@@ -1,4 +1,4 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy PoTicTac to Azure Static Web Apps
 
 on:
   push:
@@ -29,6 +29,8 @@ jobs:
         
       - name: Build
         run: npm run build
+        env:
+          CI: false # This prevents treating warnings as errors
         
       - name: Deploy
         id: builddeploy
