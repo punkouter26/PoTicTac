@@ -1,4 +1,5 @@
-import { GameState, Player } from '../types/GameTypes';
+import { GameState, Player, Move } from '../types/GameTypes';
+import { memoize } from 'lodash';
 
 export const BOARD_SIZE = 6;
 export const WIN_LENGTH = 4;
@@ -11,7 +12,14 @@ export const createInitialState = (startingPlayer: 1 | 2, players: [Player, Play
         gameStatus: 'playing',
         winner: null,
         players,
-        moveHistory: []
+        moveHistory: [],
+        undoStack: [],
+        redoStack: [],
+        sessionStats: {
+            totalGames: 0,
+            startTime: Date.now(),
+            lastUpdateTime: Date.now()
+        }
     };
 };
 
@@ -47,6 +55,11 @@ export const checkWinner = (board: number[][], lastMove: [number, number]): Arra
     }
     return null;
 };
+
+// Add memoization for win checking
+const memoizedCheckWinner = memoize((board: number[][], lastMove: [number, number]) => {
+    return checkWinner(board, lastMove);
+});
 
 export const makeMove = (state: GameState, row: number, col: number): GameState => {
     // If game is not in playing state or cell is already occupied
@@ -104,4 +117,92 @@ export const makeMove = (state: GameState, row: number, col: number): GameState 
 
 const isDraw = (board: number[][]): boolean => {
     return board.every(row => row.every(cell => cell !== 0));
+};
+
+// Add board state caching
+const boardStateCache = new Map<string, number>();
+
+export const undoMove = (state: GameState): GameState => {
+    // If no moves to undo or game is won/drawn, return current state
+    if (state.moveHistory.length === 0 || state.gameStatus !== 'playing') {
+        return state;
+    }
+
+    // Get the last move
+    const lastMove = state.moveHistory[state.moveHistory.length - 1];
+    const [row, col] = lastMove.position;
+
+    // Create new board with the move undone
+    const newBoard = state.board.map(r => [...r]);
+    newBoard[row][col] = 0;
+
+    // Update move history and undo/redo stacks
+    const newMoveHistory = state.moveHistory.slice(0, -1);
+    const newUndoStack = [...state.undoStack, lastMove];
+
+    return {
+        ...state,
+        board: newBoard,
+        currentPlayer: lastMove.player, // Switch back to the player who made the move
+        moveHistory: newMoveHistory,
+        undoStack: newUndoStack,
+        redoStack: []
+    };
+};
+
+export const redoMove = (state: GameState): GameState => {
+    // If no moves to redo or game is won/drawn, return current state
+    if (state.undoStack.length === 0 || state.gameStatus !== 'playing') {
+        return state;
+    }
+
+    // Get the last undone move
+    const moveToRedo = state.undoStack[state.undoStack.length - 1];
+    const [row, col] = moveToRedo.position;
+
+    // Create new board with the move redone
+    const newBoard = state.board.map(r => [...r]);
+    newBoard[row][col] = moveToRedo.player;
+
+    // Update move history and undo/redo stacks
+    const newMoveHistory = [...state.moveHistory, moveToRedo];
+    const newUndoStack = state.undoStack.slice(0, -1);
+
+    // Check for win after redoing the move
+    const winningCells = checkWinner(newBoard, [row, col]);
+    if (winningCells) {
+        return {
+            ...state,
+            board: newBoard,
+            gameStatus: 'won',
+            winner: moveToRedo.player,
+            winningCells,
+            currentPlayer: moveToRedo.player === 1 ? 2 : 1,
+            moveHistory: newMoveHistory,
+            undoStack: newUndoStack,
+            redoStack: []
+        };
+    }
+
+    // Check for draw
+    if (isDraw(newBoard)) {
+        return {
+            ...state,
+            board: newBoard,
+            gameStatus: 'draw',
+            currentPlayer: moveToRedo.player === 1 ? 2 : 1,
+            moveHistory: newMoveHistory,
+            undoStack: newUndoStack,
+            redoStack: []
+        };
+    }
+
+    return {
+        ...state,
+        board: newBoard,
+        currentPlayer: moveToRedo.player === 1 ? 2 : 1,
+        moveHistory: newMoveHistory,
+        undoStack: newUndoStack,
+        redoStack: []
+    };
 };

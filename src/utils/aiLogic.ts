@@ -1,4 +1,3 @@
-
 import { GameState } from '../types/GameTypes';
 import { BOARD_SIZE, isValidPosition, checkWinner } from './gameLogic';
 
@@ -14,6 +13,12 @@ const DEPTH_BY_DIFFICULTY: Record<Difficulty, number> = {
     easy: 1,
     medium: 2,
     hard: 4
+};
+
+const PROGRESSIVE_DEPTH: Record<Difficulty, number[]> = {
+    easy: [1, 1, 2],
+    medium: [2, 3, 3],
+    hard: [3, 4, 5]
 };
 
 export const getAiMove = (gameState: GameState, difficulty: Difficulty): Promise<[number, number]> => {
@@ -176,4 +181,9 @@ const getRandomMove = (board: number[][]): [number, number] => {
 
 const isBoardFull = (board: number[][]): boolean => {
     return board.every(row => row.every(cell => cell !== 0));
+};
+
+const evaluatePattern = (board: number[][], pattern: number[][]): number => {
+    // Add pattern matching logic
+    return 0;
 };

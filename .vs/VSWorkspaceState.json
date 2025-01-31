@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\dist",
+    "\\public",
+    "\\server",
+    "\\src",
+    "\\src\\components"
+  ],
+  "SelectedNode": "\\src\\components\\DifficultySelector.tsx",
+  "PreviewInSolutionExplorer": false
+}
