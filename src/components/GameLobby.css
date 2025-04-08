@@ -1,12 +1,12 @@
 .game-lobby {
     background-color: #000;
     border: 2px solid #33FF33;
-    border-radius: 8px;
+    /* Remove border-radius for sharper corners */
     padding: 2rem;
     max-width: 500px;
     margin: 2rem auto;
     color: #33FF33;
-    font-family: 'Courier New', monospace;
+    /* Remove font override to inherit global retro font */
     box-shadow: 0 0 10px #33FF33;
 }
 
@@ -27,9 +27,11 @@
     width: 100%;
     padding: 0.8rem;
     background-color: #000;
-    border: 1px solid #33FF33;
+    /* Simplify border to bottom only */
+    border: none;
+    border-bottom: 1px solid #33FF33;
     color: #33FF33;
-    font-family: 'Courier New', monospace;
+    /* Remove font override */
     font-size: 1rem;
     margin-bottom: 1rem;
     box-sizing: border-box;
@@ -54,7 +56,7 @@
     background-color: #000;
     border: 1px solid #33FF33;
     color: #33FF33;
-    font-family: 'Courier New', monospace;
+    /* Remove font override */
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -62,8 +64,9 @@
 
 .create-game-btn:hover,
 .join-game-btn:hover {
-    background-color: #33FF33;
-    color: #000;
+    /* Remove background change on hover, rely on glow/text */
+    color: #66FF66; /* Slightly brighter green on hover */
+    box-shadow: 0 0 8px #33FF33;
 }
 
 .create-game-btn:disabled,
@@ -106,12 +109,13 @@
     border: 1px solid #33FF33;
     color: #33FF33;
     cursor: pointer;
-    font-family: 'Courier New', monospace;
+    /* Remove font override */
 }
 
 .game-invite button:hover {
-    background-color: #33FF33;
-    color: #000;
+    /* Remove background change on hover */
+    color: #66FF66; /* Slightly brighter green on hover */
+    box-shadow: 0 0 5px #33FF33;
 }
 
 @keyframes pulse {

@@ -1,0 +1,174 @@
+/* Mobile-responsive styles for PoTicTac */
+
+/* Base mobile styles */
+@media (max-width: 768px) {
+  .app {
+    padding: 10px;
+  }
+  
+  h1 {
+    font-size: 2rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .game-board {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .cell {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 !important;
+    font-size: 1.8rem !important;
+  }
+  
+  .menu {
+    width: 100%;
+    max-width: 350px;
+    padding: 1rem;
+  }
+  
+  .menu-options {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .mode-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .mode-button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .game-lobby {
+    width: 100%;
+    max-width: 350px;
+    padding: 1rem;
+  }
+  
+  .player-input input,
+  .join-game-section input {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+    padding: 12px;
+  }
+  
+  .create-game-btn,
+  .join-game-btn,
+  .restart-button,
+  .rematch-button,
+  .menu-button {
+    padding: 12px;
+    font-size: 16px;
+    min-height: 44px; /* Minimum touch target size */
+  }
+  
+  /* Increase spacing for touch targets */
+  .game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  
+  /* Adjust player stats for mobile */
+  .game-stats-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Adjust game status text */
+  .game-status {
+    font-size: 1.2rem;
+  }
+  
+  .game-status-overlay {
+    width: 90%;
+    font-size: 1.5rem;
+    padding: 10px;
+  }
+}
+
+/* Small phone styles */
+@media (max-width: 375px) {
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .cell {
+    font-size: 1.5rem !important;
+  }
+  
+  .difficulty-button {
+    padding: 8px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app {
+    padding: 5px;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .game-board {
+    max-width: 80%;
+    max-height: 70vh;
+  }
+  
+  .game-controls {
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .menu {
+    flex-direction: row;
+    align-items: center;
+    max-width: 100%;
+  }
+  
+  .mode-buttons {
+    flex-direction: row;
+  }
+}
+
+/* Touch-specific improvements */
+.touch-enabled .cell:hover {
+  /* Disable hover effects on touch devices */
+  animation: none;
+}
+
+.touch-enabled .button-hover:hover {
+  /* Replace hover with active state for touch */
+  transform: none;
+}
+
+.touch-enabled .button-hover:active {
+  transform: scale(0.95);
+}
+
+/* Custom touch feedback for clickable elements */
+.touch-feedback-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Make game board cells larger on touch devices */
+.touch-enabled .game-board {
+  gap: 6px;
+}
+
+/* Add a visual active state for buttons on touch devices */
+.touch-enabled button:active {
+  background-color: rgba(51, 255, 51, 0.2);
+}

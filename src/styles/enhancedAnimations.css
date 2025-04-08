@@ -1,0 +1,262 @@
+/* Enhanced animations for PoTicTac */
+
+/* Cell placement animation */
+@keyframes placeMove {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+        filter: brightness(1.5);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Winning cells animation */
+@keyframes winPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(66, 220, 163, 0.7);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px 10px rgba(66, 220, 163, 0.5);
+        filter: brightness(1.5);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(66, 220, 163, 0);
+        filter: brightness(1);
+    }
+}
+
+/* Game draw animation */
+@keyframes drawShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Cell hover effect */
+@keyframes hoverPulse {
+    0% {
+        transform: scale(1);
+        background-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        background-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        background-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* New animation for multiplayer join */
+@keyframes joinGame {
+    0% {
+        transform: scale(0.8) translateY(20px);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05) translateY(-5px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* New animation for opponent joined notification */
+@keyframes opponentJoined {
+    0%, 100% { transform: scale(1); background-color: rgba(51, 255, 51, 0.1); }
+    50% { transform: scale(1.1); background-color: rgba(51, 255, 51, 0.3); }
+}
+
+/* Announcement animation for game events */
+@keyframes announcement {
+    0% { opacity: 0; transform: scale(0.8) translateY(-20px); }
+    10% { opacity: 1; transform: scale(1.1) translateY(0); }
+    20% { transform: scale(0.95); }
+    30% { transform: scale(1.05); }
+    40% { transform: scale(0.98); }
+    50%, 90% { transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9) translateY(-10px); }
+}
+
+/* 3D flip animation for board cells */
+@keyframes flipCell {
+    0% { transform: perspective(400px) rotateY(0); }
+    100% { transform: perspective(400px) rotateY(180deg); }
+}
+
+/* Game code copy animation */
+@keyframes gameCopied {
+    0% { transform: scale(1); background-color: rgba(51, 255, 51, 0.1); }
+    50% { transform: scale(1.2); background-color: rgba(51, 255, 51, 0.3); }
+    100% { transform: scale(1); background-color: rgba(51, 255, 51, 0.1); }
+}
+
+/* Notification popup animation */
+@keyframes notificationPopup {
+    0% { transform: translateY(-20px); opacity: 0; }
+    10% { transform: translateY(5px); opacity: 1; }
+    90% { transform: translateY(5px); opacity: 1; }
+    100% { transform: translateY(-20px); opacity: 0; }
+}
+
+/* Turn indicator animation */
+@keyframes turnIndicator {
+    0% {
+        transform: translateY(0);
+        box-shadow: 0 0 5px currentColor;
+    }
+    50% {
+        transform: translateY(-5px);
+        box-shadow: 0 0 15px currentColor;
+    }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 0 5px currentColor;
+    }
+}
+
+/* Classes for animations */
+.cell {
+    transition: all 0.3s ease;
+}
+
+.cell-empty:hover {
+    animation: hoverPulse 1.5s infinite;
+    cursor: pointer;
+}
+
+.cell-placed {
+    animation: placeMove 0.5s ease forwards;
+}
+
+.cell-winner {
+    animation: winPulse 1.5s infinite;
+}
+
+.cell-flip {
+    animation: flipCell 0.6s ease-in-out;
+}
+
+.board-draw {
+    animation: drawShake 0.8s ease-in-out;
+}
+
+.current-turn {
+    animation: turnIndicator 1.5s infinite;
+}
+
+.opponent-joined {
+    animation: opponentJoined 1.5s ease-in-out;
+}
+
+.game-announcement {
+    animation: announcement 3s ease-in-out forwards;
+}
+
+.game-code-copied {
+    animation: gameCopied 0.5s ease-in-out;
+}
+
+.notification-popup {
+    animation: notificationPopup 2.5s ease-in-out forwards;
+}
+
+.join-animation {
+    animation: joinGame 0.5s ease-in-out forwards;
+}
+
+/* Button animations */
+.button-hover {
+    transition: all 0.3s ease;
+}
+
+.button-hover:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.button-hover:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.button-hover:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Game over overlay animation */
+@keyframes gameOverFade {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.game-over-overlay {
+    animation: gameOverFade 0.5s ease forwards;
+}
+
+/* Touch feedback animation for mobile */
+@keyframes touchFeedback {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+.touch-feedback {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(51, 255, 51, 0.7) 0%, rgba(51, 255, 51, 0) 70%);
+    width: 50px;
+    height: 50px;
+    transform: translate(-50%, -50%);
+    animation: touchFeedback 0.5s ease-out forwards;
+}
+
+/* Rematch request animation */
+@keyframes rematchPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(51, 255, 51, 0.5); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(51, 255, 51, 0.8); }
+}
+
+.rematch-request {
+    animation: rematchPulse 1.5s infinite;
+}
+
+/* Loading spinner animation */
+@keyframes spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(51, 255, 51, 0.3);
+    border-radius: 50%;
+    border-top-color: #33ff33;
+    animation: spinner 1s linear infinite;
+}

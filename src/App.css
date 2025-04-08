@@ -42,9 +42,91 @@ h1 {
     background-color: rgba(0, 0, 0, 0.8);
     padding: 2rem;
     border: 2px solid #0f0;
-    border-radius: 10px;
+    /* Remove border-radius */
     box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    width: 80%; /* Adjust width as needed */
+    max-width: 500px; /* Max width for larger screens */
 }
+
+/* Style for the player name input container */
+.player-name-input {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem; /* Add some space below input */
+}
+
+/* Style for the name input field */
+.name-input {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
+    background-color: #000;
+    color: #0f0;
+    border: 2px solid #0f0;
+    text-align: center;
+    width: 80%; /* Make input wider */
+    max-width: 300px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    outline: none; /* Remove default focus outline */
+}
+
+.name-input::placeholder {
+    color: rgba(0, 255, 0, 0.5); /* Dim green placeholder */
+    font-family: 'Press Start 2P', monospace;
+}
+
+.name-input:focus {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); /* Glow on focus */
+}
+
+/* Container for mode selection section */
+.mode-selection {
+    text-align: center;
+    width: 100%;
+}
+
+.mode-selection h3 {
+    color: #0f0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-shadow: 0 0 5px #0f0;
+}
+
+/* Container for the mode buttons */
+.mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem; /* Space between buttons */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    margin-bottom: 1.5rem; /* Space below buttons */
+}
+
+/* Style for the mode buttons (Single Player, Multiplayer) */
+.mode-button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem; /* Slightly smaller than start button */
+    padding: 0.8rem 1.5rem;
+    background-color: #000;
+    color: #0f0;
+    border: 2px solid #0f0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    display: flex; /* Align icon and text */
+    align-items: center;
+    gap: 0.5rem; /* Space between icon and text */
+}
+
+.mode-button:hover {
+    color: #3f3; /* Slightly brighter green */
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+}
+
+.mode-icon {
+    font-size: 1.2rem; /* Adjust icon size if needed */
+}
+
 
 .start-button {
     font-family: 'Press Start 2P', monospace;
@@ -53,7 +135,7 @@ h1 {
     background-color: #000;
     color: #0f0;
     border: 2px solid #0f0;
-    border-radius: 5px;
+    /* Remove border-radius */
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
@@ -61,10 +143,9 @@ h1 {
 }
 
 .start-button:hover {
-    background-color: #0f0;
-    color: #000;
+    /* Simplify hover: remove background change and transform */
+    color: #3f3; /* Slightly brighter green */
     box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    transform: scale(1.05);
 }
 
 .game-status {
@@ -81,15 +162,15 @@ h1 {
     background-color: #000;
     color: #0f0;
     border: 2px solid #0f0;
-    border-radius: 5px;
+    /* Remove border-radius */
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 1rem;
 }
 
 .restart-button:hover {
-    background-color: #0f0;
-    color: #000;
+    /* Simplify hover: remove background change */
+    color: #3f3; /* Slightly brighter green */
     box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
 }
 
@@ -119,7 +200,7 @@ h1 {
     margin: 1rem 0;
     padding: 1rem;
     border: 2px solid #0f0;
-    border-radius: 8px;
+    /* Remove border-radius */
     background: rgba(0, 255, 0, 0.1);
 }
 
