@@ -2,7 +2,8 @@ import { io, Socket } from 'socket.io-client';
 
 // Ensure the URL points to your Node.js server (running on port 3001)
 // Removed process.env access as it's not available in the browser
-const SERVER_URL = 'http://localhost:3001';
+// For Azure deployment, connect to the same origin. Socket.IO client defaults to window.location host.
+const SERVER_URL = ''; // Use empty string to connect to the origin
 
 class SocketService {
   private socket: Socket | null = null;
