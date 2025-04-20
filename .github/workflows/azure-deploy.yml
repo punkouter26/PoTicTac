@@ -10,7 +10,7 @@ on:
 env:
   AZURE_WEBAPP_NAME: potictac
   AZURE_WEBAPP_PACKAGE_PATH: '.'
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '9.0.100-preview.2.24157.14'
   NODE_VERSION: '20.x'
 
 jobs:
@@ -29,6 +29,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        include-prerelease: true
 
     - name: Build React Client
       run: |
@@ -40,7 +41,8 @@ jobs:
     - name: Build and publish API
       run: |
         cd server/server/PoTicTacServer
-        dotnet restore
+        dotnet nuget add source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet9/nuget/v3/index.json -n dotnet9
+        dotnet restore --configfile ../../../NuGet.config
         dotnet build --configuration Release
         dotnet publish -c Release -o ./publish
 

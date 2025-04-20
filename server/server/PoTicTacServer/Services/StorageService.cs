@@ -1,21 +1,36 @@
 using Azure.Data.Tables;
 using System.Text.Json;
 using PoTicTacServer.Models;
+using Microsoft.Extensions.Logging;
 
 namespace PoTicTacServer.Services;
 
 public class StorageService
 {
     private readonly TableClient _tableClient;
+    private readonly ILogger<StorageService> _logger;
     private const string TableName = "PlayerStats";
 
-    public StorageService(IConfiguration configuration)
+    public StorageService(IConfiguration configuration, ILogger<StorageService> logger)
     {
-        string connectionString = configuration.GetValue<string>("AZURE_STORAGE_CONNECTION_STRING") 
-            ?? "UseDevelopmentStorage=true";
+        _logger = logger;
         
-        _tableClient = new TableClient(connectionString, TableName);
-        _tableClient.CreateIfNotExists();
+        try
+        {
+            var tableServiceClient = new TableServiceClient("UseDevelopmentStorage=true");
+            _logger.LogInformation("Created TableServiceClient for development storage");
+            
+            _tableClient = tableServiceClient.GetTableClient(TableName);
+            _logger.LogInformation("Created TableClient for table: {TableName}", TableName);
+            
+            _tableClient.CreateIfNotExists();
+            _logger.LogInformation("Successfully ensured table {TableName} exists", TableName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing table storage for table {TableName}", TableName);
+            throw;
+        }
     }
 
     public async Task<PlayerStats?> GetPlayerStatsAsync(string playerName)

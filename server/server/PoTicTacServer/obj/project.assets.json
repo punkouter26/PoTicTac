@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net9.0": {
+    "net8.0": {
       "Azure.Core/1.44.1": {
         "type": "package",
         "dependencies": {
@@ -41,18 +41,18 @@
           }
         }
       },
-      "Microsoft.AspNetCore.OpenApi/9.0.3": {
+      "Microsoft.AspNetCore.OpenApi/8.0.3": {
         "type": "package",
         "dependencies": {
-          "Microsoft.OpenApi": "1.6.17"
+          "Microsoft.OpenApi": "1.4.3"
         },
         "compile": {
-          "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll": {
+          "lib/net8.0/Microsoft.AspNetCore.OpenApi.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll": {
+          "lib/net8.0/Microsoft.AspNetCore.OpenApi.dll": {
             "related": ".xml"
           }
         },
@@ -97,13 +97,13 @@
           }
         }
       },
-      "Swashbuckle.AspNetCore/8.1.1": {
+      "Swashbuckle.AspNetCore/8.1.0": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.ApiDescription.Server": "6.0.5",
-          "Swashbuckle.AspNetCore.Swagger": "8.1.1",
-          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.1",
-          "Swashbuckle.AspNetCore.SwaggerUI": "8.1.1"
+          "Swashbuckle.AspNetCore.Swagger": "8.1.0",
+          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.0",
+          "Swashbuckle.AspNetCore.SwaggerUI": "8.1.0"
         },
         "build": {
           "build/Swashbuckle.AspNetCore.props": {}
@@ -112,18 +112,18 @@
           "buildMultiTargeting/Swashbuckle.AspNetCore.props": {}
         }
       },
-      "Swashbuckle.AspNetCore.Swagger/8.1.1": {
+      "Swashbuckle.AspNetCore.Swagger/8.1.0": {
         "type": "package",
         "dependencies": {
           "Microsoft.OpenApi": "1.6.23"
         },
         "compile": {
-          "lib/net9.0/Swashbuckle.AspNetCore.Swagger.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.Swagger.dll": {
             "related": ".pdb;.xml"
           }
         },
         "runtime": {
-          "lib/net9.0/Swashbuckle.AspNetCore.Swagger.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.Swagger.dll": {
             "related": ".pdb;.xml"
           }
         },
@@ -131,31 +131,31 @@
           "Microsoft.AspNetCore.App"
         ]
       },
-      "Swashbuckle.AspNetCore.SwaggerGen/8.1.1": {
+      "Swashbuckle.AspNetCore.SwaggerGen/8.1.0": {
         "type": "package",
         "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "8.1.1"
+          "Swashbuckle.AspNetCore.Swagger": "8.1.0"
         },
         "compile": {
-          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
             "related": ".pdb;.xml"
           }
         },
         "runtime": {
-          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
             "related": ".pdb;.xml"
           }
         }
       },
-      "Swashbuckle.AspNetCore.SwaggerUI/8.1.1": {
+      "Swashbuckle.AspNetCore.SwaggerUI/8.1.0": {
         "type": "package",
         "compile": {
-          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
             "related": ".pdb;.xml"
           }
         },
         "runtime": {
-          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+          "lib/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
             "related": ".pdb;.xml"
           }
         },
@@ -340,19 +340,18 @@
         "lib/netstandard2.0/Azure.Data.Tables.xml"
       ]
     },
-    "Microsoft.AspNetCore.OpenApi/9.0.3": {
-      "sha512": "fKh0UyGMUE+lhbovMhh3g88b9bT+y2jfZIuJ8ljY7rcCaSJ9m2Qqqbh66oULFfzWE2BUAmimzTGcPcq3jXi/Ew==",
+    "Microsoft.AspNetCore.OpenApi/8.0.3": {
+      "sha512": "mUq0UL+H7UtA3Jud/7/BC7n5W2c4zCvTFUa2hE2+/oQqATa4oGHb87ETON09SEWkcbBRTz3WM16kTE+zuoXq2A==",
       "type": "package",
-      "path": "microsoft.aspnetcore.openapi/9.0.3",
+      "path": "microsoft.aspnetcore.openapi/8.0.3",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
-        "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll",
-        "lib/net9.0/Microsoft.AspNetCore.OpenApi.xml",
-        "microsoft.aspnetcore.openapi.9.0.3.nupkg.sha512",
+        "lib/net8.0/Microsoft.AspNetCore.OpenApi.dll",
+        "lib/net8.0/Microsoft.AspNetCore.OpenApi.xml",
+        "microsoft.aspnetcore.openapi.8.0.3.nupkg.sha512",
         "microsoft.aspnetcore.openapi.nuspec"
       ]
     },
@@ -623,24 +622,24 @@
         "microsoft.openapi.nuspec"
       ]
     },
-    "Swashbuckle.AspNetCore/8.1.1": {
-      "sha512": "HJHexmU0PiYevgTLvKjYkxEtclF2w4O7iTd3Ef3p6KeT0kcYLpkFVgCw6glpGS57h8769anv8G+NFi9Kge+/yw==",
+    "Swashbuckle.AspNetCore/8.1.0": {
+      "sha512": "8NJwXskWNBhX4IntitP1VP68hzhQ9Sex4mR9ZbqCuuUsaWlfrMA+yDIYDFsbHlB2NQ6Gt27AT15BWo9jxHj1tg==",
       "type": "package",
-      "path": "swashbuckle.aspnetcore/8.1.1",
+      "path": "swashbuckle.aspnetcore/8.1.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "build/Swashbuckle.AspNetCore.props",
         "buildMultiTargeting/Swashbuckle.AspNetCore.props",
         "docs/package-readme.md",
-        "swashbuckle.aspnetcore.8.1.1.nupkg.sha512",
+        "swashbuckle.aspnetcore.8.1.0.nupkg.sha512",
         "swashbuckle.aspnetcore.nuspec"
       ]
     },
-    "Swashbuckle.AspNetCore.Swagger/8.1.1": {
-      "sha512": "h+8D5jQtnl6X4f2hJQwf0Khj0SnCQANzirCELjXJ6quJ4C1aNNCvJrAsQ+4fOKAMqJkvW48cKj79ftG+YoGcRg==",
+    "Swashbuckle.AspNetCore.Swagger/8.1.0": {
+      "sha512": "TRpBDdWh/6IzXHOLKVEuZSuhcdc8OIwhr8dyLnWvEh6FO4f0KiATAzr8yzHspcCFzCc/CONpvUCq4DzazpP6Og==",
       "type": "package",
-      "path": "swashbuckle.aspnetcore.swagger/8.1.1",
+      "path": "swashbuckle.aspnetcore.swagger/8.1.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -654,14 +653,14 @@
         "lib/netstandard2.0/Swashbuckle.AspNetCore.Swagger.pdb",
         "lib/netstandard2.0/Swashbuckle.AspNetCore.Swagger.xml",
         "package-readme.md",
-        "swashbuckle.aspnetcore.swagger.8.1.1.nupkg.sha512",
+        "swashbuckle.aspnetcore.swagger.8.1.0.nupkg.sha512",
         "swashbuckle.aspnetcore.swagger.nuspec"
       ]
     },
-    "Swashbuckle.AspNetCore.SwaggerGen/8.1.1": {
-      "sha512": "2EuPzXSNleOOzYvziERWRLnk1Oz9i0Z1PimaUFy1SasBqeV/rG+eMfwFAMtTaf4W6gvVOzRcUCNRHvpBIIzr+A==",
+    "Swashbuckle.AspNetCore.SwaggerGen/8.1.0": {
+      "sha512": "sXAUNodmnzrJb1qmgdLY6HgTDsgagXCn6p+qygW2wP0BjcvdZZA6GdDgtuc8iQON9ekrp7m5G0Zc09lvuNhc/A==",
       "type": "package",
-      "path": "swashbuckle.aspnetcore.swaggergen/8.1.1",
+      "path": "swashbuckle.aspnetcore.swaggergen/8.1.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -675,14 +674,14 @@
         "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerGen.pdb",
         "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerGen.xml",
         "package-readme.md",
-        "swashbuckle.aspnetcore.swaggergen.8.1.1.nupkg.sha512",
+        "swashbuckle.aspnetcore.swaggergen.8.1.0.nupkg.sha512",
         "swashbuckle.aspnetcore.swaggergen.nuspec"
       ]
     },
-    "Swashbuckle.AspNetCore.SwaggerUI/8.1.1": {
-      "sha512": "GDLX/MpK4oa2nYC1N/zN2UidQTtVKLPF6gkdEmGb0RITEwpJG9Gu8olKqPYnKqVeFn44JZoCS0M2LGRKXP8B/A==",
+    "Swashbuckle.AspNetCore.SwaggerUI/8.1.0": {
+      "sha512": "PYyTbYrEz1q8N8ZpCFzY5hOkvP5gv9oIml06wrrrjGRFvVXyCF/b58FRI/9mnRKRBAmWKZR5pqhmJBzvsVveSQ==",
       "type": "package",
-      "path": "swashbuckle.aspnetcore.swaggerui/8.1.1",
+      "path": "swashbuckle.aspnetcore.swaggerui/8.1.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -696,7 +695,7 @@
         "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerUI.pdb",
         "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerUI.xml",
         "package-readme.md",
-        "swashbuckle.aspnetcore.swaggerui.8.1.1.nupkg.sha512",
+        "swashbuckle.aspnetcore.swaggerui.8.1.0.nupkg.sha512",
         "swashbuckle.aspnetcore.swaggerui.nuspec"
       ]
     },
@@ -958,10 +957,10 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net9.0": [
+    "net8.0": [
       "Azure.Data.Tables >= 12.10.0",
-      "Microsoft.AspNetCore.OpenApi >= 9.0.3",
-      "Swashbuckle.AspNetCore >= 8.1.1"
+      "Microsoft.AspNetCore.OpenApi >= 8.0.3",
+      "Swashbuckle.AspNetCore >= 8.0.1"
     ]
   },
   "packageFolders": {
@@ -981,21 +980,22 @@
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
+        "C:\\Users\\punko\\OneDrive\\Documents\\PoTicTac\\NuGet.Config",
         "C:\\Users\\punko\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net9.0"
+        "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
-        "https://api.nuget.org/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {},
+        "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet9/nuget/v3/index.json": {}
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "projectReferences": {}
         }
       },
@@ -1012,8 +1012,8 @@
       "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
-      "net9.0": {
-        "targetAlias": "net9.0",
+      "net8.0": {
+        "targetAlias": "net8.0",
         "dependencies": {
           "Azure.Data.Tables": {
             "target": "Package",
@@ -1021,11 +1021,11 @@
           },
           "Microsoft.AspNetCore.OpenApi": {
             "target": "Package",
-            "version": "[9.0.3, )"
+            "version": "[8.0.3, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
-            "version": "[8.1.1, )"
+            "version": "[8.0.1, )"
           }
         },
         "imports": [
@@ -1050,5 +1050,17 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "PoTicTacServer depends on Swashbuckle.AspNetCore (>= 8.0.1) but Swashbuckle.AspNetCore 8.0.1 was not found. Swashbuckle.AspNetCore 8.1.0 was resolved instead.",
+      "libraryId": "Swashbuckle.AspNetCore",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }
