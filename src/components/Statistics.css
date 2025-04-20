@@ -1,0 +1,146 @@
+.statistics-container {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 15px;
+    color: #fff;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #00ff00;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.analytics-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.skill-level {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.level-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(45deg, #00ff00, #00cc00);
+    border-radius: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.strengths-weaknesses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.strengths ul, .weaknesses ul {
+    list-style: none;
+    padding: 0;
+}
+
+.strengths li, .weaknesses li {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.strengths li {
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.weaknesses li {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.suggestions {
+    margin-top: 20px;
+}
+
+.suggestions ul {
+    list-style: none;
+    padding: 0;
+}
+
+.suggestions li {
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255, 255, 0, 0.1);
+    border-radius: 5px;
+}
+
+.performance-history {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.history-chart {
+    display: flex;
+    height: 200px;
+    align-items: flex-end;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.history-bar {
+    flex: 1;
+    min-width: 20px;
+    transition: height 0.3s ease;
+}
+
+.history-bar.win {
+    background: linear-gradient(to top, #00ff00, #00cc00);
+}
+
+.history-bar.loss {
+    background: linear-gradient(to top, #ff0000, #cc0000);
+}
+
+.history-bar.draw {
+    background: linear-gradient(to top, #ffff00, #cccc00);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .strengths-weaknesses {
+        grid-template-columns: 1fr;
+    }
+} 

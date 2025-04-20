@@ -3,15 +3,29 @@ export type PlayerType = 'human' | 'ai';
 export type GameMode = 'singleplayer' | 'multiplayer' | 'tournament' | 'practice';
 
 export interface PlayerStats {
+    totalGames: number;
     wins: number;
     losses: number;
     draws: number;
-    totalGames: number;
+    winRate: number;
     winStreak: number;
     currentStreak: number;
     averageMovesPerGame: number;
     totalMoves: number;
-    winRate: number;
+    averageGameLength: number;
+    favoriteMoves: Array<{
+        position: string;
+        count: number;
+    }>;
+    winningPatterns: Array<{
+        pattern: string;
+        count: number;
+    }>;
+    performanceHistory: Array<{
+        date: string;
+        result: 'win' | 'loss' | 'draw';
+        gameLength: number;
+    }>;
 }
 
 export interface Player {

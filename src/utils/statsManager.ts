@@ -1,72 +1,119 @@
 import { Player, PlayerStats, GameState } from '../types/GameTypes';
+import { GameStats, HeatMapData, PerformanceAnalytics } from '../types/GameStats';
 
-export const createInitialStats = (): PlayerStats => ({
+export const createInitialStats = (): GameStats => ({
+    totalGames: 0,
     wins: 0,
     losses: 0,
     draws: 0,
-    totalGames: 0,
+    winRate: 0,
     winStreak: 0,
     currentStreak: 0,
     averageMovesPerGame: 0,
     totalMoves: 0,
-    winRate: 0
+    averageGameLength: 0,
+    favoriteMoves: [],
+    winningPatterns: [],
+    performanceHistory: []
 });
 
 export const updatePlayerStats = (
-    player: Player,
+    currentStats: GameStats,
     gameState: GameState,
-    isWinner: boolean,
-    isDraw: boolean
-): Player => {
-    const stats = { ...player.stats };
-    const movesThisGame = gameState.moveHistory.filter(move => move.player === player.symbol).length;
-
-    // Update basic stats
-    stats.totalGames += 1;
-    stats.totalMoves += movesThisGame;
-    stats.averageMovesPerGame = stats.totalMoves / stats.totalGames;
-
-    if (isWinner) {
-        stats.wins += 1;
-        stats.currentStreak += 1;
-        stats.winStreak = Math.max(stats.winStreak, stats.currentStreak);
-    } else if (isDraw) {
-        stats.draws += 1;
-        stats.currentStreak = 0;
-    } else {
-        stats.losses += 1;
-        stats.currentStreak = 0;
+    gameLength: number,
+    playerSymbol: number
+): GameStats => {
+    const newStats = { ...currentStats };
+    newStats.totalGames++;
+    newStats.totalMoves += gameLength;
+    newStats.averageMovesPerGame = newStats.totalMoves / newStats.totalGames;
+    
+    // Update win/loss/draw counts and streaks
+    if (gameState.gameStatus === 'won') {
+        if (gameState.winner === playerSymbol) {
+            newStats.wins++;
+            newStats.currentStreak++;
+            newStats.winStreak = Math.max(newStats.winStreak, newStats.currentStreak);
+        } else {
+            newStats.losses++;
+            newStats.currentStreak = 0;
+        }
+    } else if (gameState.gameStatus === 'draw') {
+        newStats.draws++;
+        newStats.currentStreak = 0;
     }
 
     // Calculate win rate
-    stats.winRate = stats.wins / stats.totalGames;
+    newStats.winRate = (newStats.wins / newStats.totalGames) * 100;
 
-    return {
-        ...player,
-        stats
-    };
+    // Update average game length
+    newStats.averageGameLength = 
+        ((newStats.averageGameLength * (newStats.totalGames - 1)) + gameLength) / newStats.totalGames;
+
+    // Add to performance history
+    newStats.performanceHistory.push({
+        date: new Date().toISOString(),
+        result: gameState.gameStatus === 'won' 
+            ? (gameState.winner === playerSymbol ? 'win' : 'loss')
+            : 'draw',
+        gameLength
+    });
+
+    return newStats;
 };
 
-export const getPlayerAchievements = (stats: PlayerStats): string[] => {
-    const achievements: string[] = [];
+export const generateHeatMapData = (gameState: GameState, playerSymbol: number): HeatMapData[] => {
+    const heatMap: HeatMapData[] = [];
+    const board = gameState.board;
 
-    if (stats.currentStreak >= 3) {
-        achievements.push('🔥 Hot Streak');
-    }
-    if (stats.winRate >= 0.7 && stats.totalGames >= 5) {
-        achievements.push('👑 Dominating');
-    }
-    if (stats.totalGames >= 10) {
-        achievements.push('🎮 Veteran');
-    }
-    if (stats.draws === 0 && stats.totalGames >= 5) {
-        achievements.push('⚔️ Decisive');
-    }
-    if (stats.averageMovesPerGame <= 4 && stats.totalGames >= 5) {
-        achievements.push('⚡ Quick Winner');
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+            if (board[row][col] === playerSymbol) {
+                heatMap.push({
+                    position: `${row},${col}`,
+                    value: 1,
+                    type: gameState.gameStatus === 'won' && gameState.winner === playerSymbol ? 'win' : 'loss'
+                });
+            }
+        }
     }
 
-    return achievements;
+    return heatMap;
+};
+
+export const analyzePerformance = (stats: GameStats): PerformanceAnalytics => {
+    const analytics: PerformanceAnalytics = {
+        strengths: [],
+        weaknesses: [],
+        improvementSuggestions: [],
+        skillLevel: 'beginner'
+    };
+
+    // Analyze win rate for skill level
+    if (stats.winRate >= 80) {
+        analytics.skillLevel = 'expert';
+    } else if (stats.winRate >= 60) {
+        analytics.skillLevel = 'advanced';
+    } else if (stats.winRate >= 40) {
+        analytics.skillLevel = 'intermediate';
+    }
+
+    // Generate suggestions based on performance
+    if (stats.wins < stats.losses) {
+        analytics.weaknesses.push('Defensive play');
+        analytics.improvementSuggestions.push('Focus on blocking opponent\'s winning moves');
+    }
+
+    if (stats.averageGameLength < 5) {
+        analytics.weaknesses.push('Game length');
+        analytics.improvementSuggestions.push('Try to plan moves ahead and think strategically');
+    }
+
+    if (stats.winRate > 50) {
+        analytics.strengths.push('Overall performance');
+    }
+
+    return analytics;
 };
 
 // Local storage management
@@ -89,5 +136,5 @@ export const loadStatsFromLocalStorage = (): [Player, Player] | null => {
     } catch (error) {
         console.error('Failed to load stats from localStorage:', error);
     }
-    return null;
-}; 
+    return null; 
+} 

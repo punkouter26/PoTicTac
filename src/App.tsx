@@ -4,7 +4,7 @@ import { GameBoard } from './components/GameBoard';
 import { GameState, Player } from './types/GameTypes';
 import { createInitialState, makeMove } from './utils/gameLogic';
 import { getAiMove, Difficulty } from './utils/aiLogic';
-import { createInitialStats } from './utils/statsManager';
+import { createInitialStats, updatePlayerStats, analyzePerformance } from './utils/statsManager';
 import socketService from './utils/socketService'; // Import socketService
 import './App.css';
 import './styles/GameStatus.css';
@@ -13,6 +13,8 @@ import './styles/mobileResponsive.css';
 import Game from './components/Game';
 import GameLobby from './components/GameLobby';
 import TouchControls from './components/TouchControls';
+import { Statistics } from './components/Statistics';
+import { GameStats, PerformanceAnalytics } from './types/GameStats';
 
 type GameMode = 'menu' | 'singleplayer' | 'multiplayer' | 'multiplayer-game';
 
@@ -37,6 +39,14 @@ export const App: React.FC = () => {
         return savedName || '';
     });
     const [multiplayerGame, setMultiplayerGame] = useState<MultiplayerGameInfo | null>(null);
+    const [playerStats, setPlayerStats] = useState<GameStats>(createInitialStats());
+    const [showStats, setShowStats] = useState(false);
+    const [analytics, setAnalytics] = useState<PerformanceAnalytics>({
+        strengths: [],
+        weaknesses: [],
+        improvementSuggestions: [],
+        skillLevel: 'beginner'
+    });
 
     // Connect socket on mount or when entering multiplayer
     useEffect(() => {
@@ -77,6 +87,20 @@ export const App: React.FC = () => {
             socketService.disconnect();
         }
     }, [gameMode]);
+
+    // Update stats when game ends
+    useEffect(() => {
+        if (gameState && (gameState.gameStatus === 'won' || gameState.gameStatus === 'draw')) {
+            const newStats = updatePlayerStats(
+                playerStats,
+                gameState,
+                gameState.moveHistory.length,
+                1 // Player symbol
+            );
+            setPlayerStats(newStats);
+            setAnalytics(analyzePerformance(newStats));
+        }
+    }, [gameState?.gameStatus]);
 
     const handleCellClick = async (row: number, col: number) => {
         if (!gameState || gameState.gameStatus !== 'playing') {
@@ -260,7 +284,26 @@ export const App: React.FC = () => {
                                 onDifficultyChange={setDifficulty}
                             />
                         </div>
+                        <button 
+                            className="stats-button"
+                            onClick={() => setShowStats(true)}
+                        >
+                            View Statistics
+                        </button>
                     </div>
+                    {showStats && (
+                        <div className="stats-modal">
+                            <div className="stats-modal-content">
+                                <button 
+                                    className="close-stats"
+                                    onClick={() => setShowStats(false)}
+                                >
+                                    ×
+                                </button>
+                                <Statistics stats={playerStats} analytics={analytics} />
+                            </div>
+                        </div>
+                    )}
                 </>
             ) : gameMode === 'multiplayer' ? (
                 <GameLobby 

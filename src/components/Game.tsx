@@ -42,15 +42,21 @@ const Game: React.FC = () => {
             const winner = players.find(p => p.symbol === newGameState.winner)!;
             const loser = players.find(p => p.symbol !== newGameState.winner)!;
 
-            const updatedWinner = updatePlayerStats(winner, newGameState, true, false);
-            const updatedLoser = updatePlayerStats(loser, newGameState, false, false);
+            const updatedWinnerStats = updatePlayerStats(winner.stats, newGameState, newGameState.moveHistory.length, winner.symbol);
+            const updatedLoserStats = updatePlayerStats(loser.stats, newGameState, newGameState.moveHistory.length, loser.symbol);
 
-            updatedPlayers[winner.symbol - 1] = updatedWinner;
-            updatedPlayers[loser.symbol - 1] = updatedLoser;
+            updatedPlayers[winner.symbol - 1] = { ...winner, stats: updatedWinnerStats };
+            updatedPlayers[loser.symbol - 1] = { ...loser, stats: updatedLoserStats };
         } else if (newGameState.gameStatus === 'draw') {
             // Update both players' stats for a draw
-            updatedPlayers[0] = updatePlayerStats(players[0], newGameState, false, true);
-            updatedPlayers[1] = updatePlayerStats(players[1], newGameState, false, true);
+            updatedPlayers[0] = { 
+                ...players[0], 
+                stats: updatePlayerStats(players[0].stats, newGameState, newGameState.moveHistory.length, players[0].symbol)
+            };
+            updatedPlayers[1] = {
+                ...players[1],
+                stats: updatePlayerStats(players[1].stats, newGameState, newGameState.moveHistory.length, players[1].symbol)
+            };
         }
 
         setPlayers(updatedPlayers);
@@ -127,6 +133,12 @@ const Game: React.FC = () => {
                         <GameBoard
                             gameState={gameState}
                             onCellClick={handleCellClick}
+                            lastMove={gameState.moveHistory.length > 0 
+                                ? { 
+                                    row: gameState.moveHistory[gameState.moveHistory.length - 1].position[0],
+                                    col: gameState.moveHistory[gameState.moveHistory.length - 1].position[1]
+                                  }
+                                : undefined}
                         />
                     </div>
 

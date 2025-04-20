@@ -3,15 +3,18 @@
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    padding: 20px;
 }
 
 .game-board {
-    display: grid;
-    gap: 4px;
-    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
     background-color: #000;
     border: 2px solid #0f0;
     border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 .game-board.retro-glow {
@@ -21,16 +24,16 @@
 .board-row {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
+    gap: 8px;
 }
 
 .cell {
     aspect-ratio: 1;
-    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.8);
     border: 2px solid #0f0;
     color: #0f0;
     font-family: 'Press Start 2P', monospace;
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -41,12 +44,13 @@
     text-shadow: 0 0 10px #0f0;
     position: relative;
     overflow: hidden;
+    min-height: 60px;
 }
 
-.cell:not(:disabled):hover {
+.cell:not(.occupied):hover {
     background-color: rgba(0, 255, 0, 0.1);
     box-shadow: 0 0 10px #0f0;
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
 .cell.occupied {
@@ -60,6 +64,7 @@
 .cell.o-move {
     color: #f00;
     text-shadow: 0 0 10px #f00;
+    border-color: #f00;
 }
 
 .cell.last-move {
@@ -125,15 +130,16 @@
 
 @media (max-width: 600px) {
     .game-board {
-        gap: 2px;
-        padding: 4px;
+        gap: 4px;
+        padding: 8px;
     }
 
     .board-row {
-        gap: 2px;
+        gap: 4px;
     }
 
     .cell {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+        min-height: 40px;
     }
 }

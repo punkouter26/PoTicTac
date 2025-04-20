@@ -41,8 +41,8 @@
 /* Game draw animation */
 @keyframes drawShake {
     0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
 }
 
 /* Cell hover effect */
@@ -136,6 +136,7 @@
 /* Classes for animations */
 .cell {
     transition: all 0.3s ease;
+    animation: cellPop 0.3s ease-out;
 }
 
 .cell-empty:hover {
@@ -259,4 +260,161 @@
     border-radius: 50%;
     border-top-color: #33ff33;
     animation: spinner 1s linear infinite;
+}
+
+/* Game board animations */
+@keyframes cellPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes winLine {
+    0% { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
+}
+
+@keyframes victoryPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes drawShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Menu animations */
+@keyframes menuSlideIn {
+    0% { transform: translateY(-50px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes buttonHover {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes statsReveal {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Particle effects */
+@keyframes particleFloat {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+
+/* Apply animations */
+.win-line {
+    animation: winLine 0.5s ease-out;
+    transform-origin: left;
+}
+
+.victory-overlay {
+    animation: victoryPulse 2s infinite;
+}
+
+.draw-overlay {
+    animation: drawShake 0.5s ease-in-out;
+}
+
+.menu-options {
+    animation: menuSlideIn 0.5s ease-out;
+}
+
+.mode-button:hover {
+    animation: buttonHover 0.5s infinite;
+}
+
+.stats-modal-content {
+    animation: statsReveal 0.3s ease-out;
+}
+
+/* Particle effects */
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #00ff00;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleFloat 1s ease-out forwards;
+}
+
+/* Enhanced hover effects */
+.mode-button {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 255, 0, 0.2),
+        transparent
+    );
+    transition: 0.5s;
+}
+
+.mode-button:hover::before {
+    left: 100%;
+}
+
+/* Status message animations */
+.game-status {
+    transition: all 0.3s ease;
+}
+
+.game-status.win {
+    animation: victoryPulse 2s infinite;
+}
+
+.game-status.draw {
+    animation: drawShake 0.5s ease-in-out;
+}
+
+/* Stats card animations */
+.stat-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #00ff00, transparent);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover::after {
+    transform: scaleX(1);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .cell {
+        animation: cellPop 0.2s ease-out;
+    }
+    
+    .menu-options {
+        animation: menuSlideIn 0.3s ease-out;
+    }
 }
