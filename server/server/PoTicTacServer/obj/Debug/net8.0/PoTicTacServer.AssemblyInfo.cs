@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PoTicTacServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f91b40755d36d42a4b124916ed2285fbd6600eb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c836a96f27244ece2f855415a1dfddf96fbbe15b")]
 [assembly: System.Reflection.AssemblyProductAttribute("PoTicTacServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PoTicTacServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -5,7 +5,7 @@ import { GameState, Player } from './types/GameTypes';
 import { createInitialState, makeMove } from './utils/gameLogic';
 import { getAiMove, Difficulty } from './utils/aiLogic';
 import { createInitialStats, updatePlayerStats, analyzePerformance } from './utils/statsManager';
-import socketService from './utils/socketService'; // Import socketService
+import signalRService from './utils/signalRService'; // Updated to use SignalR
 import './App.css';
 import './styles/GameStatus.css';
 import './styles/enhancedAnimations.css';
@@ -15,6 +15,7 @@ import GameLobby from './components/GameLobby';
 import TouchControls from './components/TouchControls';
 import { Statistics } from './components/Statistics';
 import { GameStats, PerformanceAnalytics } from './types/GameStats';
+import * as signalR from '@microsoft/signalr'; // Import SignalR types
 
 type GameMode = 'menu' | 'singleplayer' | 'multiplayer' | 'multiplayer-game';
 
@@ -48,45 +49,72 @@ export const App: React.FC = () => {
         skillLevel: 'beginner'
     });
 
-    // Connect socket on mount or when entering multiplayer
+    // Connect SignalR on mount or when entering multiplayer
     useEffect(() => {
         if (gameMode === 'multiplayer' || gameMode === 'multiplayer-game') {
-            const socket = socketService.connect();
+            const connection = signalRService.connect();
 
-            // Setup listeners needed in App.tsx (e.g., game state updates)
-            // Listener now expects an object { gameState: GameState, placedMove: { row: number, col: number } }
-            socket.on('game_state_update', (data: { gameState: GameState, placedMove?: { row: number, col: number } }) => {
-                console.log('Received game_state_update:', data);
-                setGameState(data.gameState);
-                // Use the actual placed move coordinates from the server for highlighting
-                if (data.placedMove) {
-                    setLastMove(data.placedMove);
+            // Setup listeners needed in App.tsx
+            signalRService.on('MoveReceived', (newGameState: GameState, lastMove: any) => {
+                console.log('Received MoveReceived:', newGameState, lastMove);
+                setGameState(newGameState);
+                
+                // Extract move coordinates from the lastMove
+                if (lastMove && lastMove.Position) {
+                    setLastMove({ row: lastMove.Position[0], col: lastMove.Position[1] });
                 } else {
-                    // Fallback or clear if no move info provided (e.g., on game start)
-                    setLastMove(undefined); 
+                    setLastMove(undefined);
                 }
             });
 
-            socket.on('game_over', (data: { winner: number | null, gameState: GameState }) => {
-                console.log('Received game_over:', data);
-                setGameState(data.gameState);
-                if (data.winner !== null) {
+            signalRService.on('GameOver', (finalGameState: GameState) => {
+                console.log('Received GameOver:', finalGameState);
+                setGameState(finalGameState);
+                if (finalGameState.winner !== null || finalGameState['Winner'] !== null) {
                     // Handle score update if needed
                 }
             });
 
+            signalRService.on('RematchRequested', (requesterId: string) => {
+                console.log('Rematch requested by:', requesterId);
+                // Show a notification or dialog to accept rematch
+                if (window.confirm('Your opponent has requested a rematch. Accept?')) {
+                    if (multiplayerGame) {
+                        signalRService.emit('AcceptRematch', { gameId: multiplayerGame.gameId });
+                    }
+                }
+            });
+
+            signalRService.on('RematchAccepted', (newGameState: GameState) => {
+                console.log('Rematch accepted, new game state:', newGameState);
+                setGameState(newGameState);
+                setLastMove(undefined);
+            });
+
+            signalRService.on('PlayerLeft', (playerId: string) => {
+                console.log('Player left:', playerId);
+                // Notify the user that the opponent left
+                alert('Your opponent has left the game.');
+            });
+
+            // Start the connection if not connected
+            if (connection.state !== signalR.HubConnectionState.Connected) {
+                connection.start().catch(err => console.error('Error connecting to SignalR hub:', err));
+            }
+
             // Cleanup listeners on mode change or unmount
             return () => {
-                socket.off('game_state_update');
-                socket.off('game_over');
-                // Consider disconnecting if leaving multiplayer entirely
-                // socketService.disconnect(); 
+                signalRService.off('MoveReceived');
+                signalRService.off('GameOver');
+                signalRService.off('RematchRequested');
+                signalRService.off('RematchAccepted');
+                signalRService.off('PlayerLeft');
             };
         } else {
             // Disconnect if not in multiplayer mode
-            socketService.disconnect();
+            signalRService.disconnect();
         }
-    }, [gameMode]);
+    }, [gameMode, multiplayerGame]);
 
     // Update stats when game ends
     useEffect(() => {
@@ -110,21 +138,20 @@ export const App: React.FC = () => {
         // In multiplayer mode, only allow moves on your turn
         if (gameMode === 'multiplayer-game') {
             if (!multiplayerGame || !gameState) return;
-
-            // Basic check if it's the player's turn (more robust check might be needed)
-            const currentPlayerDetails = gameState.players.find(p => p.symbol === gameState.currentPlayer);
-            // Assuming the local player's ID is stored or can be derived
-            // This needs refinement - how do we know which player *this* client is?
-            // Let's assume player 1 is host, player 2 is guest for now, or pass player ID
-            // For now, let's just send the move and let the server validate
             
-            console.log(`Sending move: row=${row}, col=${col}, gameId=${multiplayerGame.gameId}`);
-            socketService.emit('make_move', { 
-                gameId: multiplayerGame.gameId, 
-                move: { row, col } 
-                // We might need to send playerSymbol or playerId here too
-            });
-            // The game state will be updated via the 'game_state_update' event from the server
+            try {
+                console.log(`Making move: row=${row}, col=${col}, gameId=${multiplayerGame.gameId}`);
+                // SignalR method call with parameters in the correct order
+                await signalRService.emit('MakeMove', { 
+                    gameId: multiplayerGame.gameId,
+                    row: row,
+                    col: col
+                });
+                // The game state will be updated via the 'MoveReceived' event handler
+            } catch (err) {
+                console.error('Error making move:', err);
+                // Optionally show error to user
+            }
             return;
         }
 
@@ -154,7 +181,9 @@ export const App: React.FC = () => {
                 makeAiMove();
             }, 500);
         }
-    };    const getGameStatus = () => {
+    };
+
+    const getGameStatus = () => {
         if (!gameState) return '';
         if (gameState.gameStatus === 'won') {
             const winner = gameState.players.find(p => p.symbol === gameState.winner);
@@ -185,27 +214,24 @@ export const App: React.FC = () => {
         setGameState(null);
         setLastMove(undefined);
         setGameMode('multiplayer');
-        socketService.connect(); // Ensure connection for lobby
+        signalRService.connect(); // Ensure connection for lobby
     };
 
-    // This function might now be triggered by an event from the lobby component
-    // or directly if App handles joining/creating games itself.
-    // Let's assume the lobby emits an event 'start_game' handled here.
     const handleMultiplayerGameStart = (gameData: { gameId: string; isHost: boolean; initialState: GameState }) => {
         console.log("Handling multiplayer game start:", gameData);
         setMultiplayerGame({ gameId: gameData.gameId, isHost: gameData.isHost });
         setGameState(gameData.initialState); // Set initial state received from server/lobby
         setGameMode('multiplayer-game');
-        
-        // Listeners for game updates are now in the useEffect hook
     };
 
-    const returnToMenu = () => {
+    const returnToMenu = async () => {
         if (gameMode === 'multiplayer-game' && multiplayerGame) {
-            socketService.emit('leave_game', { gameId: multiplayerGame.gameId });
+            try {
+                await signalRService.emit('LeaveGame', { gameId: multiplayerGame.gameId });
+            } catch (err) {
+                console.error('Error leaving game:', err);
+            }
         }
-        // Disconnect socket when returning to menu? Or keep alive?
-        // socketService.disconnect(); 
         
         setGameState(null);
         setLastMove(undefined);
@@ -233,12 +259,13 @@ export const App: React.FC = () => {
         return '';
     };
 
-    // Save player name to localStorage when it changes
     useEffect(() => {
         if (playerName) {
             localStorage.setItem('playerName', playerName);
         }
-    }, [playerName]);    return (
+    }, [playerName]);
+
+    return (
         <div className="app">
             {gameMode === 'menu' ? (
                 <>
@@ -334,7 +361,17 @@ export const App: React.FC = () => {
                             Back to Menu
                         </button>
                         {gameMode === 'multiplayer-game' && gameState.gameStatus !== 'playing' && multiplayerGame && (
-                            <button onClick={() => socketService.emit('request_rematch', { gameId: multiplayerGame.gameId })} className="rematch-button">
+                            <button 
+                                onClick={async () => {
+                                    try {
+                                        await signalRService.emit('RequestRematch', { gameId: multiplayerGame.gameId });
+                                        console.log('Rematch requested');
+                                    } catch (err) {
+                                        console.error('Error requesting rematch:', err);
+                                    }
+                                }} 
+                                className="rematch-button"
+                            >
                                 Request Rematch
                             </button>
                         )}

@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch PoTicTac (Full Stack)",
+            "type": "dotnet",
+            "request": "launch",
+            "preLaunchTask": "start-fullstack",
+            "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
+            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net8.0/PoTicTacServer.dll",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "http://localhost:3000"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Launch Server Only",
+            "type": "dotnet",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
+            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net8.0/PoTicTacServer.dll",
+            "args": [],
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ]
+}

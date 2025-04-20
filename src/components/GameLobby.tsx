@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import socketService from '../utils/socketService'; // Use socketService
+import signalRService from '../utils/signalRService'; // Updated to use SignalR
 import './GameLobby.css';
 import { GameState } from '../types/GameTypes'; // Import GameState
+import * as signalR from '@microsoft/signalr'; // Import SignalR types
 
 // Define the structure for game data passed to onGameStart
 interface GameStartData {
@@ -28,88 +29,104 @@ const GameLobby: React.FC<GameLobbyProps> = ({
   const [gameInvite, setGameInvite] = useState<string | null>(null);
 
   // Use useCallback for event handlers passed to useEffect
-  const handleGameJoined = useCallback((data: GameStartData) => {
-    console.log("Game joined event received:", data);
-    onGameStart(data); // Pass the whole data object
+  const handleGameJoined = useCallback((gameState: GameState, players: any[]) => {
+    console.log("Game joined event received:", gameState);
+    onGameStart({
+      gameId: gameState.gameId || gameState['GameId'], // Handle both cases
+      isHost: players?.[0]?.Id === signalRService.getConnection()?.connectionId,
+      initialState: gameState
+    });
   }, [onGameStart]);
 
-  const handleGameCreated = useCallback((data: { gameId: string }) => {
-    console.log("Game created event received:", data);
-    setGameInvite(data.gameId);
+  const handleGameCreated = useCallback((gameId: string) => {
+    console.log("Game created event received:", gameId);
+    setGameInvite(gameId);
   }, []);
 
-  const handleLobbyError = useCallback((data: { message: string }) => {
-    console.error("Lobby error received:", data);
-    setError(data.message || 'An error occurred in the lobby.');
-  }, []);
-
-  // Connect to Socket.IO server and set up listeners
+  // Connect to SignalR server and set up listeners
   useEffect(() => {
-    const socket = socketService.connect(); // Ensure connection
-    // setIsConnecting(true); // Connection status handled by socket events now
+    setIsConnecting(true);
+    
+    // Connect and set up connection state listeners
+    const connection = signalRService.connect();
 
-    const onConnect = () => {
-      console.log('Lobby socket connected:', socket.id);
+    // Check connection state
+    if (connection.state === signalR.HubConnectionState.Connected) {
       setIsConnected(true);
       setIsConnecting(false);
-      setError(null);
-    };
-
-    const onDisconnect = (reason: string) => {
-      console.log('Lobby socket disconnected:', reason);
-      setIsConnected(false);
-      setIsConnecting(false);
-      // setError('Disconnected from server.'); // Optional: inform user
-    };
-
-    const onConnectError = (error: Error) => {
-      console.error('Lobby socket connection error:', error);
-      setError('Failed to connect to game server. Please try again.');
-      setIsConnected(false);
-      setIsConnecting(false);
-    };
-
-    // Check initial connection status
-    if (socket.connected) {
-      onConnect();
-    } else {
-      setIsConnecting(true); // Show connecting state until 'connect' or 'connect_error'
     }
 
-    // Add listeners
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.on('connect_error', onConnectError);
-    socket.on('game_created', handleGameCreated); // Listen for game creation confirmation
-    socket.on('game_joined', handleGameJoined);   // Listen for successful join (for both players)
-    socket.on('lobby_error', handleLobbyError);   // Listen for specific lobby errors
+    // Setup event handlers
+    connection.onreconnecting(() => {
+      console.log("Reconnecting to server...");
+      setIsConnecting(true);
+      setIsConnected(false);
+    });
+
+    connection.onreconnected(() => {
+      console.log("Reconnected to server");
+      setIsConnected(true);
+      setIsConnecting(false);
+    });
+
+    connection.onclose(() => {
+      console.log("Connection closed");
+      setIsConnected(false);
+      setIsConnecting(false);
+    });
+
+    // Register SignalR method handlers
+    signalRService.on('GameCreated', handleGameCreated);
+    signalRService.on('GameJoined', handleGameJoined);
+    signalRService.on('PlayerJoined', (player) => {
+      console.log("Player joined:", player);
+    });
+
+    // Start the connection if not already started
+    if (connection.state !== signalR.HubConnectionState.Connected) {
+      connection.start()
+        .then(() => {
+          console.log("Connected to SignalR hub");
+          setIsConnected(true);
+          setIsConnecting(false);
+          setError(null);
+        })
+        .catch(err => {
+          console.error("SignalR Connection Error: ", err);
+          setError('Failed to connect to game server. Please try again.');
+          setIsConnected(false);
+          setIsConnecting(false);
+        });
+    }
 
     // Clean up listeners on unmount
     return () => {
       console.log("Cleaning up lobby listeners...");
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('connect_error', onConnectError);
-      socket.off('game_created', handleGameCreated);
-      socket.off('game_joined', handleGameJoined);
-      socket.off('lobby_error', handleLobbyError);
-      // Decide if socket should be disconnected when leaving lobby
-      // socketService.disconnect();
+      signalRService.off('GameCreated');
+      signalRService.off('GameJoined');
+      signalRService.off('PlayerJoined');
     };
-  }, [handleGameCreated, handleGameJoined, handleLobbyError]); // Dependencies for useCallback functions
+  }, [handleGameCreated, handleGameJoined]);
 
-  const handleCreateGame = () => { // No longer async, just emits
+  const handleCreateGame = async () => {
     if (!playerName.trim()) {
       setError('Please enter your name');
       return;
     }
     setError(null);
-    console.log("Emitting create_game with player name:", playerName);
-    socketService.emit('create_game', { playerName });
-    // Game start is now handled by the 'game_joined' event listener for the creator
+    console.log("Invoking CreateGame with player name:", playerName);
+    
+    try {
+      await signalRService.ensureConnected();
+      // SignalR method invocation is different from Socket.IO events
+      await signalRService.emit('CreateGame', { playerName });
+    } catch (err) {
+      console.error("Error creating game:", err);
+      setError('Failed to create game. Please try again.');
+    }
   };
 
-  const handleJoinGame = () => { // No longer async, just emits
+  const handleJoinGame = async () => {
     if (!playerName.trim()) {
       setError('Please enter your name');
       return;
@@ -119,12 +136,21 @@ const GameLobby: React.FC<GameLobbyProps> = ({
       setError('Please enter a game code');
       return;
     }
+    
     setError(null);
-    console.log(`Emitting join_game with code: ${gameCode}, name: ${playerName}`);
-    socketService.emit('join_game', { gameCode, playerName });
-    // Game start is handled by the 'game_joined' event listener for the joiner
+    console.log(`Invoking JoinGame with code: ${gameCode}, name: ${playerName}`);
+    
+    try {
+      await signalRService.ensureConnected();
+      // SignalR method invocation with parameters
+      await signalRService.emit('JoinGame', { gameId: gameCode, playerName });
+    } catch (err) {
+      console.error("Error joining game:", err);
+      setError(`Failed to join game. ${err}`);
+    }
   };
 
+  // Rest of your component remains the same
   const copyGameCodeToClipboard = () => {
     if (gameInvite) {
       navigator.clipboard.writeText(gameInvite);
