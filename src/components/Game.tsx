@@ -4,19 +4,17 @@ import PlayerTurnIndicator from './PlayerTurnIndicator';
 import PlayerStats from './PlayerStats';
 import { GameState, Player } from '../types/GameTypes';
 import { createInitialState, makeMove, undoMove, redoMove } from '../utils/gameLogic';
-import { createInitialStats, updatePlayerStats, saveStatsToLocalStorage, loadStatsFromLocalStorage } from '../utils/statsManager';
+import { createInitialStats, updatePlayerStats } from '../utils/statsManager';
+import { WinProbabilityTracker } from '../utils/winProbability';
+import WinProbabilityGraph from './WinProbabilityGraph';
+import storageService from '../services/storageService';
 import '../styles/animations.css';
 
 const Game: React.FC = () => {
-    const createDefaultPlayers = (): [Player, Player] => [
+    const [players, setPlayers] = useState<[Player, Player]>(() => [
         { id: '1', name: 'Player 1', type: 'human', symbol: 1, stats: createInitialStats() },
         { id: '2', name: 'Player 2', type: 'human', symbol: 2, stats: createInitialStats() }
-    ];
-
-    const [players, setPlayers] = useState<[Player, Player]>(() => {
-        const savedPlayers = loadStatsFromLocalStorage();
-        return savedPlayers || createDefaultPlayers();
-    });
+    ]);
 
     const [gameState, setGameState] = useState<GameState>(() => ({
         ...createInitialState(1, players),
@@ -27,48 +25,73 @@ const Game: React.FC = () => {
         }
     }));
 
+    const [probabilityTracker] = useState(() => new WinProbabilityTracker(1));
+
+    // Load player stats from storage when component mounts
     useEffect(() => {
-        // Save stats whenever they change
-        saveStatsToLocalStorage(players);
-    }, [players]);
+        const loadPlayerStats = async () => {
+            try {
+                const player1Stats = await storageService.getPlayerStats(players[0].name);
+                const player2Stats = await storageService.getPlayerStats(players[1].name);
 
-    const updateStats = (newGameState: GameState) => {
-        if (newGameState.gameStatus === 'playing') return;
+                setPlayers(prevPlayers => [
+                    { ...prevPlayers[0], stats: player1Stats || createInitialStats() },
+                    { ...prevPlayers[1], stats: player2Stats || createInitialStats() }
+                ]);
+            } catch (error) {
+                console.error('Error loading player stats:', error);
+            }
+        };
 
-        const updatedPlayers: [Player, Player] = [...players] as [Player, Player];
+        loadPlayerStats();
+    }, []);
 
-        if (newGameState.gameStatus === 'won') {
-            // Update winner and loser stats
-            const winner = players.find(p => p.symbol === newGameState.winner)!;
-            const loser = players.find(p => p.symbol !== newGameState.winner)!;
+    useEffect(() => {
+        const flatBoard = gameState.board.flat();
+        probabilityTracker.updateProbability(flatBoard);
+    }, [gameState.board]);
 
-            const updatedWinnerStats = updatePlayerStats(winner.stats, newGameState, newGameState.moveHistory.length, winner.symbol);
-            const updatedLoserStats = updatePlayerStats(loser.stats, newGameState, newGameState.moveHistory.length, loser.symbol);
+    const updateStats = async (newGameState: GameState) => {
+        if (newGameState.gameStatus === 'won' || newGameState.gameStatus === 'draw') {
+            const updatedPlayers = players.map(player => ({
+                ...player,
+                stats: updatePlayerStats(
+                    player.stats,
+                    newGameState,
+                    newGameState.moveHistory.length,
+                    player.symbol
+                )
+            }));
 
-            updatedPlayers[winner.symbol - 1] = { ...winner, stats: updatedWinnerStats };
-            updatedPlayers[loser.symbol - 1] = { ...loser, stats: updatedLoserStats };
-        } else if (newGameState.gameStatus === 'draw') {
-            // Update both players' stats for a draw
-            updatedPlayers[0] = { 
-                ...players[0], 
-                stats: updatePlayerStats(players[0].stats, newGameState, newGameState.moveHistory.length, players[0].symbol)
-            };
-            updatedPlayers[1] = {
-                ...players[1],
-                stats: updatePlayerStats(players[1].stats, newGameState, newGameState.moveHistory.length, players[1].symbol)
-            };
+            // Update state
+            setPlayers(updatedPlayers as [Player, Player]);
+
+            // Save to storage
+            try {
+                await Promise.all([
+                    storageService.savePlayerStats(updatedPlayers[0].name, updatedPlayers[0].stats),
+                    storageService.savePlayerStats(updatedPlayers[1].name, updatedPlayers[1].stats)
+                ]);
+            } catch (error) {
+                console.error('Error saving player stats:', error);
+            }
         }
-
-        setPlayers(updatedPlayers);
     };
 
     const handleCellClick = (row: number, col: number) => {
         setGameState(prevState => {
             const newState = makeMove(prevState, row, col);
-            if (newState.gameStatus !== 'playing' && newState.gameStatus !== prevState.gameStatus) {
-                // Game just ended
-                updateStats(newState);
-            }
+            updateStats(newState);
+            return newState;
+        });
+    };
+
+    const handleMove = (position: number) => {
+        const row = Math.floor(position / 3);
+        const col = position % 3;
+        setGameState(prevState => {
+            const newState = makeMove(prevState, row, col);
+            updateStats(newState);
             return newState;
         });
     };
@@ -90,6 +113,26 @@ const Game: React.FC = () => {
                 lastUpdateTime: Date.now()
             }
         }));
+        probabilityTracker.reset();
+    };
+
+    const handlePlayerNameChange = async (index: number, newName: string) => {
+        try {
+            // Load stats for the new name if they exist
+            const existingStats = await storageService.getPlayerStats(newName);
+            
+            setPlayers(prevPlayers => {
+                const updatedPlayers = [...prevPlayers] as [Player, Player];
+                updatedPlayers[index] = {
+                    ...updatedPlayers[index],
+                    name: newName,
+                    stats: existingStats || createInitialStats()
+                };
+                return updatedPlayers;
+            });
+        } catch (error) {
+            console.error('Error updating player name:', error);
+        }
     };
 
     return (
@@ -99,16 +142,32 @@ const Game: React.FC = () => {
             alignItems: 'center',
             padding: '20px',
             minHeight: '100vh',
-            backgroundColor: '#f8f9fa'
+            backgroundColor: '#000'
         }}>
             <h1 style={{
                 fontSize: '2.5rem',
-                color: '#2f3542',
+                color: '#00ff00',
                 marginBottom: '20px',
-                textAlign: 'center'
+                textAlign: 'center',
+                fontFamily: 'monospace',
+                textShadow: '0 0 10px rgba(0, 255, 0, 0.5)'
             }}>
                 Tic Tac Toe
             </h1>
+
+            {storageService.isInOfflineMode() && (
+                <div style={{
+                    backgroundColor: 'rgba(255, 71, 87, 0.2)',
+                    color: '#ff4757',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    fontFamily: 'monospace',
+                    border: '1px solid #ff4757'
+                }}>
+                    🔄 Offline Mode - Stats will be saved locally
+                </div>
+            )}
 
             <div style={{
                 display: 'flex',
@@ -118,9 +177,21 @@ const Game: React.FC = () => {
                 maxWidth: '1200px',
                 margin: '20px 0'
             }}>
-                <PlayerStats player={players[0]} />
+                <PlayerStats 
+                    player={players[0]} 
+                    onNameChange={(name) => handlePlayerNameChange(0, name)}
+                />
                 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: '20px',
+                    borderRadius: '15px',
+                    border: '2px solid #00ff00',
+                    boxShadow: '0 0 20px rgba(0, 255, 0, 0.2)'
+                }}>
                     <PlayerTurnIndicator
                         currentPlayer={gameState.currentPlayer}
                         players={players}
@@ -142,6 +213,11 @@ const Game: React.FC = () => {
                         />
                     </div>
 
+                    <WinProbabilityGraph
+                        probabilities={probabilityTracker.getProbabilityHistory()}
+                        currentMove={probabilityTracker.getCurrentMove()}
+                    />
+
                     <div style={{
                         display: 'flex',
                         gap: '12px',
@@ -153,12 +229,13 @@ const Game: React.FC = () => {
                             disabled={gameState.moveHistory.length === 0 || gameState.gameStatus !== 'playing'}
                             style={{
                                 padding: '10px 20px',
-                                backgroundColor: '#2f3542',
-                                color: '#fff',
-                                border: 'none',
+                                backgroundColor: 'transparent',
+                                color: '#00ff00',
+                                border: '1px solid #00ff00',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                fontSize: '1rem'
+                                fontSize: '1rem',
+                                fontFamily: 'monospace'
                             }}
                         >
                             Undo
@@ -170,12 +247,13 @@ const Game: React.FC = () => {
                             disabled={gameState.undoStack.length === 0 || gameState.gameStatus !== 'playing'}
                             style={{
                                 padding: '10px 20px',
-                                backgroundColor: '#2f3542',
-                                color: '#fff',
-                                border: 'none',
+                                backgroundColor: 'transparent',
+                                color: '#00ff00',
+                                border: '1px solid #00ff00',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                fontSize: '1rem'
+                                fontSize: '1rem',
+                                fontFamily: 'monospace'
                             }}
                         >
                             Redo
@@ -186,12 +264,13 @@ const Game: React.FC = () => {
                             onClick={handleNewGame}
                             style={{
                                 padding: '10px 20px',
-                                backgroundColor: '#ff4757',
-                                color: '#fff',
-                                border: 'none',
+                                backgroundColor: 'transparent',
+                                color: '#00ff00',
+                                border: '1px solid #00ff00',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                fontSize: '1rem'
+                                fontSize: '1rem',
+                                fontFamily: 'monospace'
                             }}
                         >
                             New Game
@@ -199,7 +278,10 @@ const Game: React.FC = () => {
                     </div>
                 </div>
 
-                <PlayerStats player={players[1]} />
+                <PlayerStats 
+                    player={players[1]} 
+                    onNameChange={(name) => handlePlayerNameChange(1, name)}
+                />
             </div>
         </div>
     );

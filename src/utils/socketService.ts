@@ -1,9 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-// Ensure the URL points to your Node.js server (running on port 3001)
-// Removed process.env access as it's not available in the browser
-// For Azure deployment, connect to the same origin. Socket.IO client defaults to window.location host.
-const SERVER_URL = ''; // Use empty string to connect to the origin
+// Connect to the server running on port 8080
+const SERVER_URL = 'http://localhost:8080';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -12,7 +10,10 @@ class SocketService {
     if (!this.socket) {
       console.log(`Connecting socket to ${SERVER_URL}`);
       this.socket = io(SERVER_URL, {
-        transports: ['websocket'], // Use WebSocket transport
+        transports: ['websocket', 'polling'], // Allow both WebSocket and polling
+        reconnection: true, // Enable reconnection
+        reconnectionAttempts: 5, // Try to reconnect 5 times
+        reconnectionDelay: 1000, // Wait 1 second between attempts
       });
 
       this.socket.on('connect', () => {
@@ -43,22 +44,26 @@ class SocketService {
     return this.socket;
   }
 
-  // Example: Emit an event
   emit(eventName: string, data: any): void {
+    if (!this.socket?.connected) {
+      console.warn('Socket not connected, attempting to connect...');
+      this.connect();
+    }
     this.socket?.emit(eventName, data);
   }
 
-  // Example: Listen for an event
   on(eventName: string, callback: (...args: any[]) => void): void {
+    if (!this.socket?.connected) {
+      console.warn('Socket not connected, attempting to connect...');
+      this.connect();
+    }
     this.socket?.on(eventName, callback);
   }
 
-  // Example: Remove an event listener
   off(eventName: string, callback?: (...args: any[]) => void): void {
     this.socket?.off(eventName, callback);
   }
 }
 
 // Export a singleton instance
-const socketService = new SocketService();
-export default socketService;
+export default new SocketService();

@@ -1,0 +1,17 @@
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\PoTicTacServer.exe
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\appsettings.Development.json
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\appsettings.json
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\PoTicTacServer.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\PoTicTacServer.deps.json
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\PoTicTacServer.runtimeconfig.json
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\PoTicTacServer.pdb
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Azure.Core.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Azure.Data.Tables.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Microsoft.OpenApi.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\System.ClientModel.dll
+C:\Users\punko\OneDrive\Documents\PoTicTac\server\server\PoTicTacServer\bin\Release\net9.0\publish\System.Memory.Data.dll

@@ -7,12 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins for simplicity in development
-    methods: ["GET", "POST"]
+    origin: "http://localhost:3000", // Allow frontend origin
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-const PORT = process.env.PORT || 3001; // Use a different port than the frontend
+const PORT = process.env.PORT || 8080; // Match client port
 
 // --- Game State Management (In-Memory) ---
 const games = {}; // Store active games { gameId: { players: [socketId1, socketId2], gameState: {...}, playerNames: {socketId: name} } }
@@ -295,5 +296,5 @@ app.get('*', (req, res) => {
 
 
 server.listen(PORT, () => {
-  console.log(`Server listening on *:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

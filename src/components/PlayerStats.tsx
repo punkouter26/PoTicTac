@@ -5,6 +5,7 @@ import '../styles/animations.css';
 
 interface PlayerStatsProps {
     player: Player;
+    onNameChange: (name: string) => void;
 }
 
 const StatItem: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
@@ -19,8 +20,11 @@ const StatItem: React.FC<{ label: string; value: string | number }> = ({ label, 
     </div>
 );
 
-const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
+const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onNameChange }) => {
     const [showDetailedStats, setShowDetailedStats] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [tempName, setTempName] = useState(player.name);
+
     const {
         wins,
         losses,
@@ -31,6 +35,14 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
         averageMovesPerGame,
         winRate
     } = player.stats;
+
+    const handleNameSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (tempName.trim()) {
+            onNameChange(tempName.trim());
+            setIsEditing(false);
+        }
+    };
 
     return (
         <>
@@ -58,9 +70,76 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
                     }}>
                         {player.symbol === 1 ? 'X' : 'O'}
                     </span>
-                    <span style={{ fontWeight: 'bold', color: '#2f3542' }}>
-                        {player.name}
-                    </span>
+                    {isEditing ? (
+                        <form onSubmit={handleNameSubmit} style={{ marginBottom: '15px' }}>
+                            <input
+                                type="text"
+                                value={tempName}
+                                onChange={(e) => setTempName(e.target.value)}
+                                style={{
+                                    backgroundColor: 'transparent',
+                                    color: '#00ff00',
+                                    border: '1px solid #00ff00',
+                                    padding: '5px',
+                                    borderRadius: '4px',
+                                    fontFamily: 'monospace',
+                                    width: '100%',
+                                    marginBottom: '5px'
+                                }}
+                                autoFocus
+                            />
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <button
+                                    type="submit"
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        color: '#00ff00',
+                                        border: '1px solid #00ff00',
+                                        padding: '5px 10px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        flex: 1
+                                    }}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setTempName(player.name);
+                                        setIsEditing(false);
+                                    }}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        color: '#00ff00',
+                                        border: '1px solid #00ff00',
+                                        padding: '5px 10px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        flex: 1
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <span
+                            onClick={() => setIsEditing(true)}
+                            style={{
+                                fontWeight: 'bold',
+                                color: '#2f3542',
+                                cursor: 'pointer',
+                                marginBottom: '15px',
+                                fontSize: '1.2rem',
+                                textAlign: 'center',
+                                textDecoration: 'underline',
+                                textDecorationStyle: 'dotted'
+                            }}
+                        >
+                            {player.name}
+                        </span>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
