@@ -27,7 +27,6 @@ const Game: React.FC = () => {
 
     const [probabilityTracker] = useState(() => new WinProbabilityTracker(1));
 
-    // Load player stats from storage when component mounts
     useEffect(() => {
         const loadPlayerStats = async () => {
             try {
@@ -63,10 +62,8 @@ const Game: React.FC = () => {
                 )
             }));
 
-            // Update state
             setPlayers(updatedPlayers as [Player, Player]);
 
-            // Save to storage
             try {
                 await Promise.all([
                     storageService.savePlayerStats(updatedPlayers[0].name, updatedPlayers[0].stats),
@@ -118,7 +115,6 @@ const Game: React.FC = () => {
 
     const handlePlayerNameChange = async (index: number, newName: string) => {
         try {
-            // Load stats for the new name if they exist
             const existingStats = await storageService.getPlayerStats(newName);
             
             setPlayers(prevPlayers => {
@@ -136,24 +132,8 @@ const Game: React.FC = () => {
     };
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '20px',
-            minHeight: '100vh',
-            backgroundColor: '#000'
-        }}>
-            <h1 style={{
-                fontSize: '2.5rem',
-                color: '#00ff00',
-                marginBottom: '20px',
-                textAlign: 'center',
-                fontFamily: 'monospace',
-                textShadow: '0 0 10px rgba(0, 255, 0, 0.5)'
-            }}>
-                Tic Tac Toe
-            </h1>
+        <div className="app">
+            <h1>Tic Tac Toe</h1>
 
             {storageService.isInOfflineMode() && (
                 <div style={{
@@ -169,38 +149,19 @@ const Game: React.FC = () => {
                 </div>
             )}
 
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '40px',
-                width: '100%',
-                maxWidth: '1200px',
-                margin: '20px 0'
-            }}>
-                <PlayerStats 
-                    player={players[0]} 
-                    onNameChange={(name) => handlePlayerNameChange(0, name)}
-                />
-                
-                <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+            <div className="game-container">
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
                     alignItems: 'center',
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: '20px',
-                    borderRadius: '15px',
-                    border: '2px solid #00ff00',
-                    boxShadow: '0 0 20px rgba(0, 255, 0, 0.2)'
                 }}>
                     <PlayerTurnIndicator
                         currentPlayer={gameState.currentPlayer}
                         players={players}
                     />
 
-                    <div style={{
-                        position: 'relative',
-                        margin: '20px 0'
-                    }}>
+                    <div className="game-board-container">
                         <GameBoard
                             gameState={gameState}
                             onCellClick={handleCellClick}
@@ -213,16 +174,7 @@ const Game: React.FC = () => {
                         />
                     </div>
 
-                    <WinProbabilityGraph
-                        probabilities={probabilityTracker.getProbabilityHistory()}
-                        currentMove={probabilityTracker.getCurrentMove()}
-                    />
-
-                    <div style={{
-                        display: 'flex',
-                        gap: '12px',
-                        marginTop: '20px'
-                    }}>
+                    <div className="game-controls">
                         <button
                             className="button-hover"
                             onClick={handleUndo}
@@ -277,14 +229,38 @@ const Game: React.FC = () => {
                         </button>
                     </div>
                 </div>
+            </div>
 
+            <div className="player-stats-container" style={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                width: '100%',
+                marginTop: '20px',
+                flexWrap: 'wrap',
+                gap: '15px'
+            }}>
+                <PlayerStats 
+                    player={players[0]} 
+                    onNameChange={(name) => handlePlayerNameChange(0, name)}
+                />
                 <PlayerStats 
                     player={players[1]} 
                     onNameChange={(name) => handlePlayerNameChange(1, name)}
+                />
+            </div>
+
+            <div className="probability-container" style={{
+                width: '100%',
+                maxWidth: '600px',
+                margin: '15px auto'
+            }}>
+                <WinProbabilityGraph
+                    probabilities={probabilityTracker.getProbabilityHistory()}
+                    currentMove={probabilityTracker.getCurrentMove()}
                 />
             </div>
         </div>
     );
 };
 
-export default Game; 
+export default Game;

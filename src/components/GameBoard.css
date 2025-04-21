@@ -129,6 +129,10 @@
 }
 
 @media (max-width: 600px) {
+    .game-board-container {
+        padding: 10px;
+    }
+
     .game-board {
         gap: 4px;
         padding: 8px;
@@ -140,6 +144,35 @@
 
     .cell {
         font-size: 1.5rem;
-        min-height: 40px;
+        min-height: auto;
+        border-width: 1px;
+    }
+}
+
+@media (max-width: 375px) {
+    .game-board-container {
+        padding: 5px;
+    }
+    
+    .game-board {
+        gap: 3px;
+        padding: 5px;
+    }
+    
+    .board-row {
+        gap: 3px;
+    }
+    
+    .cell {
+        font-size: 1.2rem;
+        min-height: auto;
+        border-width: 1px;
+    }
+}
+
+@media (max-height: 740px) and (max-width: 480px) {
+    .game-board-container {
+        padding: 5px;
+        margin-top: 0;
     }
 }

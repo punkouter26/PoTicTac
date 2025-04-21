@@ -4,29 +4,51 @@
 @media (max-width: 768px) {
   .app {
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Use full viewport height */
+    box-sizing: border-box;
   }
   
   h1 {
-    font-size: 2rem !important;
-    margin-bottom: 1rem !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 0.7rem !important;
+  }
+  
+  .game-board-container {
+    max-width: 100%;
+    padding: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   
   .game-board {
     max-width: 100%;
     margin: 0 auto;
+    padding: 8px !important; /* Reduce padding */
+    gap: 4px !important; /* Reduce gap */
+  }
+  
+  .board-row {
+    gap: 4px !important; /* Reduce gap between cells */
   }
   
   .cell {
     width: 100% !important;
     height: auto !important;
     aspect-ratio: 1 !important;
-    font-size: 1.8rem !important;
+    font-size: 1.5rem !important;
+    min-height: unset !important; /* Remove min-height */
+    padding: 0 !important;
+    border-width: 1px !important; /* Thinner borders */
   }
   
   .menu {
     width: 100%;
     max-width: 350px;
-    padding: 1rem;
+    padding: 0.7rem;
   }
   
   .menu-options {
@@ -67,7 +89,6 @@
     min-height: 44px; /* Minimum touch target size */
   }
   
-  /* Increase spacing for touch targets */
   .game-controls {
     display: flex;
     flex-direction: column;
@@ -75,13 +96,11 @@
     margin-top: 20px;
   }
   
-  /* Adjust player stats for mobile */
   .game-stats-container {
     flex-direction: column;
     align-items: center;
   }
   
-  /* Adjust game status text */
   .game-status {
     font-size: 1.2rem;
   }
@@ -96,16 +115,48 @@
 /* Small phone styles */
 @media (max-width: 375px) {
   h1 {
-    font-size: 1.5rem !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 0.5rem !important;
   }
   
   .cell {
-    font-size: 1.5rem !important;
+    font-size: 1.2rem !important;
+    border-width: 1px !important;
+  }
+  
+  .game-board {
+    padding: 5px !important;
+    gap: 3px !important;
+  }
+  
+  .board-row {
+    gap: 3px !important;
   }
   
   .difficulty-button {
-    padding: 8px;
+    padding: 6px;
     font-size: 0.7rem;
+  }
+  
+  .back-to-menu-button {
+    padding: 8px;
+    font-size: 0.8rem;
+    margin-top: 10px;
+  }
+}
+
+/* Extra small phone styles */
+@media (max-width: 320px) {
+  h1 {
+    font-size: 1.1rem !important;
+  }
+  
+  .cell {
+    font-size: 1rem !important;
+  }
+  
+  .game-status {
+    font-size: 1rem !important;
   }
 }
 
@@ -144,12 +195,10 @@
 
 /* Touch-specific improvements */
 .touch-enabled .cell:hover {
-  /* Disable hover effects on touch devices */
   animation: none;
 }
 
 .touch-enabled .button-hover:hover {
-  /* Replace hover with active state for touch */
   transform: none;
 }
 
@@ -157,18 +206,15 @@
   transform: scale(0.95);
 }
 
-/* Custom touch feedback for clickable elements */
 .touch-feedback-container {
   position: relative;
   overflow: hidden;
 }
 
-/* Make game board cells larger on touch devices */
 .touch-enabled .game-board {
   gap: 6px;
 }
 
-/* Add a visual active state for buttons on touch devices */
 .touch-enabled button:active {
   background-color: rgba(51, 255, 51, 0.2);
 }
