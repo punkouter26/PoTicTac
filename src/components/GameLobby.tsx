@@ -11,6 +11,11 @@ interface GameStartData {
   initialState: GameState;
 }
 
+// Define server response structure that includes gameId
+interface ServerGameState extends GameState {
+  gameId: string;
+}
+
 interface GameLobbyProps {
   playerName: string;
   onGameStart: (gameData: GameStartData) => void; // Updated signature
@@ -29,12 +34,22 @@ const GameLobby: React.FC<GameLobbyProps> = ({
   const [gameInvite, setGameInvite] = useState<string | null>(null);
 
   // Use useCallback for event handlers passed to useEffect
-  const handleGameJoined = useCallback((gameState: GameState, players: any[]) => {
+  const handleGameJoined = useCallback((gameState: any, players: any[]) => {
     console.log("Game joined event received:", gameState);
+    const gameId = typeof gameState === 'object' && 'gameId' in gameState 
+      ? gameState.gameId 
+      : (typeof gameState === 'object' && 'GameId' in gameState ? gameState.GameId : null);
+      
+    if (!gameId) {
+      console.error("Could not find gameId in game state", gameState);
+      setError('Error joining game: Invalid game data');
+      return;
+    }
+    
     onGameStart({
-      gameId: gameState.gameId || gameState['GameId'], // Handle both cases
+      gameId,
       isHost: players?.[0]?.Id === signalRService.getConnection()?.connectionId,
-      initialState: gameState
+      initialState: gameState as GameState
     });
   }, [onGameStart]);
 
