@@ -70,7 +70,7 @@ export const App: React.FC = () => {
             signalRService.on('GameOver', (finalGameState: GameState) => {
                 console.log('Received GameOver:', finalGameState);
                 setGameState(finalGameState);
-                if (finalGameState.winner !== null || finalGameState['Winner'] !== null) {
+                if (finalGameState.winner !== null) {
                     // Handle score update if needed
                 }
             });
