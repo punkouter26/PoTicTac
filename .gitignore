@@ -6,6 +6,33 @@
 /build
 /dist
 
+# .NET build outputs
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.user
+*.suo
+*.userprefs
+*.vs
+*.vscode
+*.idea
+*.cache
+*.generated.*
+*.binlog
+*.tmp
+*.temp
+*_wpftmp.csproj
+*_wpftmp.user
+*.pubxml.user
+*.userosscache
+
+# Azurite DB files
+__azurite_*
+__blobstorage__/
+__queuestorage__/
+
 # Logs
 logs
 *.log
