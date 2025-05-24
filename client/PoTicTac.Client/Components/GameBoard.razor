@@ -1,0 +1,75 @@
+@using PoTicTac.Client.Models
+
+<div class="game-board-container">
+    <div class="game-board retro-glow">
+        @for (int row = 0; row < GameState.Board.Length; row++)
+        {
+            <div class="board-row">
+                @for (int col = 0; col < GameState.Board[row].Length; col++)
+                {
+                    var currentRow = row;
+                    var currentCol = col;
+                    var value = GameState.Board[row][col];
+                    var isLastMove = LastMove?.Row == row && LastMove?.Col == col;
+                    var isWinningCell = GameState.WinningCells?.Any(cell => cell[0] == row && cell[1] == col) == true;
+                    
+                    <div class="cell @GetCellClasses(value, isLastMove, isWinningCell)"
+                         @onclick="() => HandleCellClick(currentRow, currentCol)">
+                        @GetCellSymbol(value)
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public GameState GameState { get; set; } = new();
+    [Parameter] public EventCallback<(int Row, int Col)> OnCellClick { get; set; }
+    [Parameter] public LastMoveInfo? LastMove { get; set; }
+
+    public class LastMoveInfo
+    {
+        public int Row { get; set; }
+        public int Col { get; set; }
+    }
+
+    private async Task HandleCellClick(int row, int col)
+    {
+        if (GameState.Board[row][col] == 0 && OnCellClick.HasDelegate)
+        {
+            await OnCellClick.InvokeAsync((row, col));
+        }
+    }
+
+    private string GetCellClasses(int value, bool isLastMove, bool isWinningCell)
+    {
+        var classes = new List<string>();
+
+        if (value != 0)
+            classes.Add("occupied");
+
+        if (value == 1)
+            classes.Add("x-move");
+        else if (value == 2)
+            classes.Add("o-move");
+
+        if (isLastMove)
+            classes.Add("last-move");
+
+        if (isWinningCell)
+            classes.Add("winning");
+
+        return string.Join(" ", classes);
+    }
+
+    private string GetCellSymbol(int value)
+    {
+        return value switch
+        {
+            1 => "X",
+            2 => "O",
+            _ => ""
+        };
+    }
+}

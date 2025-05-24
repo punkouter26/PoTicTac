@@ -1,0 +1,42 @@
+name: Build and Deploy PoTicTac to Azure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: PoTicTac
+  DOTNET_VERSION: '9.0.x' # Use latest stable 9.x
+  AZURE_RESOURCE_GROUP: PoTicTac # Assuming resource group name is same as app name
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore PoTicTac.sln
+
+    - name: Build and publish
+      run: dotnet publish PoTicTac.sln -c Release -o ${{ github.workspace }}/publish
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ github.workspace }}/publish

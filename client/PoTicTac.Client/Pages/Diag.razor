@@ -1,0 +1,320 @@
+@page "/diag"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.Extensions.Logging
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HttpClient Http
+@inject ILogger<Diag> Logger
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<h3>Diagnostics</h3>
+
+<div class="health-grid">
+    <div class="health-item">
+        <h4>API Health Check</h4>
+        <p>Status: <span class="@(apiHealthStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@apiHealthStatus</span></p>
+        <small>@apiHealthDetails</small>
+    </div>
+    
+    <div class="health-item">
+        <h4>Storage Health Check</h4>
+        <p>Status: <span class="@(storageHealthStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@storageHealthStatus</span></p>
+        <small>@storageHealthDetails</small>
+    </div>
+    
+    <div class="health-item">
+        <h4>Players API</h4>
+        <p>Status: <span class="@(playersApiStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@playersApiStatus</span></p>
+        <small>@playersApiDetails</small>
+    </div>
+    
+    <div class="health-item">
+        <h4>SignalR Hub</h4>
+        <p>Status: <span class="@(signalRStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@signalRStatus</span></p>
+        <small>@signalRDetails</small>
+    </div>
+    
+    <div class="health-item">
+        <h4>Internet Connection</h4>
+        <p>Status: <span class="@(internetStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@internetStatus</span></p>
+        <small>@internetDetails</small>
+    </div>
+</div>
+
+<div class="actions">
+    <button class="btn btn-primary" @onclick="RefreshAllChecks">Refresh All Checks</button>
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</div>
+
+@code {
+    private string apiHealthStatus = "Checking...";
+    private string apiHealthDetails = "";
+    private string storageHealthStatus = "Checking...";
+    private string storageHealthDetails = "";
+    private string playersApiStatus = "Checking...";
+    private string playersApiDetails = "";
+    private string signalRStatus = "Checking...";
+    private string signalRDetails = "";
+    private string internetStatus = "Checking...";
+    private string internetDetails = "";
+    
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAllChecks();
+    }
+
+    private async Task RefreshAllChecks()
+    {
+        // Reset all statuses
+        apiHealthStatus = storageHealthStatus = playersApiStatus = signalRStatus = internetStatus = "Checking...";
+        apiHealthDetails = storageHealthDetails = playersApiDetails = signalRDetails = internetDetails = "";
+        StateHasChanged();
+
+        // Run all checks concurrently
+        var tasks = new[]
+        {
+            CheckApiHealth(),
+            CheckStorageHealth(),
+            CheckPlayersApi(),
+            CheckSignalRHub(),
+            CheckInternetConnection()
+        };
+
+        await Task.WhenAll(tasks);
+        StateHasChanged();
+    }
+
+    private async Task CheckApiHealth()
+    {
+        try
+        {
+            var response = await Http.GetAsync("/health");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                apiHealthStatus = "Healthy";
+                apiHealthDetails = $"Response: {response.StatusCode}";
+            }
+            else
+            {
+                apiHealthStatus = "Unhealthy";
+                apiHealthDetails = $"HTTP {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            apiHealthStatus = "Unhealthy";
+            apiHealthDetails = $"Error: {ex.Message}";
+            Logger.LogError(ex, "Error checking API health.");
+        }
+    }
+
+    private async Task CheckStorageHealth()
+    {
+        try
+        {
+            var response = await Http.GetAsync("/health");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                // Parse the health check response to get storage-specific status
+                if (content.Contains("Storage") || content.Contains("Healthy"))
+                {
+                    storageHealthStatus = "Healthy";
+                    storageHealthDetails = "Azure Table Storage accessible";
+                }
+                else
+                {
+                    storageHealthStatus = "Unknown";
+                    storageHealthDetails = "Storage status unclear from health endpoint";
+                }
+            }
+            else
+            {
+                storageHealthStatus = "Unhealthy";
+                storageHealthDetails = $"Health endpoint returned {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            storageHealthStatus = "Unhealthy";
+            storageHealthDetails = $"Error: {ex.Message}";
+            Logger.LogError(ex, "Error checking storage health.");
+        }
+    }
+
+    private async Task CheckPlayersApi()
+    {
+        try
+        {
+            // Test the players API endpoints
+            var getAllResponse = await Http.GetAsync("/api/players");
+            var leaderboardResponse = await Http.GetAsync("/api/players/leaderboard");
+            
+            if (getAllResponse.IsSuccessStatusCode && leaderboardResponse.IsSuccessStatusCode)
+            {
+                playersApiStatus = "Healthy";
+                playersApiDetails = "All endpoints responding correctly";
+            }
+            else
+            {
+                playersApiStatus = "Unhealthy";
+                playersApiDetails = $"GetAll: {getAllResponse.StatusCode}, Leaderboard: {leaderboardResponse.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            playersApiStatus = "Unhealthy";
+            playersApiDetails = $"Error: {ex.Message}";
+            Logger.LogError(ex, "Error checking Players API.");
+        }
+    }
+
+    private async Task CheckSignalRHub()
+    {
+        try
+        {
+            // Dispose existing connection if any
+            if (hubConnection != null)
+            {
+                await hubConnection.DisposeAsync();
+            }
+
+            // Create new SignalR connection
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/gamehub"))
+                .Build();
+
+            // Start the connection
+            await hubConnection.StartAsync();
+            
+            if (hubConnection.State == HubConnectionState.Connected)
+            {
+                signalRStatus = "Healthy";
+                signalRDetails = "SignalR connection established successfully";
+            }
+            else
+            {
+                signalRStatus = "Unhealthy";
+                signalRDetails = $"Connection state: {hubConnection.State}";
+            }
+        }
+        catch (Exception ex)
+        {
+            signalRStatus = "Unhealthy";
+            signalRDetails = $"Error: {ex.Message}";
+            Logger.LogError(ex, "Error checking SignalR hub.");
+        }
+    }
+
+    private async Task CheckInternetConnection()
+    {
+        try
+        {
+            // A simple way to check internet connectivity by trying to reach a well-known public server
+            var response = await Http.GetAsync("https://www.google.com", HttpCompletionOption.ResponseHeadersRead);
+            if (response.IsSuccessStatusCode)
+            {
+                internetStatus = "Healthy";
+                internetDetails = "External connectivity confirmed";
+            }
+            else
+            {
+                internetStatus = "Unhealthy";
+                internetDetails = $"HTTP {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            internetStatus = "Unhealthy";
+            internetDetails = $"Error: {ex.Message} (Expected in localhost due to CORS)";
+            Logger.LogError(ex, "Error checking internet connection.");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+
+<style>
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .health-item {
+        border: 1px solid #ccc;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #f9f9f9;
+    }
+
+    .health-item h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .health-item small {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .status-healthy {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .status-unhealthy {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .actions {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .actions .btn {
+        margin: 0 10px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+</style>

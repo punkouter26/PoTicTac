@@ -1,0 +1,349 @@
+﻿@page "/"
+@using PoTicTac.Client.Models
+@using PoTicTac.Client.Services
+@using PoTicTac.Client.Components
+@inject GameLogicService GameLogic
+@inject AILogicService AILogic
+@inject SignalRService SignalR
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<PageTitle>PoTicTac</PageTitle>
+
+<link href="css/game.css" rel="stylesheet" />
+<link href="css/gameboard.css" rel="stylesheet" />
+<link href="css/difficulty-selector.css" rel="stylesheet" />
+
+<div class="app">
+    @if (gameMode == GameModeType.Menu)
+    {
+        <h1 class="game-title">PoTicTac</h1>
+        <div class="menu">
+            <div class="player-name-input">
+                <input type="text" 
+                       placeholder="Enter Your Name"
+                       @bind="playerName"
+                       @bind:event="oninput"
+                       class="name-input" />
+            </div>
+            
+            <div class="menu-options">
+                <div class="mode-selection">
+                    <h3>Choose Game Mode</h3>
+                    <div class="mode-buttons">
+                        <button class="mode-button" @onclick="StartSinglePlayerGame">
+                            <span class="mode-icon">🤖</span>
+                            Single Player
+                        </button>
+                        <button class="mode-button" @onclick="StartMultiplayerLobby">
+                            <span class="mode-icon">👥</span>
+                            Multiplayer
+                        </button>
+                    </div>
+                </div>
+                
+                <DifficultySelector CurrentDifficulty="difficulty" 
+                                  OnDifficultyChange="OnDifficultyChanged" />
+            </div>
+            <button class="stats-button" @onclick="() => showStats = true">
+                View Statistics
+            </button>
+        </div>
+        
+        @if (showStats)
+        {
+            <div class="stats-modal">
+                <div class="stats-modal-content">
+                    <button class="close-stats" @onclick="() => showStats = false">
+                        ×
+                    </button>
+                    <h2>Player Statistics</h2>
+                    <p>Statistics feature coming soon...</p>
+                </div>
+            </div>
+        }
+    }
+    else if (gameMode == GameModeType.Multiplayer)
+    {
+        <h1>Multiplayer Lobby</h1>
+        <p>Multiplayer feature coming soon...</p>
+        <button class="menu-button" @onclick="ReturnToMenu">
+            Back to Menu
+        </button>
+    }
+    else if (gameState != null)
+    {
+        <h1>Tic Tac Toe (4 in a row)</h1>
+        
+        @if (gameState.GameStatus == GameStatus.Won)
+        {
+            <div class="game-status-overlay @GetStatusClass()">
+                @GetGameStatus()
+            </div>
+        }
+        
+        <div class="game-status" style="visibility: @(gameState.GameStatus == GameStatus.Won ? "hidden" : "visible")">
+            @GetGameStatus()
+        </div>
+        
+        <GameBoard GameState="gameState" 
+                   OnCellClick="HandleCellClick" 
+                   LastMove="lastMove" />
+        
+        <div class="game-controls">
+            <button @onclick="ReturnToMenu" class="menu-button">
+                Back to Menu
+            </button>
+            @if (gameMode == GameModeType.MultiplayerGame && gameState.GameStatus != GameStatus.Playing && multiplayerGame != null)
+            {
+                <button @onclick="RequestRematch" class="rematch-button">
+                    Request Rematch
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private enum GameModeType
+    {
+        Menu,
+        Singleplayer,
+        Multiplayer,
+        MultiplayerGame
+    }
+
+    private GameModeType gameMode = GameModeType.Menu;
+    private GameState? gameState;
+    private GameBoard.LastMoveInfo? lastMove;
+    private Difficulty difficulty = Difficulty.Medium;
+    private GameScore gameScore = new();
+    private string playerName = string.Empty;
+    private MultiplayerGameInfo? multiplayerGame;
+    private PlayerStats playerStats = new();
+    private bool showStats = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load player name from local storage if available
+        try
+        {
+            var savedName = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "playerName");
+            if (!string.IsNullOrEmpty(savedName))
+            {
+                playerName = savedName;
+            }
+        }
+        catch
+        {
+            // Ignore localStorage errors
+        }
+    }
+
+    private async Task OnDifficultyChanged(Difficulty newDifficulty)
+    {
+        difficulty = newDifficulty;
+        StateHasChanged();
+    }
+
+    private async Task HandleCellClick((int Row, int Col) move)
+    {
+        if (gameState == null || gameState.GameStatus != GameStatus.Playing)
+            return;
+
+        // In multiplayer mode, only allow moves on your turn
+        if (gameMode == GameModeType.MultiplayerGame)
+        {
+            if (multiplayerGame == null || gameState == null) return;
+            
+            try
+            {
+                await SignalR.MakeMoveAsync(multiplayerGame.GameId, move.Row, move.Col);
+                // The game state will be updated via SignalR events
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error making move: {ex.Message}");
+            }
+            return;
+        }
+
+        // Single player mode
+        if (gameState.CurrentPlayer != 1)
+            return;
+
+        var newGameState = GameLogic.MakeMove(gameState, move.Row, move.Col);
+        if (newGameState == gameState)
+            return;
+
+        gameState = newGameState;
+        lastMove = new GameBoard.LastMoveInfo { Row = move.Row, Col = move.Col };
+        StateHasChanged();
+
+        // AI move in single player mode
+        if (newGameState.GameStatus == GameStatus.Playing && newGameState.CurrentPlayer == 2)
+        {
+            await Task.Delay(500); // Simulate thinking time
+            var aiMove = await AILogic.GetAiMove(newGameState, difficulty);
+            var afterAiMove = GameLogic.MakeMove(newGameState, aiMove[0], aiMove[1]);
+            gameState = afterAiMove;
+            lastMove = new GameBoard.LastMoveInfo { Row = aiMove[0], Col = aiMove[1] };
+            StateHasChanged();
+        }
+    }
+
+    private string GetGameStatus()
+    {
+        if (gameState == null) return string.Empty;
+        
+        if (gameState.GameStatus == GameStatus.Won)
+        {
+            var winner = gameState.Players.FirstOrDefault(p => p.Symbol == gameState.Winner);
+            if (gameMode == GameModeType.MultiplayerGame)
+            {
+                return $"{winner?.Name} Wins!";
+            }
+            return $"{(winner?.Type == PlayerType.Human ? "Player" : "AI")} Wins!";
+        }
+        
+        if (gameState.GameStatus == GameStatus.Draw) 
+            return "Draw!";
+        
+        if (gameMode == GameModeType.MultiplayerGame)
+        {
+            var currentPlayer = gameState.Players.FirstOrDefault(p => p.Symbol == gameState.CurrentPlayer);
+            return $"{currentPlayer?.Name}'s Turn";
+        }
+        
+        return $"{(gameState.CurrentPlayer == 1 ? "Player" : "AI")}'s Turn";
+    }
+
+    private void StartSinglePlayerGame()
+    {
+        var players = new Player[]
+        {
+            new Player 
+            { 
+                Id = "1", 
+                Name = string.IsNullOrEmpty(playerName) ? "Player 1" : playerName, 
+                Type = PlayerType.Human, 
+                Symbol = 1, 
+                Stats = new PlayerStats() 
+            },
+            new Player 
+            { 
+                Id = "2", 
+                Name = "AI Player", 
+                Type = PlayerType.AI, 
+                Symbol = 2, 
+                AiConfig = new AIConfig { Difficulty = difficulty }, 
+                Stats = new PlayerStats() 
+            }
+        };
+        
+        gameState = GameLogic.CreateInitialState(1, players);
+        gameMode = GameModeType.Singleplayer;
+        lastMove = null;
+        StateHasChanged();
+    }
+
+    private async Task StartMultiplayerLobby()
+    {
+        gameState = null;
+        lastMove = null;
+        gameMode = GameModeType.Multiplayer;
+        
+        try
+        {
+            await SignalR.ConnectAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error connecting to SignalR: {ex.Message}");
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task ReturnToMenu()
+    {
+        if (gameMode == GameModeType.MultiplayerGame && multiplayerGame != null)
+        {
+            try
+            {
+                await SignalR.LeaveGameAsync(multiplayerGame.GameId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error leaving game: {ex.Message}");
+            }
+        }
+        
+        gameState = null;
+        lastMove = null;
+        multiplayerGame = null;
+        gameMode = GameModeType.Menu;
+        StateHasChanged();
+    }
+
+    private string GetStatusClass()
+    {
+        if (gameState?.GameStatus != GameStatus.Won) return string.Empty;
+        
+        if (gameMode == GameModeType.MultiplayerGame)
+        {
+            return "player-wins";
+        }
+        
+        var winner = gameState.Players.FirstOrDefault(p => p.Symbol == gameState.Winner);
+        if (winner?.Type == PlayerType.AI) return "ai-wins";
+        if (winner?.Type == PlayerType.Human) return "player-wins";
+        return string.Empty;
+    }
+
+    private async Task RequestRematch()
+    {
+        if (multiplayerGame != null)
+        {
+            try
+            {
+                await SignalR.RequestRematchAsync(multiplayerGame.GameId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error requesting rematch: {ex.Message}");
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Save player name to localStorage when it changes
+            if (!string.IsNullOrEmpty(playerName))
+            {
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "playerName", playerName);
+                }
+                catch
+                {
+                    // Ignore localStorage errors
+                }
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await SignalR.DisconnectAsync();
+        }
+        catch
+        {
+            // Ignore disposal errors
+        }
+    }
+}

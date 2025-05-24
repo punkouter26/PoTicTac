@@ -14,28 +14,6 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "start-client",
-            "type": "npm",
-            "script": "start",
-            "path": "${workspaceFolder}",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "custom",
-                "pattern": {
-                    "regexp": "^$"
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "Starting the development server",
-                    "endsPattern": "Compiled successfully|Failed to compile"
-                }
-            },
-            "presentation": {
-                "reveal": "silent",
-                "panel": "dedicated"
-            }
-        },
-        {
             "label": "start-server",
             "dependsOn": "build-server",
             "command": "dotnet",
@@ -56,8 +34,7 @@
             "label": "start-fullstack",
             "dependsOrder": "parallel",
             "dependsOn": [
-                "start-server",
-                "start-client"
+                "start-server"
             ],
             "problemMatcher": []
         }

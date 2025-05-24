@@ -1,0 +1,33 @@
+@using PoTicTac.Client.Models
+
+<div class="difficulty-selector">
+    <h3>AI Difficulty</h3>
+    <div class="difficulty-buttons">
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Easy ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Easy)">
+            Easy
+        </button>
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Medium ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Medium)">
+            Medium
+        </button>
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Hard ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Hard)">
+            Hard
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Difficulty CurrentDifficulty { get; set; } = Difficulty.Medium;
+    [Parameter] public EventCallback<Difficulty> OnDifficultyChange { get; set; }
+
+    private async Task SetDifficulty(Difficulty difficulty)
+    {
+        CurrentDifficulty = difficulty;
+        if (OnDifficultyChange.HasDelegate)
+        {
+            await OnDifficultyChange.InvokeAsync(difficulty);
+        }
+    }
+}

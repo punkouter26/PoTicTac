@@ -7,12 +7,13 @@
             "request": "launch",
             "preLaunchTask": "start-fullstack",
             "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
-            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net8.0/PoTicTacServer.dll",
+            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-                "uriFormat": "http://localhost:3000"
+                "uriFormat": "${auto-detected-url}",
+                "browser": "chrome"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -23,12 +24,13 @@
             "type": "dotnet",
             "request": "launch",
             "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
-            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net8.0/PoTicTacServer.dll",
+            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
             "args": [],
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "browser": "chrome"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
