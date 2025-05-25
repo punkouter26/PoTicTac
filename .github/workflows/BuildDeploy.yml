@@ -75,14 +75,15 @@ jobs:
         azd auth login \
           --client-id "$AZURE_CLIENT_ID" \
           --federated-credential-provider "github" \
-          --tenant-id "$AZURE_TENANT_ID"
-
-    - name: Azure Dev Provision
+          --tenant-id "$AZURE_TENANT_ID"    - name: Azure Dev Provision
       run: azd provision --no-prompt
       env:
         AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
         AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
         AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+        # Infrastructure parameters
+        environmentName: ${{ env.AZURE_ENV_NAME }}
+        location: ${{ vars.AZURE_LOCATION || 'eastus2' }}
 
     - name: Azure Dev Deploy
       run: azd deploy --no-prompt
