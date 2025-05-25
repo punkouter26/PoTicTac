@@ -1,0 +1,117 @@
+@page "/stats"
+@using PoTicTac.Client.Services
+@using PoTicTac.Client.Models
+@using Radzen
+@using Radzen.Blazor
+@using Radzen.Blazor.Rendering // Add this line
+@inject StatisticsService StatisticsService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<PageTitle>PoTicTac - Statistics</PageTitle>
+
+<h3>Player Statistics</h3>
+
+@if (isLoading)
+{
+    <p><em>Loading statistics...</em></p>
+}
+else if (playerStats == null || !playerStats.Any())
+{
+    <p><em>No player statistics available.</em></p>
+}
+else
+{
+    <RadzenCard Style="margin-bottom: 20px;">
+        <h4>Overall Summary</h4>
+        <div class="row">
+            <div class="col-md-3">
+                <RadzenCard>
+                    <h5>Total Games</h5>
+                    <p>@totalGames</p>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard>
+                    <h5>Total Wins</h5>
+                    <p>@totalWins</p>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard>
+                    <h5>Total Losses</h5>
+                    <p>@totalLosses</p>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard>
+                    <h5>Total Draws</h5>
+                    <p>@totalDraws</p>
+                </RadzenCard>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <h4>Individual Player Stats</h4>
+    <RadzenDataGrid Data="@playerStats" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="10"
+                    TItem="PlayerStatsDto" ColumnWidth="200px">
+        <Columns>
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Name" Title="Player Name" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.TotalGames" Title="Games Played" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Wins" Title="Wins" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Losses" Title="Losses" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Draws" Title="Draws" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinRate" Title="Win Rate" FormatString="{0:P0}" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinStreak" Title="Win Streak" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.AverageMovesPerGame" Title="Avg. Moves" FormatString="{0:N2}" />
+        </Columns>
+    </RadzenDataGrid>
+
+    <h4 style="margin-top: 20px;">Leaderboard (Top 10 by Win Rate)</h4>
+    <RadzenDataGrid Data="@leaderboard" AllowFiltering="false" AllowSorting="false" AllowPaging="false"
+                    TItem="PlayerStatsDto" ColumnWidth="200px">
+        <Columns>
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Name" Title="Player Name" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinRate" Title="Win Rate" FormatString="{0:P0}" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.TotalGames" Title="Games Played" />
+            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Wins" Title="Wins" />
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@code {
+    private List<PlayerStatsDto>? playerStats;
+    private List<PlayerStatsDto>? leaderboard;
+    private bool isLoading = true;
+
+    private int totalGames;
+    private int totalWins;
+    private int totalLosses;
+    private int totalDraws;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            playerStats = await StatisticsService.GetAllPlayerStatistics();
+            leaderboard = await StatisticsService.GetLeaderboard(10);
+
+            if (playerStats != null)
+            {
+                totalGames = playerStats.Sum(p => p.Stats.TotalGames);
+                totalWins = playerStats.Sum(p => p.Stats.Wins);
+                totalLosses = playerStats.Sum(p => p.Stats.Losses);
+                totalDraws = playerStats.Sum(p => p.Stats.Draws);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = $"Failed to load statistics: {ex.Message}", Duration = 5000 });
+            Console.WriteLine($"Error loading statistics: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
