@@ -10,12 +10,10 @@ services:
     host: appservice
 hooks:
   preprovision:
-    windows:
-      - echo "Preparing for provision..."
-    posix:
-      - echo "Preparing for provision..."
+    - shell: pwsh
+      run: echo "Preparing for provision..."
+      continueOnError: false
   postprovision:
-    windows:
-      - echo "Provision completed successfully"
-    posix:
-      - echo "Provision completed successfully"
+    - shell: pwsh  
+      run: echo "Provision completed successfully"
+      continueOnError: false
