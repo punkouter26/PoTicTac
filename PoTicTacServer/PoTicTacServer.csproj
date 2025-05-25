@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\client\PoTicTac.Client\PoTicTac.Client.csproj" />
+    <ProjectReference Include="..\PoTicTac.Client\PoTicTac.Client.csproj" />
   </ItemGroup>
 
 </Project>

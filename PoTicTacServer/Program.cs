@@ -31,8 +31,8 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
     loggerConfiguration
         .MinimumLevel.Override("Microsoft.ApplicationInsights", Serilog.Events.LogEventLevel.Information)
-        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
-        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning);
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
+        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Information);
 
     Log.Logger = loggerConfiguration.CreateLogger();
 });
@@ -41,7 +41,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddSingleton<StorageService>();
 
 // Register TableServiceClient for DI
-builder.Services.AddSingleton(x => new TableServiceClient(builder.Configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING")));
+// builder.Services.AddSingleton(x => new TableServiceClient(builder.Configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING")));
 
 // Add SignalR services
 builder.Services.AddSignalR();

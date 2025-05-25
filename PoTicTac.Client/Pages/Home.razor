@@ -6,6 +6,7 @@
 @inject AILogicService AILogic
 @inject SignalRService SignalR
 @inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
 @implements IAsyncDisposable
 
 <PageTitle>PoTicTac</PageTitle>
@@ -45,23 +46,11 @@
                 <DifficultySelector CurrentDifficulty="difficulty" 
                                   OnDifficultyChange="OnDifficultyChanged" />
             </div>
-            <button class="stats-button" @onclick="() => showStats = true">
+            <button class="stats-button" @onclick="NavigateToStats">
                 View Statistics
             </button>
         </div>
         
-        @if (showStats)
-        {
-            <div class="stats-modal">
-                <div class="stats-modal-content">
-                    <button class="close-stats" @onclick="() => showStats = false">
-                        ×
-                    </button>
-                    <h2>Player Statistics</h2>
-                    <p>Statistics feature coming soon...</p>
-                </div>
-            </div>
-        }
     }
     else if (gameMode == GameModeType.Multiplayer)
     {
@@ -121,7 +110,7 @@
     private string playerName = string.Empty;
     private MultiplayerGameInfo? multiplayerGame;
     private PlayerStats playerStats = new();
-    private bool showStats = false;
+    // Removed unused showStats modal handling
 
     protected override async Task OnInitializedAsync()
     {
@@ -315,6 +304,8 @@
             }
         }
     }
+
+    private void NavigateToStats() => NavigationManager.NavigateTo("/stats");
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
