@@ -41,7 +41,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddSingleton<StorageService>();
 
 // Register TableServiceClient for DI
-// builder.Services.AddSingleton(x => new TableServiceClient(builder.Configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING")));
+builder.Services.AddSingleton(x => new TableServiceClient(builder.Configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING")));
 
 // Add SignalR services
 builder.Services.AddSignalR();

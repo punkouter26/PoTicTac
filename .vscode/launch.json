@@ -3,17 +3,16 @@
     "configurations": [
         {
             "name": "Launch PoTicTac (Full Stack)",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "start-fullstack",
-            "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
-            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
+            "preLaunchTask": "build-server",
+            "cwd": "${workspaceFolder}/PoTicTacServer",
+            "program": "${workspaceFolder}/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-                "uriFormat": "${auto-detected-url}",
-                "browser": "chrome"
+                "uriFormat": "%s"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -21,20 +20,24 @@
         },
         {
             "name": "Launch Server Only",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "cwd": "${workspaceFolder}/server/server/PoTicTacServer",
-            "program": "${workspaceFolder}/server/server/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
+            "cwd": "${workspaceFolder}/PoTicTacServer",
+            "program": "${workspaceFolder}/PoTicTacServer/bin/Debug/net9.0/PoTicTacServer.dll",
             "args": [],
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-                "browser": "chrome"
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             }
+        },
+        {
+            "name": "Attach to PoTicTacServer",
+            "type": "coreclr",
+            "request": "attach"
         }
     ]
 }

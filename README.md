@@ -20,6 +20,22 @@ A retro-styled 6x6 Tic Tac Toe game where players need to get 4 in a row to win.
 - **Real-time**: SignalR
 - **Hosting**: Azure App Service
 
+### Architecture Diagrams
+The solution includes Mermaid diagrams documenting the system design:
+
+1. **Component Diagram**: Shows system components and their relationships
+2. **Domain Model**: Documents the core domain entities
+3. **User Workflow**: Illustrates key user flows
+4. **Feature Timeline**: Shows implementation progress
+
+To generate SVG versions of all diagrams:
+1. Run the generation script: `.\generate_diagrams.ps1`
+2. Alternatively, manually convert specific diagrams:
+   ```bash
+   npm install -g @mermaid-js/mermaid-cli
+   mmdc -i Component.mermaid -o Diagrams/Component.svg
+   ```
+
 ## Development
 
 ### Prerequisites

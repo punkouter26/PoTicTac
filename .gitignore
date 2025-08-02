@@ -20,15 +20,21 @@
 *.pubxml.user
 *.userosscache
 
+# Build and publish directories
+**/publish/
+publish.zip
+
 # Azurite DB files
 __azurite_*
 __blobstorage__/
 __queuestorage__/
 AzuriteData/
+AzuriteConfig
 
 # Logs
 logs
 *.log
+log.txt
 
 # VS Code files
 .vscode/*
@@ -49,3 +55,12 @@ Thumbs.db
 
 # Visual Studio files
 .vs/
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# Test results
+TestResults/
+*.trx
+*.coverage

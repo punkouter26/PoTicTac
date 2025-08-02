@@ -82,6 +82,51 @@ namespace PoTicTacServer.Controllers
                 return StatusCode(500, "Internal server error when retrieving leaderboard.");
             }
         }
+
+        /// <summary>
+        /// Creates sample player data for testing purposes.
+        /// </summary>
+        [HttpPost("test-data")]
+        public async Task<ActionResult> CreateTestData()
+        {
+            _logger.LogInformation("Creating test player data.");
+            try
+            {
+                var testPlayers = new[]
+                {
+                    new { Name = "Alice", Wins = 15, Losses = 5, Draws = 2 },
+                    new { Name = "Bob", Wins = 10, Losses = 8, Draws = 4 },
+                    new { Name = "Charlie", Wins = 8, Losses = 12, Draws = 3 },
+                    new { Name = "Diana", Wins = 20, Losses = 3, Draws = 1 },
+                    new { Name = "Eve", Wins = 12, Losses = 6, Draws = 5 }
+                };
+
+                foreach (var testPlayer in testPlayers)
+                {
+                    var stats = new PlayerStats
+                    {
+                        Wins = testPlayer.Wins,
+                        Losses = testPlayer.Losses,
+                        Draws = testPlayer.Draws,
+                        TotalGames = testPlayer.Wins + testPlayer.Losses + testPlayer.Draws,
+                        WinStreak = testPlayer.Wins > 10 ? 5 : 2,
+                        CurrentStreak = 1,
+                        AverageMovesPerGame = 7.5
+                    };
+                    stats.WinRate = stats.TotalGames > 0 ? (double)stats.Wins / stats.TotalGames : 0;
+
+                    await _storageService.SavePlayerStatsAsync(testPlayer.Name, stats);
+                }
+
+                _logger.LogInformation("Successfully created test data for {Count} players.", testPlayers.Length);
+                return Ok($"Created test data for {testPlayers.Length} players.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating test data.");
+                return StatusCode(500, "Internal server error when creating test data.");
+            }
+        }
     }
 
     public class PlayerStatsDto
