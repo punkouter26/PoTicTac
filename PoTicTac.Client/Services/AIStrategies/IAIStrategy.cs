@@ -4,5 +4,5 @@ namespace PoTicTac.Client.Services.AIStrategies;
 
 public interface IAIStrategy
 {
-    Task<int[]> GetMoveAsync(GameState gameState);
+    Task<int[]> GetMoveAsync(GameBoardState gameState);
 }

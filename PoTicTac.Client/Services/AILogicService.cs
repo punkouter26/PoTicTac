@@ -17,7 +17,7 @@ public class AILogicService
         };
     }
 
-    public async Task<int[]> GetAiMove(GameState gameState, Difficulty difficulty)
+    public async Task<int[]> GetAiMove(GameBoardState gameState, Difficulty difficulty)
     {
         return await _strategies[difficulty].GetMoveAsync(gameState);
     }

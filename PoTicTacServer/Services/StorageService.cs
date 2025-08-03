@@ -14,15 +14,15 @@ public class StorageService
     public StorageService(IConfiguration configuration, ILogger<StorageService> logger)
     {
         _logger = logger;
-        
+
         try
         {
             var tableServiceClient = new TableServiceClient("UseDevelopmentStorage=true");
             _logger.LogInformation("Created TableServiceClient for development storage");
-            
+
             _tableClient = tableServiceClient.GetTableClient(TableName);
             _logger.LogInformation("Created TableClient for table: {TableName}", TableName);
-            
+
             _tableClient.CreateIfNotExists();
             _logger.LogInformation("Successfully ensured table {TableName} exists", TableName);
         }
@@ -87,4 +87,4 @@ public class StorageService
             .Take(limit)
             .ToList();
     }
-} 
+}

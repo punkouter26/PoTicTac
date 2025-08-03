@@ -66,7 +66,7 @@ namespace PoTicTacServer.Hubs
         {
             var board = CreateEmptyBoard();
             var players = new List<Player> { player1 };
-            
+
             return new GameState
             {
                 GameId = gameId,
@@ -217,7 +217,7 @@ namespace PoTicTacServer.Hubs
         {
             var gameId = GenerateGameId();
             var playerId = Context.ConnectionId;
-            
+
             var player = new Player
             {
                 Id = playerId,
@@ -286,10 +286,10 @@ namespace PoTicTacServer.Hubs
             UserGameMap[playerId] = gameId;
 
             await Groups.AddToGroupAsync(playerId, gameId);
-            
+
             // Notify existing player about the new player
             await Clients.Group(gameId).SendAsync("PlayerJoined", player);
-            
+
             // Send the complete game state to both players
             await Clients.Group(gameId).SendAsync("GameJoined", gameState, gameState.Players);
         }
@@ -303,7 +303,7 @@ namespace PoTicTacServer.Hubs
 
             var playerId = Context.ConnectionId;
             var player = gameState.Players.FirstOrDefault(p => p.Id == playerId);
-            
+
             if (player == null)
             {
                 throw new HubException("Player not found in this game");
@@ -369,7 +369,7 @@ namespace PoTicTacServer.Hubs
         public async Task LeaveGame(string gameId)
         {
             var playerId = Context.ConnectionId;
-            
+
             if (UserGameMap.TryRemove(playerId, out _))
             {
                 await Groups.RemoveFromGroupAsync(playerId, gameId);
@@ -380,13 +380,13 @@ namespace PoTicTacServer.Hubs
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             var playerId = Context.ConnectionId;
-            
+
             if (UserGameMap.TryRemove(playerId, out var gameId))
             {
                 await Groups.RemoveFromGroupAsync(playerId, gameId);
                 await Clients.OthersInGroup(gameId).SendAsync("PlayerLeft", playerId);
             }
-            
+
             await base.OnDisconnectedAsync(exception);
         }
 

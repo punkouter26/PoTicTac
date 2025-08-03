@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using PoTicTac.Client.Models;
-
 namespace PoTicTac.Client.Services
 {
     public class SignalRService : IAsyncDisposable
@@ -39,14 +38,14 @@ namespace PoTicTac.Client.Services
         public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
         // Event handlers
-        public void OnMoveReceived(Action<GameState, Move> handler)
+        public void OnMoveReceived(Action<GameBoardState, Move> handler)
         {
-            _hubConnection?.On<GameState, Move>("MoveReceived", handler);
+            _hubConnection?.On<GameBoardState, Move>("MoveReceived", handler);
         }
 
-        public void OnGameOver(Action<GameState> handler)
+        public void OnGameOver(Action<GameBoardState> handler)
         {
-            _hubConnection?.On<GameState>("GameOver", handler);
+            _hubConnection?.On<GameBoardState>("GameOver", handler);
         }
 
         public void OnRematchRequested(Action<string> handler)
@@ -54,9 +53,9 @@ namespace PoTicTac.Client.Services
             _hubConnection?.On<string>("RematchRequested", handler);
         }
 
-        public void OnRematchAccepted(Action<GameState> handler)
+        public void OnRematchAccepted(Action<GameBoardState> handler)
         {
-            _hubConnection?.On<GameState>("RematchAccepted", handler);
+            _hubConnection?.On<GameBoardState>("RematchAccepted", handler);
         }
 
         public void OnPlayerLeft(Action<string> handler)
@@ -64,9 +63,9 @@ namespace PoTicTac.Client.Services
             _hubConnection?.On<string>("PlayerLeft", handler);
         }
 
-        public void OnGameJoined(Action<string, bool, GameState> handler)
+        public void OnGameJoined(Action<string, bool, GameBoardState> handler)
         {
-            _hubConnection?.On<string, bool, GameState>("GameJoined", handler);
+            _hubConnection?.On<string, bool, GameBoardState>("GameJoined", handler);
         }
 
         public void OnGameCreated(Action<string> handler)

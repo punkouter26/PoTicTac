@@ -4,21 +4,10 @@ namespace PoTicTac.Client.Services
 {
     public class GameLogicService
     {
-        public const int BOARD_SIZE = 6;
-        public const int WIN_LENGTH = 4;
-        public const int TURN_TIME_LIMIT = 5000; // 5 seconds in milliseconds
-
-        public GameState CreateInitialState(int startingPlayer, Player[] players)
+        public GameBoardState CreateInitialState(PlayerType startingPlayer, Player[] players)
         {
-            var board = new int[BOARD_SIZE][];
-            for (int i = 0; i < BOARD_SIZE; i++)
+            var initialState = new GameBoardState
             {
-                board[i] = new int[BOARD_SIZE];
-            }
-
-            return new GameState
-            {
-                Board = board,
                 CurrentPlayer = startingPlayer,
                 GameStatus = GameStatus.Playing,
                 Winner = null,
@@ -33,152 +22,182 @@ namespace PoTicTac.Client.Services
                     LastUpdateTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
                 }
             };
+
+            // The constructor already initializes the board to all None values
+            return initialState;
         }
 
-        public bool IsValidPosition(int row, int col)
+        public PlayerType? CheckWinner(GameBoardState board)
         {
-            return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
-        }
+            const int winLength = 4; // Need 4 in a row to win
+            int boardSize = GameBoardState.BoardSize;
 
-        public List<int[]>? CheckWinner(int[][] board, int[] lastMove)
-        {
-            var row = lastMove[0];
-            var col = lastMove[1];
-            var player = board[row][col];
-            var directions = new int[][]
+            // Check rows for 4 in a row
+            for (int row = 0; row < boardSize; row++)
             {
-                new[] { 0, 1 },  // horizontal
-                new[] { 1, 0 },  // vertical
-                new[] { 1, 1 },  // diagonal \
-                new[] { 1, -1 }  // diagonal /
-            };
-
-            foreach (var direction in directions)
-            {
-                var dx = direction[0];
-                var dy = direction[1];
-                var line = new List<int[]> { new[] { row, col } };
-
-                // Check in positive direction
-                for (int i = 1; i < WIN_LENGTH; i++)
+                for (int col = 0; col <= boardSize - winLength; col++)
                 {
-                    var newRow = row + dx * i;
-                    var newCol = col + dy * i;
-                    if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
-                        break;
-                    line.Add(new[] { newRow, newCol });
+                    PlayerType first = board.Board[row, col];
+                    if (first != PlayerType.None)
+                    {
+                        bool win = true;
+                        for (int i = 1; i < winLength; i++)
+                        {
+                            if (board.Board[row, col + i] != first)
+                            {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win)
+                        {
+                            return first;
+                        }
+                    }
                 }
-
-                // Check in negative direction
-                for (int i = 1; i < WIN_LENGTH; i++)
-                {
-                    var newRow = row - dx * i;
-                    var newCol = col - dy * i;
-                    if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
-                        break;
-                    line.Add(new[] { newRow, newCol });
-                }
-
-                if (line.Count >= WIN_LENGTH)
-                    return line;
             }
 
-            return null;
+            // Check columns for 4 in a row
+            for (int col = 0; col < boardSize; col++)
+            {
+                for (int row = 0; row <= boardSize - winLength; row++)
+                {
+                    PlayerType first = board.Board[row, col];
+                    if (first != PlayerType.None)
+                    {
+                        bool win = true;
+                        for (int i = 1; i < winLength; i++)
+                        {
+                            if (board.Board[row + i, col] != first)
+                            {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win)
+                        {
+                            return first;
+                        }
+                    }
+                }
+            }
+
+            // Check diagonals (top-left to bottom-right)
+            for (int row = 0; row <= boardSize - winLength; row++)
+            {
+                for (int col = 0; col <= boardSize - winLength; col++)
+                {
+                    PlayerType first = board.Board[row, col];
+                    if (first != PlayerType.None)
+                    {
+                        bool win = true;
+                        for (int i = 1; i < winLength; i++)
+                        {
+                            if (board.Board[row + i, col + i] != first)
+                            {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win)
+                        {
+                            return first;
+                        }
+                    }
+                }
+            }
+
+            // Check diagonals (top-right to bottom-left)
+            for (int row = 0; row <= boardSize - winLength; row++)
+            {
+                for (int col = winLength - 1; col < boardSize; col++)
+                {
+                    PlayerType first = board.Board[row, col];
+                    if (first != PlayerType.None)
+                    {
+                        bool win = true;
+                        for (int i = 1; i < winLength; i++)
+                        {
+                            if (board.Board[row + i, col - i] != first)
+                            {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win)
+                        {
+                            return first;
+                        }
+                    }
+                }
+            }
+
+            // Check for draw (no empty cells)
+            for (int row = 0; row < boardSize; row++)
+            {
+                for (int col = 0; col < boardSize; col++)
+                {
+                    if (board.Board[row, col] == PlayerType.None)
+                    {
+                        return null; // Game still in progress
+                    }
+                }
+            }
+
+            return PlayerType.Draw;
         }
 
-        public GameState MakeMove(GameState state, int row, int col)
+        public GameBoardState MakeMove(GameBoardState state, int row, int col)
         {
             // If game is not in playing state or cell is already occupied
-            if (state.GameStatus != GameStatus.Playing || state.Board[row][col] != 0)
+            if (state.GameStatus != GameStatus.Playing || state.Board[row, col] != PlayerType.None)
             {
                 return state;
             }
 
-            // Create new board with the move
-            var newBoard = new int[BOARD_SIZE][];
-            for (int i = 0; i < BOARD_SIZE; i++)
+            // Create new state with the move
+            var newState = new GameBoardState
             {
-                newBoard[i] = new int[BOARD_SIZE];
-                Array.Copy(state.Board[i], newBoard[i], BOARD_SIZE);
-            }
-            newBoard[row][col] = state.CurrentPlayer;
-
-            // Add move to history
-            var newMoveHistory = new List<Move>(state.MoveHistory)
-            {
-                new Move
-                {
-                    Player = state.CurrentPlayer,
-                    Position = new[] { row, col },
-                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                }
-            };
-
-            // Check for win
-            var winningCells = CheckWinner(newBoard, new[] { row, col });
-            if (winningCells != null)
-            {
-                return new GameState
-                {
-                    Board = newBoard,
-                    GameStatus = GameStatus.Won,
-                    Winner = state.CurrentPlayer,
-                    WinningCells = winningCells,
-                    CurrentPlayer = state.CurrentPlayer == 1 ? 2 : 1,
-                    Players = state.Players,
-                    MoveHistory = newMoveHistory,
-                    UndoStack = state.UndoStack,
-                    RedoStack = state.RedoStack,
-                    SessionStats = state.SessionStats
-                };
-            }
-
-            // Check for draw
-            if (IsDraw(newBoard))
-            {
-                return new GameState
-                {
-                    Board = newBoard,
-                    GameStatus = GameStatus.Draw,
-                    Winner = null,
-                    CurrentPlayer = state.CurrentPlayer == 1 ? 2 : 1,
-                    Players = state.Players,
-                    MoveHistory = newMoveHistory,
-                    UndoStack = state.UndoStack,
-                    RedoStack = state.RedoStack,
-                    SessionStats = state.SessionStats
-                };
-            }
-
-            // Continue game
-            return new GameState
-            {
-                Board = newBoard,
-                CurrentPlayer = state.CurrentPlayer == 1 ? 2 : 1,
-                GameStatus = GameStatus.Playing,
-                Winner = null,
+                Board = (PlayerType[,])state.Board.Clone(),
+                CurrentPlayer = state.CurrentPlayer,
+                GameStatus = state.GameStatus,
+                Winner = state.Winner,
                 Players = state.Players,
-                MoveHistory = newMoveHistory,
+                MoveHistory = new List<Move>(state.MoveHistory),
                 UndoStack = state.UndoStack,
                 RedoStack = state.RedoStack,
                 SessionStats = state.SessionStats
             };
-        }
 
-        private bool IsDraw(int[][] board)
-        {
-            for (int i = 0; i < BOARD_SIZE; i++)
+            // Apply the move
+            newState.Board[row, col] = state.CurrentPlayer;
+
+            // Add move to history
+            newState.MoveHistory.Add(new Move
             {
-                for (int j = 0; j < BOARD_SIZE; j++)
-                {
-                    if (board[i][j] == 0)
-                        return false;
-                }
+                Player = state.CurrentPlayer,
+                Position = new[] { row, col },
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            });
+
+            // Check for winner or draw
+            var winner = CheckWinner(newState);
+            if (winner != null)
+            {
+                newState.GameStatus = winner == PlayerType.Draw ? GameStatus.Draw : GameStatus.Won;
+                newState.Winner = winner == PlayerType.Draw ? null : winner;
             }
-            return true;
+
+            // Switch player if game is still in progress
+            if (newState.GameStatus == GameStatus.Playing)
+            {
+                newState.CurrentPlayer = state.CurrentPlayer == PlayerType.X ? PlayerType.O : PlayerType.X;
+            }
+
+            return newState;
         }
 
-        public GameState UndoMove(GameState state)
+        public GameBoardState UndoMove(GameBoardState state)
         {
             // If no moves to undo or game is won/drawn, return current state
             if (state.MoveHistory.Count == 0 || state.GameStatus != GameStatus.Playing)
@@ -191,34 +210,32 @@ namespace PoTicTac.Client.Services
             var row = lastMove.Position[0];
             var col = lastMove.Position[1];
 
-            // Create new board with the move undone
-            var newBoard = new int[BOARD_SIZE][];
-            for (int i = 0; i < BOARD_SIZE; i++)
+            // Create new state with the move undone
+            var newState = new GameBoardState
             {
-                newBoard[i] = new int[BOARD_SIZE];
-                Array.Copy(state.Board[i], newBoard[i], BOARD_SIZE);
-            }
-            newBoard[row][col] = 0;
-
-            // Update move history and undo/redo stacks
-            var newMoveHistory = state.MoveHistory.Take(state.MoveHistory.Count - 1).ToList();
-            var newUndoStack = new List<Move>(state.UndoStack) { lastMove };
-
-            return new GameState
-            {
-                Board = newBoard,
-                CurrentPlayer = lastMove.Player, // Switch back to the player who made the move
-                GameStatus = GameStatus.Playing,
-                Winner = null,
+                Board = (PlayerType[,])state.Board.Clone(),
+                CurrentPlayer = state.CurrentPlayer,
+                GameStatus = state.GameStatus,
+                Winner = state.Winner,
                 Players = state.Players,
-                MoveHistory = newMoveHistory,
-                UndoStack = newUndoStack,
-                RedoStack = new List<Move>(),
+                MoveHistory = new List<Move>(state.MoveHistory),
+                UndoStack = new List<Move>(state.UndoStack),
+                RedoStack = new List<Move>(state.RedoStack),
                 SessionStats = state.SessionStats
             };
+
+            // Undo the move
+            newState.Board[row, col] = PlayerType.None;
+            newState.MoveHistory.RemoveAt(newState.MoveHistory.Count - 1);
+            newState.UndoStack.Add(lastMove);
+
+            // Switch back to the player who made the move
+            newState.CurrentPlayer = lastMove.Player;
+
+            return newState;
         }
 
-        public GameState RedoMove(GameState state)
+        public GameBoardState RedoMove(GameBoardState state)
         {
             // If no moves to redo or game is won/drawn, return current state
             if (state.UndoStack.Count == 0 || state.GameStatus != GameStatus.Playing)
@@ -231,67 +248,40 @@ namespace PoTicTac.Client.Services
             var row = moveToRedo.Position[0];
             var col = moveToRedo.Position[1];
 
-            // Create new board with the move redone
-            var newBoard = new int[BOARD_SIZE][];
-            for (int i = 0; i < BOARD_SIZE; i++)
+            // Create new state with the move redone
+            var newState = new GameBoardState
             {
-                newBoard[i] = new int[BOARD_SIZE];
-                Array.Copy(state.Board[i], newBoard[i], BOARD_SIZE);
-            }
-            newBoard[row][col] = moveToRedo.Player;
-
-            // Update move history and undo/redo stacks
-            var newMoveHistory = new List<Move>(state.MoveHistory) { moveToRedo };
-            var newUndoStack = state.UndoStack.Take(state.UndoStack.Count - 1).ToList();
-
-            // Check for win after redoing the move
-            var winningCells = CheckWinner(newBoard, new[] { row, col });
-            if (winningCells != null)
-            {
-                return new GameState
-                {
-                    Board = newBoard,
-                    GameStatus = GameStatus.Won,
-                    Winner = moveToRedo.Player,
-                    WinningCells = winningCells,
-                    CurrentPlayer = moveToRedo.Player == 1 ? 2 : 1,
-                    Players = state.Players,
-                    MoveHistory = newMoveHistory,
-                    UndoStack = newUndoStack,
-                    RedoStack = new List<Move>(),
-                    SessionStats = state.SessionStats
-                };
-            }
-
-            // Check for draw
-            if (IsDraw(newBoard))
-            {
-                return new GameState
-                {
-                    Board = newBoard,
-                    GameStatus = GameStatus.Draw,
-                    Winner = null,
-                    CurrentPlayer = moveToRedo.Player == 1 ? 2 : 1,
-                    Players = state.Players,
-                    MoveHistory = newMoveHistory,
-                    UndoStack = newUndoStack,
-                    RedoStack = new List<Move>(),
-                    SessionStats = state.SessionStats
-                };
-            }
-
-            return new GameState
-            {
-                Board = newBoard,
-                CurrentPlayer = moveToRedo.Player == 1 ? 2 : 1,
-                GameStatus = GameStatus.Playing,
-                Winner = null,
+                Board = (PlayerType[,])state.Board.Clone(),
+                CurrentPlayer = state.CurrentPlayer,
+                GameStatus = state.GameStatus,
+                Winner = state.Winner,
                 Players = state.Players,
-                MoveHistory = newMoveHistory,
-                UndoStack = newUndoStack,
-                RedoStack = new List<Move>(),
+                MoveHistory = new List<Move>(state.MoveHistory),
+                UndoStack = new List<Move>(state.UndoStack),
+                RedoStack = new List<Move>(state.RedoStack),
                 SessionStats = state.SessionStats
             };
+
+            // Redo the move
+            newState.Board[row, col] = moveToRedo.Player;
+            newState.MoveHistory.Add(moveToRedo);
+            newState.UndoStack.RemoveAt(newState.UndoStack.Count - 1);
+
+            // Check for winner or draw
+            var winner = CheckWinner(newState);
+            if (winner != null)
+            {
+                newState.GameStatus = winner == PlayerType.Draw ? GameStatus.Draw : GameStatus.Won;
+                newState.Winner = winner == PlayerType.Draw ? null : winner;
+            }
+
+            // Switch player if game is still in progress
+            if (newState.GameStatus == GameStatus.Playing)
+            {
+                newState.CurrentPlayer = moveToRedo.Player == PlayerType.X ? PlayerType.O : PlayerType.X;
+            }
+
+            return newState;
         }
     }
 }

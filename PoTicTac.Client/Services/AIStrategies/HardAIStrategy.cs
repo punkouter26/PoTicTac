@@ -4,181 +4,128 @@ namespace PoTicTac.Client.Services.AIStrategies;
 
 public class HardAIStrategy : IAIStrategy
 {
-    public Task<int[]> GetMoveAsync(GameState gameState)
+    public Task<int[]> GetMoveAsync(GameBoardState gameState)
     {
-        // First check for immediate win
-        var winningMove = FindWinningMove(gameState.Board, gameState.CurrentPlayer);
-        if (winningMove != null) return Task.FromResult(winningMove);
-
-        // Then block opponent's winning move
-        var blockingMove = FindWinningMove(gameState.Board, gameState.CurrentPlayer == 1 ? 2 : 1);
-        if (blockingMove != null) return Task.FromResult(blockingMove);
-
-        // Use minimax algorithm for optimal move
-        var (_, bestMove) = MinimaxWithAlphaBeta(gameState, 3, int.MinValue, int.MaxValue, true);
-        return Task.FromResult(bestMove ?? GetStrategicMove(gameState.Board));
+        var bestMove = FindBestMove(gameState.Board, gameState.CurrentPlayer);
+        return Task.FromResult(bestMove);
     }
 
-    private (int score, int[]? move) MinimaxWithAlphaBeta(GameState gameState, int depth, int alpha, int beta, bool isMaximizing)
+    private int[] FindBestMove(PlayerType[,] board, PlayerType player)
     {
-        if (depth == 0 || gameState.GameStatus != GameStatus.Playing)
+        int bestScore = int.MinValue;
+        int[] bestMove = new int[2];
+
+        for (int i = 0; i < board.GetLength(0); i++)
         {
-            return (EvaluateBoard(gameState.Board, gameState.CurrentPlayer), null);
-        }
-
-        var moves = GetAvailableMoves(gameState.Board);
-        int[]? bestMove = null;
-        int bestScore = isMaximizing ? int.MinValue : int.MaxValue;
-
-        foreach (var move in moves)
-        {
-            // Make move
-            gameState.Board[move[0]][move[1]] = isMaximizing ? gameState.CurrentPlayer : (gameState.CurrentPlayer == 1 ? 2 : 1);
-            
-            // Recurse
-            var (currentScore, _) = MinimaxWithAlphaBeta(gameState, depth - 1, alpha, beta, !isMaximizing);
-            
-            // Undo move
-            gameState.Board[move[0]][move[1]] = 0;
-
-            if (isMaximizing)
+            for (int j = 0; j < board.GetLength(1); j++)
             {
-                if (currentScore > bestScore)
+                if (board[i, j] == PlayerType.None)
                 {
-                    bestScore = currentScore;
-                    bestMove = move;
-                    alpha = Math.Max(alpha, bestScore);
+                    board[i, j] = player;
+                    int score = Minimax(board, 0, false, player);
+                    board[i, j] = PlayerType.None;
+
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestMove = new[] { i, j };
+                    }
                 }
             }
-            else
-            {
-                if (currentScore < bestScore)
-                {
-                    bestScore = currentScore;
-                    bestMove = move;
-                    beta = Math.Min(beta, bestScore);
-                }
-            }
-
-            if (beta <= alpha)
-                break;
         }
 
-        return (bestScore, bestMove);
+        return bestMove;
     }
 
-    private int EvaluateBoard(int[][] board, int player)
+    private int Minimax(PlayerType[,] board, int depth, bool isMaximizing, PlayerType player)
     {
-        // Simple evaluation - +10 for win, -10 for loss, 0 for draw
-        if (CheckWin(board, player)) return 10;
-        if (CheckWin(board, player == 1 ? 2 : 1)) return -10;
-        return 0;
+        PlayerType opponent = player == PlayerType.X ? PlayerType.O : PlayerType.X;
+        var result = CheckWinner(board);
+
+        if (result != PlayerType.None)
+        {
+            return result == player ? 10 - depth : depth - 10;
+        }
+
+        if (IsBoardFull(board))
+        {
+            return 0;
+        }
+
+        if (isMaximizing)
+        {
+            int bestScore = int.MinValue;
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    if (board[i, j] == PlayerType.None)
+                    {
+                        board[i, j] = player;
+                        int score = Minimax(board, depth + 1, false, player);
+                        board[i, j] = PlayerType.None;
+                        bestScore = Math.Max(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        }
+        else
+        {
+            int bestScore = int.MaxValue;
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    if (board[i, j] == PlayerType.None)
+                    {
+                        board[i, j] = opponent;
+                        int score = Minimax(board, depth + 1, true, player);
+                        board[i, j] = PlayerType.None;
+                        bestScore = Math.Min(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        }
     }
 
-    private bool CheckWin(int[][] board, int player)
+    private PlayerType CheckWinner(PlayerType[,] board)
     {
         // Check rows
         for (int i = 0; i < 3; i++)
         {
-            if (board[i][0] == player && board[i][1] == player && board[i][2] == player)
-                return true;
+            if (board[i, 0] != PlayerType.None && board[i, 0] == board[i, 1] && board[i, 1] == board[i, 2])
+                return board[i, 0];
         }
 
         // Check columns
         for (int j = 0; j < 3; j++)
         {
-            if (board[0][j] == player && board[1][j] == player && board[2][j] == player)
-                return true;
+            if (board[0, j] != PlayerType.None && board[0, j] == board[1, j] && board[1, j] == board[2, j])
+                return board[0, j];
         }
 
         // Check diagonals
-        if (board[0][0] == player && board[1][1] == player && board[2][2] == player)
-            return true;
-        if (board[0][2] == player && board[1][1] == player && board[2][0] == player)
-            return true;
+        if (board[0, 0] != PlayerType.None && board[0, 0] == board[1, 1] && board[1, 1] == board[2, 2])
+            return board[0, 0];
 
-        return false;
+        if (board[0, 2] != PlayerType.None && board[0, 2] == board[1, 1] && board[1, 1] == board[2, 0])
+            return board[0, 2];
+
+        return PlayerType.None;
     }
 
-    private int[]? FindWinningMove(int[][] board, int player)
+    private bool IsBoardFull(PlayerType[,] board)
     {
-        // Same implementation as MediumAIStrategy
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < board.GetLength(0); i++)
         {
-            if (board[i][0] == player && board[i][1] == player && board[i][2] == 0)
-                return new[] { i, 2 };
-            if (board[i][0] == player && board[i][2] == player && board[i][1] == 0)
-                return new[] { i, 1 };
-            if (board[i][1] == player && board[i][2] == player && board[i][0] == 0)
-                return new[] { i, 0 };
-        }
-
-        for (int j = 0; j < 3; j++)
-        {
-            if (board[0][j] == player && board[1][j] == player && board[2][j] == 0)
-                return new[] { 2, j };
-            if (board[0][j] == player && board[2][j] == player && board[1][j] == 0)
-                return new[] { 1, j };
-            if (board[1][j] == player && board[2][j] == player && board[0][j] == 0)
-                return new[] { 0, j };
-        }
-
-        if (board[0][0] == player && board[1][1] == player && board[2][2] == 0)
-            return new[] { 2, 2 };
-        if (board[0][0] == player && board[2][2] == player && board[1][1] == 0)
-            return new[] { 1, 1 };
-        if (board[1][1] == player && board[2][2] == player && board[0][0] == 0)
-            return new[] { 0, 0 };
-        if (board[0][2] == player && board[1][1] == player && board[2][0] == 0)
-            return new[] { 2, 0 };
-        if (board[0][2] == player && board[2][0] == player && board[1][1] == 0)
-            return new[] { 1, 1 };
-        if (board[1][1] == player && board[2][0] == player && board[0][2] == 0)
-            return new[] { 0, 2 };
-
-        return null;
-    }
-
-    private int[] GetStrategicMove(int[][] board)
-    {
-        // Default to center if available
-        if (board[1][1] == 0) return new[] { 1, 1 };
-
-        // Then corners
-        var corners = new List<int[]> { new[] { 0, 0 }, new[] { 0, 2 }, new[] { 2, 0 }, new[] { 2, 2 } };
-        var availableCorners = corners.Where(c => board[c[0]][c[1]] == 0).ToList();
-        if (availableCorners.Any())
-        {
-            var random = new Random();
-            return availableCorners[random.Next(availableCorners.Count)];
-        }
-
-        // Finally any available edge
-        var edges = new List<int[]> { new[] { 0, 1 }, new[] { 1, 0 }, new[] { 1, 2 }, new[] { 2, 1 } };
-        var availableEdges = edges.Where(e => board[e[0]][e[1]] == 0).ToList();
-        if (availableEdges.Any())
-        {
-            var random = new Random();
-            return availableEdges[random.Next(availableEdges.Count)];
-        }
-
-        // Fallback - should never happen as game should be over
-        return new[] { 0, 0 };
-    }
-
-    private List<int[]> GetAvailableMoves(int[][] board)
-    {
-        var moves = new List<int[]>();
-        for (int i = 0; i < board.Length; i++)
-        {
-            for (int j = 0; j < board[i].Length; j++)
+            for (int j = 0; j < board.GetLength(1); j++)
             {
-                if (board[i][j] == 0)
-                {
-                    moves.Add(new[] { i, j });
-                }
+                if (board[i, j] == PlayerType.None)
+                    return false;
             }
         }
-        return moves;
+        return true;
     }
 }

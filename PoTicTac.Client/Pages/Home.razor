@@ -103,7 +103,7 @@
     }
 
     private GameModeType gameMode = GameModeType.Menu;
-    private GameState? gameState;
+    private GameBoardState? gameState;
     private GameBoard.LastMoveInfo? lastMove;
     private Difficulty difficulty = Difficulty.Medium;
     private GameScore gameScore = new();
@@ -158,7 +158,7 @@
         }
 
         // Single player mode
-        if (gameState.CurrentPlayer != 1)
+        if (gameState.CurrentPlayer != PlayerType.X)
             return;
 
         var newGameState = GameLogic.MakeMove(gameState, move.Row, move.Col);
@@ -170,7 +170,7 @@
         StateHasChanged();
 
         // AI move in single player mode
-        if (newGameState.GameStatus == GameStatus.Playing && newGameState.CurrentPlayer == 2)
+        if (newGameState.GameStatus == GameStatus.Playing && newGameState.CurrentPlayer == PlayerType.O)
         {
             await Task.Delay(500); // Simulate thinking time
             var aiMove = await AILogic.GetAiMove(newGameState, difficulty);
@@ -204,7 +204,7 @@
             return $"{currentPlayer?.Name}'s Turn";
         }
         
-        return $"{(gameState.CurrentPlayer == 1 ? "Player" : "AI")}'s Turn";
+        return $"{(gameState.CurrentPlayer == PlayerType.X ? "Player" : "AI")}'s Turn";
     }
 
     private void StartSinglePlayerGame()
@@ -216,7 +216,7 @@
                 Id = "1", 
                 Name = string.IsNullOrEmpty(playerName) ? "Player 1" : playerName, 
                 Type = PlayerType.Human, 
-                Symbol = 1, 
+                Symbol = PlayerType.X, 
                 Stats = new PlayerStats() 
             },
             new Player 
@@ -224,13 +224,13 @@
                 Id = "2", 
                 Name = "AI Player", 
                 Type = PlayerType.AI, 
-                Symbol = 2, 
+                Symbol = PlayerType.O, 
                 AiConfig = new AIConfig { Difficulty = difficulty }, 
                 Stats = new PlayerStats() 
             }
         };
         
-        gameState = GameLogic.CreateInitialState(1, players);
+        gameState = GameLogic.CreateInitialState(PlayerType.X, players);
         gameMode = GameModeType.Singleplayer;
         lastMove = null;
         StateHasChanged();

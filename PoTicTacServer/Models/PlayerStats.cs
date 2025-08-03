@@ -25,4 +25,4 @@ public class PlayerEntity : ITableEntity
     public string LastUpdated { get; set; } = string.Empty;
     public DateTimeOffset? Timestamp { get; set; }
     public ETag ETag { get; set; }
-} 
+}

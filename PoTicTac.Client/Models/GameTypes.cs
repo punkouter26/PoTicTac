@@ -9,6 +9,10 @@ namespace PoTicTac.Client.Models
 
     public enum PlayerType
     {
+        X,
+        O,
+        None,
+        Draw,
         Human,
         AI
     }
@@ -69,24 +73,40 @@ namespace PoTicTac.Client.Models
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public PlayerType Type { get; set; }
-        public int Symbol { get; set; } // 1 or 2
+        public PlayerType Symbol { get; set; } // X or O
         public AIConfig? AiConfig { get; set; }
         public PlayerStats Stats { get; set; } = new();
     }
 
     public class Move
     {
-        public int Player { get; set; } // 1 or 2
+        public PlayerType Player { get; set; }
         public int[] Position { get; set; } = new int[2]; // [row, col]
         public long Timestamp { get; set; }
     }
 
-    public class GameState
+    public class GameBoardState
     {
-        public int[][] Board { get; set; } = Array.Empty<int[]>();
-        public int CurrentPlayer { get; set; } // 1 or 2
+        public const int BoardSize = 6;
+
+        public PlayerType[,] Board { get; set; } = new PlayerType[BoardSize, BoardSize];
+
+        public GameBoardState()
+        {
+            // Initialize all cells to None
+            for (int i = 0; i < BoardSize; i++)
+            {
+                for (int j = 0; j < BoardSize; j++)
+                {
+                    Board[i, j] = PlayerType.None;
+                }
+            }
+        }
+
+        public PlayerType[,] Cells => Board; // Backward compatibility
+        public PlayerType CurrentPlayer { get; set; }
         public GameStatus GameStatus { get; set; }
-        public int? Winner { get; set; } // 1, 2, or null
+        public PlayerType? Winner { get; set; }
         public Player[] Players { get; set; } = new Player[2];
         public List<Move> MoveHistory { get; set; } = new();
         public List<Move> UndoStack { get; set; } = new();

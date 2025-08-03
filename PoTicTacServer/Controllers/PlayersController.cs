@@ -46,4 +46,4 @@ public class PlayersController : ControllerBase
         var players = await _storageService.GetLeaderboardAsync(limit);
         return Ok(players.Select(p => new { name = p.Name, stats = p.Stats }));
     }
-} 
+}
