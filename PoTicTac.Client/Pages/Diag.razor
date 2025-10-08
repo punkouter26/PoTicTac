@@ -8,43 +8,53 @@
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
-<h3>Diagnostics</h3>
+<PageTitle>PoTicTac - Diagnostics</PageTitle>
 
-<div class="health-grid">
-    <div class="health-item">
-        <h4>API Health Check</h4>
-        <p>Status: <span class="@(apiHealthStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@apiHealthStatus</span></p>
-        <small>@apiHealthDetails</small>
-    </div>
-    
-    <div class="health-item">
-        <h4>Storage Health Check</h4>
-        <p>Status: <span class="@(storageHealthStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@storageHealthStatus</span></p>
-        <small>@storageHealthDetails</small>
-    </div>
-    
-    <div class="health-item">
-        <h4>Players API</h4>
-        <p>Status: <span class="@(playersApiStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@playersApiStatus</span></p>
-        <small>@playersApiDetails</small>
-    </div>
-    
-    <div class="health-item">
-        <h4>SignalR Hub</h4>
-        <p>Status: <span class="@(signalRStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@signalRStatus</span></p>
-        <small>@signalRDetails</small>
-    </div>
-    
-    <div class="health-item">
-        <h4>Internet Connection</h4>
-        <p>Status: <span class="@(internetStatus == "Healthy" ? "status-healthy" : "status-unhealthy")">@internetStatus</span></p>
-        <small>@internetDetails</small>
-    </div>
-</div>
+<link href="css/diag.css" rel="stylesheet" />
 
-<div class="actions">
-    <button class="btn btn-primary" @onclick="RefreshAllChecks">Refresh All Checks</button>
-    <a href="/" class="btn btn-secondary">Back to Home</a>
+<div class="diag-container">
+    <h1 class="diag-title">System Diagnostics</h1>
+
+    <div class="diag-content">
+        <div class="health-grid">
+            <div class="health-item">
+                <h4>API Health Check</h4>
+                <p>Status: <span class="@GetStatusClass(apiHealthStatus)">@apiHealthStatus</span></p>
+                <small>@apiHealthDetails</small>
+            </div>
+            
+            <div class="health-item">
+                <h4>Storage Health Check</h4>
+                <p>Status: <span class="@GetStatusClass(storageHealthStatus)">@storageHealthStatus</span></p>
+                <small>@storageHealthDetails</small>
+            </div>
+            
+            <div class="health-item">
+                <h4>Players API</h4>
+                <p>Status: <span class="@GetStatusClass(playersApiStatus)">@playersApiStatus</span></p>
+                <small>@playersApiDetails</small>
+            </div>
+            
+            <div class="health-item">
+                <h4>SignalR Hub</h4>
+                <p>Status: <span class="@GetStatusClass(signalRStatus)">@signalRStatus</span></p>
+                <small>@signalRDetails</small>
+            </div>
+            
+            <div class="health-item">
+                <h4>Internet Connection</h4>
+                <p>Status: <span class="@GetStatusClass(internetStatus)">@internetStatus</span></p>
+                <small>@internetDetails</small>
+            </div>
+        </div>
+
+        <div class="diag-actions">
+            <button class="diag-button" @onclick="RefreshAllChecks" disabled="@isRefreshing">
+                @(isRefreshing ? "Refreshing..." : "Refresh All Checks")
+            </button>
+            <a href="/" class="diag-button">Back to Game</a>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -58,6 +68,7 @@
     private string signalRDetails = "";
     private string internetStatus = "Checking...";
     private string internetDetails = "";
+    private bool isRefreshing = false;
     
     private HubConnection? hubConnection;
 
@@ -66,8 +77,19 @@
         await RefreshAllChecks();
     }
 
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Healthy" => "status-healthy",
+            "Checking..." => "status-checking",
+            _ => "status-unhealthy"
+        };
+    }
+
     private async Task RefreshAllChecks()
     {
+        isRefreshing = true;
         // Reset all statuses
         apiHealthStatus = storageHealthStatus = playersApiStatus = signalRStatus = internetStatus = "Checking...";
         apiHealthDetails = storageHealthDetails = playersApiDetails = signalRDetails = internetDetails = "";
@@ -84,6 +106,7 @@
         };
 
         await Task.WhenAll(tasks);
+        isRefreshing = false;
         StateHasChanged();
     }
 
@@ -91,12 +114,20 @@
     {
         try
         {
-            var response = await Http.GetAsync("/health");
-            if (response.IsSuccessStatusCode)
+            var response = await Http.GetAsync("/api/health");
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                apiHealthStatus = "Healthy";
-                apiHealthDetails = $"Response: {response.StatusCode}";
+                var healthResponse = await response.Content.ReadFromJsonAsync<HealthResponse>();
+                if (healthResponse != null)
+                {
+                    apiHealthStatus = healthResponse.Status == "Healthy" ? "Healthy" : "Unhealthy";
+                    apiHealthDetails = $"Status: {healthResponse.Status}, Duration: {healthResponse.TotalDuration:F0}ms";
+                }
+                else
+                {
+                    apiHealthStatus = "Unhealthy";
+                    apiHealthDetails = "Failed to parse health response";
+                }
             }
             else
             {
@@ -116,20 +147,28 @@
     {
         try
         {
-            var response = await Http.GetAsync("/health");
-            if (response.IsSuccessStatusCode)
+            var response = await Http.GetAsync("/api/health");
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                // Parse the health check response to get storage-specific status
-                if (content.Contains("Storage") || content.Contains("Healthy"))
+                var healthResponse = await response.Content.ReadFromJsonAsync<HealthResponse>();
+                if (healthResponse != null)
                 {
-                    storageHealthStatus = "Healthy";
-                    storageHealthDetails = "Azure Table Storage accessible";
+                    var storageCheck = healthResponse.Checks?.FirstOrDefault(c => c.Name == "AzureTableStorage");
+                    if (storageCheck != null)
+                    {
+                        storageHealthStatus = storageCheck.Status == "Healthy" ? "Healthy" : "Unhealthy";
+                        storageHealthDetails = $"{storageCheck.Description ?? "Azure Table Storage"} ({storageCheck.Duration:F0}ms)";
+                    }
+                    else
+                    {
+                        storageHealthStatus = "Unknown";
+                        storageHealthDetails = "Storage check not found in health response";
+                    }
                 }
                 else
                 {
-                    storageHealthStatus = "Unknown";
-                    storageHealthDetails = "Storage status unclear from health endpoint";
+                    storageHealthStatus = "Unhealthy";
+                    storageHealthDetails = "Failed to parse health response";
                 }
             }
             else
@@ -235,79 +274,20 @@
             await hubConnection.DisposeAsync();
         }
     }
+
+    public class HealthResponse
+    {
+        public string Status { get; set; } = string.Empty;
+        public double TotalDuration { get; set; }
+        public List<HealthCheckItem>? Checks { get; set; }
+    }
+
+    public class HealthCheckItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public double Duration { get; set; }
+        public string? Exception { get; set; }
+    }
 }
-
-<style>
-    .health-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .health-item {
-        border: 1px solid #ccc;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        background-color: #f9f9f9;
-    }
-
-    .health-item h4 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        color: #333;
-    }
-
-    .health-item small {
-        display: block;
-        margin-top: 5px;
-        color: #666;
-        font-style: italic;
-    }
-
-    .status-healthy {
-        color: #28a745;
-        font-weight: bold;
-    }
-
-    .status-unhealthy {
-        color: #dc3545;
-        font-weight: bold;
-    }
-
-    .actions {
-        text-align: center;
-        padding: 20px;
-    }
-
-    .actions .btn {
-        margin: 0 10px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        text-decoration: none;
-        display: inline-block;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-    }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-    }
-
-    .btn-secondary:hover {
-        background-color: #545b62;
-    }
-</style>

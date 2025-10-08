@@ -10,23 +10,23 @@ namespace PoTicTacServer.Hubs
     // Game state representation
     public class GameState
     {
-        public string GameId { get; set; }
-        public List<List<int>> Board { get; set; }
+        public required string GameId { get; set; }
+        public required List<List<int>> Board { get; set; }
         public int CurrentPlayer { get; set; }
-        public string GameStatus { get; set; }
+        public required string GameStatus { get; set; }
         public int? Winner { get; set; }
-        public List<Player> Players { get; set; }
-        public List<Move> MoveHistory { get; set; }
-        public List<int[]> WinningCells { get; set; }
+        public required List<Player> Players { get; set; }
+        public required List<Move> MoveHistory { get; set; }
+        public required List<int[]> WinningCells { get; set; }
     }
 
     public class Player
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Type { get; set; }
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+        public required string Type { get; set; }
         public int Symbol { get; set; }
-        public PlayerStats Stats { get; set; }
+        public required PlayerStats Stats { get; set; }
     }
 
     public class PlayerStats
@@ -45,7 +45,7 @@ namespace PoTicTacServer.Hubs
     public class Move
     {
         public int Player { get; set; }
-        public int[] Position { get; set; }
+        public required int[] Position { get; set; }
         public long Timestamp { get; set; }
     }
 
@@ -76,7 +76,7 @@ namespace PoTicTacServer.Hubs
                 Winner = null,
                 Players = players,
                 MoveHistory = new List<Move>(),
-                WinningCells = null
+                WinningCells = new List<int[]>()
             };
         }
 
@@ -141,7 +141,7 @@ namespace PoTicTacServer.Hubs
                     Winner = null,
                     Players = state.Players,
                     MoveHistory = newMoveHistory,
-                    WinningCells = null
+                    WinningCells = new List<int[]>()
                 };
             }
 
@@ -155,11 +155,11 @@ namespace PoTicTacServer.Hubs
                 Winner = null,
                 Players = state.Players,
                 MoveHistory = newMoveHistory,
-                WinningCells = null
+                WinningCells = new List<int[]>()
             };
         }
 
-        private static List<int[]> CheckWinner(List<List<int>> board, int row, int col)
+        private static List<int[]>? CheckWinner(List<List<int>> board, int row, int col)
         {
             var player = board[row][col];
             var directions = new[] { new[] { 0, 1 }, new[] { 1, 0 }, new[] { 1, 1 }, new[] { 1, -1 } };
@@ -359,7 +359,7 @@ namespace PoTicTacServer.Hubs
                 Winner = null,
                 Players = gameState.Players,
                 MoveHistory = new List<Move>(),
-                WinningCells = null
+                WinningCells = new List<int[]>()
             };
 
             Games[gameId] = newGameState;
@@ -377,7 +377,7 @@ namespace PoTicTacServer.Hubs
             }
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var playerId = Context.ConnectionId;
 

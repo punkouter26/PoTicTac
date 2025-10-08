@@ -30,8 +30,8 @@ namespace PoTicTac.IntegrationTests
             var stats = await _client.GetFromJsonAsync<PlayerStats>("/api/statistics");
             Assert.NotNull(stats);
             Assert.True(stats.TotalGames >= 0);
-            Assert.True(stats.XWins >= 0);
-            Assert.True(stats.OWins >= 0);
+            Assert.True(stats.Wins >= 0);
+            Assert.True(stats.Losses >= 0);
             Assert.True(stats.Draws >= 0);
         }
 
@@ -42,9 +42,9 @@ namespace PoTicTac.IntegrationTests
 
             var newStats = new PlayerStats
             {
-                TotalGames = initialStats.TotalGames + 1,
-                XWins = initialStats.XWins + 1,
-                OWins = initialStats.OWins,
+                TotalGames = initialStats!.TotalGames + 1,
+                Wins = initialStats.Wins + 1,
+                Losses = initialStats.Losses,
                 Draws = initialStats.Draws
             };
 
@@ -52,8 +52,8 @@ namespace PoTicTac.IntegrationTests
             response.EnsureSuccessStatusCode();
 
             var updatedStats = await _client.GetFromJsonAsync<PlayerStats>("/api/statistics");
-            Assert.Equal(newStats.TotalGames, updatedStats.TotalGames);
-            Assert.Equal(newStats.XWins, updatedStats.XWins);
+            Assert.Equal(newStats.TotalGames, updatedStats!.TotalGames);
+            Assert.Equal(newStats.Wins, updatedStats.Wins);
         }
     }
 }

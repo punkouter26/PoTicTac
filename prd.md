@@ -18,6 +18,111 @@ PoTicTac is a modern, retro-styled twist on classic Tic Tac Toe that elevates th
 - Web application developers interested in modern Blazor implementations
 - Educational institutions teaching game theory and AI algorithms
 
+### Application Overview
+PoTicTac is a full-stack web application built with Blazor WebAssembly and ASP.NET Core that delivers a rich, retro-styled gaming experience. The application consists of several key architectural components:
+
+**Frontend Architecture (Blazor WebAssembly)**
+- **Single-Page Application**: Client-side rendering with .NET 9 WebAssembly
+- **Component-Based UI**: Modular Blazor components for reusability and maintainability
+- **Real-Time Communication**: SignalR client for multiplayer functionality
+- **Local State Management**: Browser storage for user preferences and session data
+
+**Backend Architecture (ASP.NET Core Web API)**
+- **RESTful API Services**: Standard HTTP endpoints for game statistics and player management
+- **Real-Time Hub**: SignalR hub for live multiplayer game sessions
+- **Azure Integration**: Cloud-native storage and monitoring services
+- **Health Monitoring**: Comprehensive system health checks and diagnostics
+
+**Data Persistence**
+- **Azure Table Storage**: NoSQL database for player statistics and game history
+- **Azurite Emulation**: Local development environment matching production storage
+- **Configuration-Based Connection**: Environment-specific connection strings for seamless local/cloud switching
+
+**UI Components and Pages**
+
+1. **Home Page (`/` route)**
+   - **Main Menu**: Entry point for all game interactions
+   - **Player Name Input**: Persistent player identification with local storage
+   - **Game Mode Selection**: Choose between Single Player (vs AI) and Multiplayer modes
+   - **Difficulty Selector Component**: Three-tier AI difficulty selection (Easy/Medium/Hard)
+   - **Active Game Interface**: Full game board display during gameplay
+   - **Game Status Display**: Real-time feedback on current player and game outcome
+
+2. **GameBoard Component**
+   - **6x6 Interactive Grid**: 36 clickable cells arranged in a 6-row by 6-column layout
+   - **Move Visualization**: X and O symbols rendered with retro neon green glow effects
+   - **Winning Pattern Highlight**: Visual emphasis on the 4-in-a-row winning cells
+   - **Last Move Indicator**: Highlights the most recent move for context
+   - **Hover Effects**: Interactive feedback showing available moves
+   - **Click Handling**: Cell click events propagated to parent for game logic processing
+
+3. **DifficultySelector Component**
+   - **Three Difficulty Levels**: Easy (Random with basic blocking), Medium (Threat detection), Hard (Minimax algorithm)
+   - **Visual Indicators**: Clear visual representation of selected difficulty
+   - **Dynamic Switching**: Change difficulty mid-session (applies to next game)
+   - **Difficulty Descriptions**: Tooltips explaining each AI difficulty level
+
+4. **Statistics Page (`/stats` route)**
+   - **Overall Summary Cards**: Total games, wins, losses, draws across all players
+   - **Player Statistics Grid**: Radzen DataGrid with filtering, sorting, and pagination
+   - **Performance Metrics**: Win rate, win streak, average moves per game
+   - **Leaderboard**: Top 10 players ranked by win rate
+   - **Data Refresh**: Real-time statistics pulled from Azure Table Storage
+
+5. **Diagnostics Page (`/diag` route)**
+   - **API Health Check**: Validates backend API connectivity and response
+   - **Storage Health Check**: Verifies Azure Table Storage connection
+   - **Players API Status**: Tests player data endpoints
+   - **SignalR Hub Status**: Confirms real-time communication hub connectivity
+   - **Internet Connection Check**: External connectivity validation
+   - **Visual Status Indicators**: Color-coded status (green=healthy, red=unhealthy)
+   - **Manual Refresh**: On-demand health check execution
+   - **Detailed Error Messages**: Diagnostic information for troubleshooting
+
+**Service Layer Architecture**
+
+1. **GameLogicService** (Client-side)
+   - Core game mechanics: move validation, win detection, draw conditions
+   - Board state management and history tracking
+   - 4-in-a-row pattern detection (horizontal, vertical, diagonal)
+   - Turn management and game reset functionality
+
+2. **AILogicService** (Client-side)
+   - AI move calculation based on selected difficulty
+   - Strategy pattern implementation for extensible AI algorithms
+   - Easy: Random moves with 30% strategic blocking
+   - Medium: Threat detection and offensive pattern recognition
+   - Hard: Minimax algorithm with alpha-beta pruning
+
+3. **SignalRService** (Client-side)
+   - Real-time multiplayer connection management
+   - Game room creation and joining
+   - Move broadcasting to all connected players
+   - Automatic reconnection handling
+
+4. **StatisticsService** (Client & Server)
+   - Client: HTTP calls to statistics API endpoints
+   - Server: Data retrieval from Azure Table Storage
+   - Leaderboard calculation and ranking
+   - Player performance aggregation
+
+5. **StorageService** (Server-side)
+   - Azure Table Storage abstraction layer
+   - CRUD operations for player statistics
+   - Connection string configuration management
+   - Support for both Azurite (local) and Azure (production)
+
+**Multiplayer Infrastructure**
+- **GameHub** (SignalR Hub): Manages real-time game sessions, player connections, and move synchronization
+- **Game State Synchronization**: Ensures consistent board state across all connected clients
+- **Lobby System**: (Planned) Player matching and game room management
+
+**Cross-Cutting Concerns**
+- **Health Monitoring**: `/api/health` endpoint with detailed component health status
+- **Structured Logging**: Serilog with Application Insights sink for cloud telemetry
+- **Error Handling**: Global exception handling with RFC 7807 Problem Details
+- **Configuration Management**: Environment-specific settings in appsettings.json
+
 ## 2. Product Vision & Goals
 
 ### Vision Statement

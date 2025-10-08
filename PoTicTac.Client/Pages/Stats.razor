@@ -1,84 +1,145 @@
 @page "/stats"
-@layout MainLayout
 @using PoTicTac.Client.Services
 @using PoTicTac.Client.Models
-@using Radzen
-@using Radzen.Blazor
-@using Radzen.Blazor.Rendering // Add this line
 @inject StatisticsService StatisticsService
-@inject DialogService DialogService
-@inject NotificationService NotificationService
+@inject NavigationManager Navigation
 
 <PageTitle>PoTicTac - Statistics</PageTitle>
 
-<h3>Player Statistics</h3>
+<link href="css/stats.css" rel="stylesheet" />
 
-@if (isLoading)
-{
-    <p><em>Loading statistics...</em></p>
-}
-else if (playerStats == null || !playerStats.Any())
-{
-    <p><em>No player statistics available.</em></p>
-}
-else
-{
-    <RadzenCard Style="margin-bottom: 20px;">
-        <h4>Overall Summary</h4>
-        <div class="row">
-            <div class="col-md-3">
-                <RadzenCard>
-                    <h5>Total Games</h5>
-                    <p>@totalGames</p>
-                </RadzenCard>
+<div class="stats-container">
+    <h1 class="stats-title">Player Statistics</h1>
+
+    @if (isLoading)
+    {
+        <div class="stats-loading">
+            <p>Loading statistics...</p>
+        </div>
+    }
+    else if (playerStats == null || !playerStats.Any())
+    {
+        <div class="stats-content">
+            <div class="no-data-message">
+                <h3>No Statistics Available</h3>
+                <p>Play some games to see your statistics!</p>
+                <p>Statistics will be saved automatically after each game.</p>
             </div>
-            <div class="col-md-3">
-                <RadzenCard>
-                    <h5>Total Wins</h5>
-                    <p>@totalWins</p>
-                </RadzenCard>
-            </div>
-            <div class="col-md-3">
-                <RadzenCard>
-                    <h5>Total Losses</h5>
-                    <p>@totalLosses</p>
-                </RadzenCard>
-            </div>
-            <div class="col-md-3">
-                <RadzenCard>
-                    <h5>Total Draws</h5>
-                    <p>@totalDraws</p>
-                </RadzenCard>
+            <div style="text-align: center;">
+                <a href="/" class="stats-back-button">Back to Game</a>
             </div>
         </div>
-    </RadzenCard>
+    }
+    else
+    {
+        <div class="stats-content">
+            <!-- Overall Summary Section -->
+            <div class="stats-section">
+                <h2 class="stats-section-title">Overall Summary</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-card-title">Total Games</div>
+                        <div class="summary-card-value">@totalGames</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-title">Total Wins</div>
+                        <div class="summary-card-value">@totalWins</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-title">Total Losses</div>
+                        <div class="summary-card-value">@totalLosses</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-title">Total Draws</div>
+                        <div class="summary-card-value">@totalDraws</div>
+                    </div>
+                </div>
+            </div>
 
-    <h4>Individual Player Stats</h4>
-    <RadzenDataGrid Data="@playerStats" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="10"
-                    TItem="PlayerStatsDto" ColumnWidth="200px">
-        <Columns>
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Name" Title="Player Name" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.TotalGames" Title="Games Played" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Wins" Title="Wins" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Losses" Title="Losses" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Draws" Title="Draws" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinRate" Title="Win Rate" FormatString="{0:P0}" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinStreak" Title="Win Streak" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.AverageMovesPerGame" Title="Avg. Moves" FormatString="{0:N2}" />
-        </Columns>
-    </RadzenDataGrid>
+            <!-- Leaderboard Section -->
+            <div class="stats-section">
+                <h2 class="stats-section-title">Leaderboard - Top Players</h2>
+                @if (leaderboard != null && leaderboard.Any())
+                {
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Win Rate</th>
+                                <th>Games</th>
+                                <th>Wins</th>
+                                <th>Losses</th>
+                                <th>Draws</th>
+                                <th>Streak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < leaderboard.Count; i++)
+                            {
+                                var player = leaderboard[i];
+                                var rankClass = i == 0 ? "leaderboard-rank-1" : i == 1 ? "leaderboard-rank-2" : i == 2 ? "leaderboard-rank-3" : "leaderboard-rank";
+                                <tr>
+                                    <td class="@rankClass">@(i + 1)</td>
+                                    <td>@player.Name</td>
+                                    <td>@((player.Stats.WinRate * 100).ToString("F1"))%</td>
+                                    <td>@player.Stats.TotalGames</td>
+                                    <td>@player.Stats.Wins</td>
+                                    <td>@player.Stats.Losses</td>
+                                    <td>@player.Stats.Draws</td>
+                                    <td>@player.Stats.WinStreak</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p style="text-align: center; color: #0f0;">No leaderboard data available.</p>
+                }
+            </div>
 
-    <h4 style="margin-top: 20px;">Leaderboard (Top 10 by Win Rate)</h4>
-    <RadzenDataGrid Data="@leaderboard" AllowFiltering="false" AllowSorting="false" AllowPaging="false"
-                    TItem="PlayerStatsDto" ColumnWidth="200px">
-        <Columns>
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Name" Title="Player Name" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.WinRate" Title="Win Rate" FormatString="{0:P0}" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.TotalGames" Title="Games Played" />
-            <RadzenDataGridColumn TItem="PlayerStatsDto" Property="Stats.Wins" Title="Wins" />
-        </Columns>
-    </RadzenDataGrid>
-}
+            <!-- All Players Section -->
+            <div class="stats-section">
+                <h2 class="stats-section-title">All Players</h2>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Games</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Draws</th>
+                            <th>Win Rate</th>
+                            <th>Win Streak</th>
+                            <th>Avg Moves</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var player in playerStats.OrderByDescending(p => p.Stats.WinRate))
+                        {
+                            <tr>
+                                <td>@player.Name</td>
+                                <td>@player.Stats.TotalGames</td>
+                                <td>@player.Stats.Wins</td>
+                                <td>@player.Stats.Losses</td>
+                                <td>@player.Stats.Draws</td>
+                                <td>@((player.Stats.WinRate * 100).ToString("F1"))%</td>
+                                <td>@player.Stats.WinStreak</td>
+                                <td>@player.Stats.AverageMovesPerGame.ToString("F1")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Back Button -->
+            <div style="text-align: center;">
+                <a href="/" class="stats-back-button">Back to Game</a>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
     private List<PlayerStatsDto>? playerStats;
@@ -92,12 +153,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadStatistics();
+    }
+
+    private async Task LoadStatistics()
+    {
+        isLoading = true;
         try
         {
             playerStats = await StatisticsService.GetAllPlayerStatistics();
             leaderboard = await StatisticsService.GetLeaderboard(10);
 
-            if (playerStats != null)
+            if (playerStats != null && playerStats.Any())
             {
                 totalGames = playerStats.Sum(p => p.Stats.TotalGames);
                 totalWins = playerStats.Sum(p => p.Stats.Wins);
@@ -107,8 +174,10 @@ else
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = $"Failed to load statistics: {ex.Message}", Duration = 5000 });
             Console.WriteLine($"Error loading statistics: {ex.Message}");
+            // Set empty lists to avoid null reference
+            playerStats = new List<PlayerStatsDto>();
+            leaderboard = new List<PlayerStatsDto>();
         }
         finally
         {

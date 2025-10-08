@@ -1,0 +1,241 @@
+/* Stats page - Retro arcade styling matching main game */
+
+.stats-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #0f0;
+    font-family: 'Press Start 2P', monospace;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.stats-title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0,
+                 0 0 20px #0f0,
+                 0 0 30px #0f0;
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px #0f0,
+                     0 0 20px #0f0,
+                     0 0 30px #0f0;
+    }
+    to {
+        text-shadow: 0 0 20px #0f0,
+                     0 0 30px #0f0,
+                     0 0 40px #0f0;
+    }
+}
+
+.stats-content {
+    width: 100%;
+    max-width: 1200px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #0f0;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    padding: 2rem;
+}
+
+.stats-section {
+    margin-bottom: 3rem;
+}
+
+.stats-section-title {
+    font-size: 1.5rem;
+    color: #0f0;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 5px #0f0;
+    border-bottom: 2px solid #0f0;
+    padding-bottom: 0.5rem;
+}
+
+/* Summary cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background-color: #000;
+    border: 2px solid #0f0;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    transform: translateY(-5px);
+}
+
+.summary-card-title {
+    font-size: 0.8rem;
+    color: #0f0;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.summary-card-value {
+    font-size: 2rem;
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+}
+
+/* Data table styling */
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.7rem;
+}
+
+.stats-table th {
+    background-color: #000;
+    color: #0f0;
+    padding: 1rem;
+    text-align: left;
+    border: 2px solid #0f0;
+    text-shadow: 0 0 5px #0f0;
+}
+
+.stats-table td {
+    padding: 0.8rem 1rem;
+    border: 1px solid #0f0;
+    color: #0f0;
+}
+
+.stats-table tbody tr {
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.stats-table tbody tr:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.stats-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 255, 0, 0.05);
+}
+
+/* Loading and empty states */
+.stats-loading, .stats-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #0f0;
+    font-size: 1rem;
+}
+
+.stats-empty {
+    border: 2px solid #0f0;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Back button */
+.stats-back-button {
+    margin-top: 2rem;
+    padding: 1rem 2rem;
+    background-color: #000;
+    color: #0f0;
+    border: 2px solid #0f0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.stats-back-button:hover {
+    background-color: #0f0;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    transform: scale(1.05);
+}
+
+/* Leaderboard specific styling */
+.leaderboard-rank {
+    font-weight: bold;
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+}
+
+.leaderboard-rank-1 {
+    color: #ffd700;
+    text-shadow: 0 0 10px #ffd700;
+}
+
+.leaderboard-rank-2 {
+    color: #c0c0c0;
+    text-shadow: 0 0 10px #c0c0c0;
+}
+
+.leaderboard-rank-3 {
+    color: #cd7f32;
+    text-shadow: 0 0 10px #cd7f32;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .stats-title {
+        font-size: 1.5rem;
+    }
+
+    .stats-section-title {
+        font-size: 1rem;
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-table {
+        font-size: 0.6rem;
+    }
+
+    .stats-table th,
+    .stats-table td {
+        padding: 0.5rem;
+    }
+
+    .stats-back-button {
+        font-size: 0.6rem;
+        padding: 0.8rem 1.5rem;
+    }
+}
+
+/* No data message styling */
+.no-data-message {
+    text-align: center;
+    padding: 3rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #0f0;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    margin: 2rem 0;
+}
+
+.no-data-message h3 {
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+    margin-bottom: 1rem;
+}
+
+.no-data-message p {
+    color: #0f0;
+    font-size: 0.7rem;
+    line-height: 1.5;
+}

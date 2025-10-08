@@ -1,0 +1,246 @@
+/* Diagnostics page - Retro arcade styling matching main game */
+
+.diag-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #0f0;
+    font-family: 'Press Start 2P', monospace;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.diag-title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0,
+                 0 0 20px #0f0,
+                 0 0 30px #0f0;
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px #0f0,
+                     0 0 20px #0f0,
+                     0 0 30px #0f0;
+    }
+    to {
+        text-shadow: 0 0 20px #0f0,
+                     0 0 30px #0f0,
+                     0 0 40px #0f0;
+    }
+}
+
+.diag-content {
+    width: 100%;
+    max-width: 1000px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #0f0;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    padding: 2rem;
+}
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.health-item {
+    background-color: #000;
+    border: 2px solid #0f0;
+    padding: 1.5rem;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.health-item:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    transform: translateY(-3px);
+}
+
+.health-item h4 {
+    font-size: 0.9rem;
+    color: #0f0;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 5px #0f0;
+    border-bottom: 1px solid #0f0;
+    padding-bottom: 0.5rem;
+}
+
+.health-item p {
+    font-size: 0.7rem;
+    margin-bottom: 0.5rem;
+    color: #0f0;
+}
+
+.health-item small {
+    font-size: 0.5rem;
+    color: rgba(0, 255, 0, 0.7);
+    line-height: 1.4;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Status indicators */
+.status-healthy {
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+    font-weight: bold;
+}
+
+.status-unhealthy {
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+    font-weight: bold;
+}
+
+.status-checking {
+    color: #ffa500;
+    text-shadow: 0 0 10px #ffa500;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Actions section */
+.diag-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.diag-button {
+    padding: 1rem 2rem;
+    background-color: #000;
+    color: #0f0;
+    border: 2px solid #0f0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.diag-button:hover {
+    background-color: #0f0;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    transform: scale(1.05);
+}
+
+.diag-button:active {
+    transform: scale(0.98);
+}
+
+.diag-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.diag-button:disabled:hover {
+    background-color: #000;
+    color: #0f0;
+    transform: none;
+}
+
+/* Health indicator badges */
+.health-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid;
+    font-size: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.health-badge-healthy {
+    color: #0f0;
+    border-color: #0f0;
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+.health-badge-unhealthy {
+    color: #ff0000;
+    border-color: #ff0000;
+    background-color: rgba(255, 0, 0, 0.1);
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+}
+
+.health-badge-checking {
+    color: #ffa500;
+    border-color: #ffa500;
+    background-color: rgba(255, 165, 0, 0.1);
+    box-shadow: 0 0 5px rgba(255, 165, 0, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .diag-title {
+        font-size: 1.5rem;
+    }
+
+    .health-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .health-item h4 {
+        font-size: 0.7rem;
+    }
+
+    .health-item p {
+        font-size: 0.6rem;
+    }
+
+    .health-item small {
+        font-size: 0.45rem;
+    }
+
+    .diag-button {
+        font-size: 0.6rem;
+        padding: 0.8rem 1.5rem;
+    }
+
+    .diag-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .diag-button {
+        width: 100%;
+    }
+}
+
+/* Loading spinner */
+.diag-loading {
+    text-align: center;
+    padding: 3rem;
+    color: #0f0;
+    font-size: 0.9rem;
+}
+
+.diag-loading::after {
+    content: '...';
+    animation: ellipsis 1.5s infinite;
+}
+
+@keyframes ellipsis {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+}

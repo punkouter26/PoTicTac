@@ -17,8 +17,14 @@ public class StorageService
 
         try
         {
-            var tableServiceClient = new TableServiceClient("UseDevelopmentStorage=true");
-            _logger.LogInformation("Created TableServiceClient for development storage");
+            var connectionString = configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException("AZURE_STORAGE_CONNECTION_STRING is not configured");
+            }
+
+            var tableServiceClient = new TableServiceClient(connectionString);
+            _logger.LogInformation("Created TableServiceClient with connection string from configuration");
 
             _tableClient = tableServiceClient.GetTableClient(TableName);
             _logger.LogInformation("Created TableClient for table: {TableName}", TableName);

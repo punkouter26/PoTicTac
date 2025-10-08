@@ -1,67 +1,26 @@
-1. Core Principles
-Modern Workflow: Use modern .NET 9 practices, prioritizing the Ardalis Clean Architecture template. The application will be a Blazor WebAssembly project hosted by a .NET API.
-CLI First: Execute all possible actions via the command line (dotnet, az, gh).
-Run API Only: When instructed to run the app, only start the API project (PoAppName.Api).
-Clean Code: Apply SOLID principles and GoF design patterns. Code should be self-documenting, but add comments to explain complex logic or design choices.
-Refactoring: Propose refactoring for any .cs or .razor file exceeding 500 lines.
-Proactive Cleanup: Before generating rm or dotnet remove commands, list any identified unused files, code, or project references with a justification and await approval.
+Coding Rules for Blazor WebAssembly / .NET (Check PRD.MD for app description / Check STEPS.MD for 10 high level steps to complete the app, Check Diagrams folder .MMD files for quick overview of app)
+1. Guiding Philosophy & Standards
+Enforce Strict Technology & Ports: Use .NET 9.0 exclusively. The API must run on HTTP 5000/HTTPS 5001 and host the Blazor Wasm application.
+Prioritize Simplicity & Principles: Enforce SOLID principles and Design Patterns (GoF, etc.) throughout the codebase. Maintain simplicity, conciseness, and ease of understanding via proactive refactoring.
+Automate Everything: Automate all operations (build, deploy, etc.) using CLI tools (dotnet, az, gh, azd, etc.).
 
-2. Project Scaffolding & Configuration
-Naming Convention: All projects and the solution must be prefixed with Po.. The solution will be named PoAppName, based on the application name provided in the initial prompt.
-Initial Script: For a new project, generate a single shell script that:
-Creates the complete solution structure using ardalis/clean-architecture.
-Updates all projects to target .NET 9.0.
-Generates a standard .gitignore file.
-Local Environment: Configure the local development environment:
-launch.json: Set up to launch and debug only the PoAppName.Api project.
-launchSettings.json: Set applicationUrl to https://localhost:5001;http://localhost:5000.
+2. Architecture & Maintenance
+Strictly Enforce Architectural Style: Employ Vertical Slice Architecture with Clean Architecture boundaries where complexity dictates.
+Single Responsibility: Limit all files to ≤500 lines by refactoring into focused components.
+Project Structure & Naming: Use the standard layout (/src, /tests, /docs, /scripts). Prefix all projects with **Po.AppName** (e.g., Po.AppName.Api).
+Do not create additional .md files beyond PRD.MD STEPS.MD README.MD or .ps1 files or summary docs
 
-3. Backend Architecture & API Design
-Architecture: Use the Ardalis Clean Architecture as the foundation. For features within the Application layer, implement Vertical Slice Architecture.
-API Style:
-Use Minimal APIs for simple, resource-based endpoints.
-Use Controllers for complex operations involving multiple services.
-Developer Experience: Design API endpoints to be easily tested via the Swagger UI and replicated with curl commands.
-Design Patterns: When using a GoF pattern (e.g., Repository, Mediator), add a comment directly above the implementation stating the pattern's name and its purpose.
-Global Exception Handling: Implement middleware in the API to handle exceptions globally. It must use Serilog to log full exception details and return a standardized Problem Details (RFC 7807) response.
-API Documentation: Configure the API project with Swagger/OpenAPI support from inception using AddSwaggerGen and UseSwaggerUI.
+3. API, Observability, & Error Handling
+Mandate API Observability: Enable Swagger/OpenAPI documentation from inception and expose a mandatory /api/health endpoint for readiness/liveness checks.
+Fix and Enforce Error Handling: Implement global error-handling using RFC 7807 Problem Details (via Serilog). NEVER return raw exception messages or stack traces to callers.
 
-4. Frontend Architecture (Blazor)
-Component Strategy: Start with built-in Blazor components. For complex UI like data grids or charts, proactively suggest and use the Radzen.Blazor library.
-State Management:
-Use standard parameters and events for component-level state.
-For state shared across non-related components, propose a scoped, cascaded service as a state container.
-Diagnostics Page: Every application must include a diagnostics page at the /diag route.
-This page will display the connection status of critical dependencies (Database, external APIs, etc.).
-It will fetch data from a /healthz API endpoint, implemented using .NET's built-in Health Check features.
+4. Data Persistence & Frontend
+Default Data Persistence & Naming: Default to Azure Table Storage (use Azurite locally); only use Azure SQL/Cosmos DB with tech-lead approval. Name tables using the pattern: PoAppName[TableName].
+Frontend Components: Start with built-in Blazor components; adopt Radzen.Blazor only for advanced scenarios.
 
-5. Data & Persistence
-ORM: Use Entity Framework Core.
-Data Access: Implement the Repository Pattern in the Infrastructure project to abstract data access from application logic.
-Azure Storage:
-Use Azurite for local development emulation.
-Azure Storage Tables must be named PoAppName[TableName] (e.g., PoAppNameOrders).
+5. Testing & Workflow
+Mandate Test-Driven Development (TDD): Always follow the TDD cycle: Write a failing xUnit test first before implementing code. Maintain separate unit, integration, and functional tests.
+Execution and Documentation Directive: Always run the API project for execution. Refer to and mark steps complete in STEPS.MD as development progresses (if the file exists).
+Create E2E tests with Playwright MCP as needed to cover the main application functionality
 
-6. Testing Strategy
-Frameworks: Use xUnit for testing, FluentAssertions for assertions, and NSubstitute for mocking.
-Project Structure: Maintain separate projects for test types: PoAppName.UnitTests, PoAppName.IntegrationTests, and PoAppName.FunctionalTests.
-Test-First Workflow: Follow this exact sequence for all new features:
-Propose changes to the Domain and Application layers. Await approval.
-Upon approval, write the Application layer services/handlers.
-Immediately write Integration Tests covering the happy path, validation failures, and edge cases. Await confirmation that tests pass.
-Once tests are confirmed, implement the API endpoint and Blazor UI.
 
-7. DevOps & Operations
-Secrets Management:
-Local: Use appsettings.development.json.
-Azure: Use Azure App Service Application Settings or Key Vault to inject secrets as environment variables.
-Logging: Implement Serilog with two sinks:
-Console Sink: For real-time development feedback.
-File Sink: Log at Verbose level to src/PoAppName.Api/log.txt. The file must be overwritten on each application run.
-Containerization: For every new solution, generate:
-A multi-stage Dockerfile for the API project.
-A docker-compose.yml file defining services for the API and an Azurite instance for a complete containerized local environment.
-
-8. Reference Architecture
-Use the fullstackhero/dotnet-starter-kit repository as an architectural reference.
-Review any Mermaid diagrams in the project's Diagrams folder to understand the structure.

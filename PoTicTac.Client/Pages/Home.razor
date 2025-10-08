@@ -129,10 +129,11 @@
         }
     }
 
-    private async Task OnDifficultyChanged(Difficulty newDifficulty)
+    private Task OnDifficultyChanged(Difficulty newDifficulty)
     {
         difficulty = newDifficulty;
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
     private async Task HandleCellClick((int Row, int Col) move)

@@ -57,11 +57,9 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in all environments for API testing
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseSerilogRequestLogging(); // Add this to log HTTP requests
 
@@ -85,3 +83,6 @@ app.MapHealthChecks("/health");
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+// Make Program class accessible for integration tests
+public partial class Program { }
