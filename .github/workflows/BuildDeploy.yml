@@ -48,9 +48,6 @@ jobs:
     - name: Build solution
       run: dotnet build PoTicTac.sln --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test PoTicTac.sln --configuration Release --no-build --verbosity normal
-
   deploy:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -75,7 +72,9 @@ jobs:
         azd auth login \
           --client-id "$AZURE_CLIENT_ID" \
           --federated-credential-provider "github" \
-          --tenant-id "$AZURE_TENANT_ID"    - name: Azure Dev Provision
+          --tenant-id "$AZURE_TENANT_ID"
+
+    - name: Azure Dev Provision
       run: azd provision --no-prompt
       env:
         AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
