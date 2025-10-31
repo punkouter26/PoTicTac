@@ -18,7 +18,7 @@ public class HardAIStrategy : IAIStrategy
     private int[] FindBestMove(PlayerType[,] board, PlayerType player)
     {
         int boardSize = board.GetLength(0);
-        
+
         // Optimization: If board is empty, take center
         if (IsEmptyBoard(board))
         {
@@ -38,12 +38,12 @@ public class HardAIStrategy : IAIStrategy
 
         // Evaluate moves with priority ordering (center and adjacent cells first)
         var moves = GetOrderedMoves(board, player);
-        
+
         foreach (var move in moves.Take(Math.Min(10, moves.Count))) // Limit to top 10 moves for performance
         {
             int i = move[0];
             int j = move[1];
-            
+
             board[i, j] = player;
             int score = Minimax(board, 0, false, player, int.MinValue, int.MaxValue);
             board[i, j] = PlayerType.None;
@@ -118,7 +118,7 @@ public class HardAIStrategy : IAIStrategy
                     int distanceFromCenter = Math.Abs(i - center) + Math.Abs(j - center);
                     int adjacentPieces = CountAdjacentPieces(board, i, j, player);
                     int priority = (100 - distanceFromCenter) + (adjacentPieces * 50);
-                    
+
                     moves.Add((new[] { i, j }, priority));
                 }
             }
@@ -155,7 +155,7 @@ public class HardAIStrategy : IAIStrategy
         int boardSize = board.GetLength(0);
         var chars = new char[boardSize * boardSize];
         int index = 0;
-        
+
         for (int i = 0; i < boardSize; i++)
         {
             for (int j = 0; j < boardSize; j++)
@@ -168,7 +168,7 @@ public class HardAIStrategy : IAIStrategy
                 };
             }
         }
-        
+
         return new string(chars);
     }
 
@@ -221,7 +221,7 @@ public class HardAIStrategy : IAIStrategy
                         board[i, j] = PlayerType.None;
                         bestScore = Math.Max(score, bestScore);
                         alpha = Math.Max(alpha, bestScore);
-                        
+
                         // Alpha-beta pruning
                         if (beta <= alpha)
                         {
@@ -248,7 +248,7 @@ public class HardAIStrategy : IAIStrategy
                         board[i, j] = PlayerType.None;
                         bestScore = Math.Min(score, bestScore);
                         beta = Math.Min(beta, bestScore);
-                        
+
                         // Alpha-beta pruning
                         if (beta <= alpha)
                         {
@@ -294,7 +294,7 @@ public class HardAIStrategy : IAIStrategy
     {
         int score = 0;
         int boardSize = board.GetLength(0);
-        
+
         // Check horizontal, vertical, and diagonal lines
         int[][] directions = new int[][] {
             new[] {0, 1},   // Horizontal
@@ -307,42 +307,65 @@ public class HardAIStrategy : IAIStrategy
         {
             int count = 1; // Current piece
             int empty = 0;
-            
+
             // Check in positive direction
             for (int k = 1; k < 3; k++)
             {
                 int newRow = row + dir[0] * k;
                 int newCol = col + dir[1] * k;
                 if (newRow < 0 || newRow >= boardSize || newCol < 0 || newCol >= boardSize)
+                {
                     break;
+                }
+
                 if (board[newRow, newCol] == player)
+                {
                     count++;
+                }
                 else if (board[newRow, newCol] == PlayerType.None)
+                {
                     empty++;
+                }
                 else
+                {
                     break;
+                }
             }
-            
+
             // Check in negative direction
             for (int k = 1; k < 3; k++)
             {
                 int newRow = row - dir[0] * k;
                 int newCol = col - dir[1] * k;
                 if (newRow < 0 || newRow >= boardSize || newCol < 0 || newCol >= boardSize)
+                {
                     break;
+                }
+
                 if (board[newRow, newCol] == player)
+                {
                     count++;
+                }
                 else if (board[newRow, newCol] == PlayerType.None)
+                {
                     empty++;
+                }
                 else
+                {
                     break;
+                }
             }
-            
+
             // Score based on potential
             if (count >= 2)
+            {
                 score += count * count * 10; // Favor longer sequences
+            }
+
             if (count >= 1 && empty >= 2)
+            {
                 score += empty * 2; // Favor open positions
+            }
         }
 
         return score;
@@ -355,7 +378,9 @@ public class HardAIStrategy : IAIStrategy
             for (int j = 0; j < board.GetLength(1); j++)
             {
                 if (board[i, j] != PlayerType.None)
+                {
                     return false;
+                }
             }
         }
         return true;
@@ -367,22 +392,30 @@ public class HardAIStrategy : IAIStrategy
         for (int i = 0; i < 3; i++)
         {
             if (board[i, 0] != PlayerType.None && board[i, 0] == board[i, 1] && board[i, 1] == board[i, 2])
+            {
                 return board[i, 0];
+            }
         }
 
         // Check columns
         for (int j = 0; j < 3; j++)
         {
             if (board[0, j] != PlayerType.None && board[0, j] == board[1, j] && board[1, j] == board[2, j])
+            {
                 return board[0, j];
+            }
         }
 
         // Check diagonals
         if (board[0, 0] != PlayerType.None && board[0, 0] == board[1, 1] && board[1, 1] == board[2, 2])
+        {
             return board[0, 0];
+        }
 
         if (board[0, 2] != PlayerType.None && board[0, 2] == board[1, 1] && board[1, 1] == board[2, 0])
+        {
             return board[0, 2];
+        }
 
         return PlayerType.None;
     }
@@ -394,7 +427,9 @@ public class HardAIStrategy : IAIStrategy
             for (int j = 0; j < board.GetLength(1); j++)
             {
                 if (board[i, j] == PlayerType.None)
+                {
                     return false;
+                }
             }
         }
         return true;

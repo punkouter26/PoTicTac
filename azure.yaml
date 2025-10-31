@@ -4,6 +4,12 @@ name: PoTicTac
 metadata:
   template: PoTicTac@0.0.1-beta
 
+# Infrastructure configuration
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
 services:
   web:
     project: ./PoTicTacServer

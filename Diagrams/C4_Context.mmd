@@ -1,0 +1,25 @@
+graph TB
+    User[👤 Player] -->|Plays Game| PoTicTac[PoTicTac Web Application<br/>Blazor WASM + ASP.NET Core]
+    
+    PoTicTac -->|Reads/Writes<br/>Player Stats| TableStorage[(Azure Table Storage<br/>NoSQL Database)]
+    PoTicTac -->|Sends<br/>Telemetry| AppInsights[Application Insights<br/>Monitoring & Diagnostics]
+    
+    PoTicTac -->|Logs Events| LogAnalytics[Log Analytics Workspace<br/>Centralized Logging]
+    
+    AppInsights -.->|Aggregates| LogAnalytics
+    
+    User -->|Views Stats<br/>Checks Health| PoTicTac
+    User -->|Plays<br/>Multiplayer| PoTicTac
+    
+    Admin[👨‍💼 DevOps Admin] -->|Monitors<br/>Troubleshoots| AppInsights
+    Admin -->|Queries<br/>Logs| LogAnalytics
+    Admin -->|Deploys<br/>Manages| PoTicTac
+    
+    style PoTicTac fill:#0f4,stroke:#0f0,stroke-width:3px,color:#000
+    style TableStorage fill:#08f,stroke:#04f,stroke-width:2px,color:#fff
+    style AppInsights fill:#f80,stroke:#f60,stroke-width:2px,color:#000
+    style LogAnalytics fill:#f80,stroke:#f60,stroke-width:2px,color:#000
+    style User fill:#fff,stroke:#0f0,stroke-width:2px,color:#000
+    style Admin fill:#fff,stroke:#0f0,stroke-width:2px,color:#000
+    
+    classDef external fill:#ddd,stroke:#999,stroke-width:2px,color:#000

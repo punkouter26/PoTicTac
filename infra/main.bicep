@@ -3,25 +3,33 @@ targetScope = 'subscription'
 @minLength(1)
 @maxLength(64)
 @description('Name of the environment (used for resource group and resource naming)')
-param environmentName string = 'PoTicTac'
+param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
-param location string = 'eastus2'
+param location string
 
-// Service principal ID for RBAC assignments (optional)
+@allowed([
+  'dev'
+  'prod'
+])
+@description('Environment type - determines App Service Plan selection')
+param environmentType string = 'dev'
+
+@description('Service principal ID for RBAC assignments (optional)')
 param principalId string = ''
 
-// Set to true to use existing shared App Service Plan
-param useExistingAppServicePlan bool = true
-param existingAppServicePlanName string = 'PoShared'
-param existingAppServicePlanResourceGroup string = 'PoShared'
-param deployAppService bool = false // Set to false to skip App Service deployment in Bicep
+@description('Tags to apply to all resources')
+param tags object = {
+  environment: environmentType
+  application: 'PoTicTac'
+}
 
 // Resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: environmentName
+  name: '${environmentName}-rg'
   location: location
+  tags: tags
 }
 
 // Deploy resources
@@ -31,20 +39,18 @@ module resources './resources.bicep' = {
   params: {
     location: location
     resourceName: environmentName
+    environmentType: environmentType
     principalId: principalId
-    useExistingAppServicePlan: useExistingAppServicePlan
-    existingAppServicePlanName: existingAppServicePlanName
-    existingAppServicePlanResourceGroup: existingAppServicePlanResourceGroup
-    deployAppService: deployAppService
+    tags: tags
   }
 }
 
 // Outputs
 output AZURE_LOCATION string = location
 output AZURE_RESOURCE_GROUP string = rg.name
+output AZURE_KEY_VAULT_ENDPOINT string = resources.outputs.keyVaultEndpoint
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = resources.outputs.applicationInsightsConnectionString
-@secure()
-output AZURE_STORAGE_CONNECTION_STRING string = resources.outputs.storageConnectionString
 output AZURE_STORAGE_ACCOUNT_NAME string = resources.outputs.storageAccountName
 output APP_SERVICE_NAME string = resources.outputs.appServiceName
 output APP_SERVICE_URL string = resources.outputs.appServiceUrl
+output APP_SERVICE_PRINCIPAL_ID string = resources.outputs.appServicePrincipalId

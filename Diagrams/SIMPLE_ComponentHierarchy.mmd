@@ -1,0 +1,14 @@
+graph TD
+    App[App.razor] --> Router[Router]
+    Router --> Layout[MainLayout]
+    Layout --> Nav[NavMenu]
+    Layout --> Home[Home.razor]
+    Layout --> Stats[Stats.razor]
+    Layout --> Diag[Diag.razor]
+    
+    Home --> Board[GameBoard]
+    Home --> Selector[DifficultySelector]
+    
+    style App fill:#512BD4,stroke:#0f0,stroke-width:2px
+    style Home fill:#61DAFB,stroke:#0f0,stroke-width:2px
+    style Board fill:#0f4,stroke:#0f0,stroke-width:2px

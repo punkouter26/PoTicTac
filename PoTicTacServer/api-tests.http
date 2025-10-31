@@ -1,0 +1,248 @@
+### PoTicTac API Verification Tests
+### Use REST Client VS Code Extension or similar HTTP client
+### All tests include inline assertions
+
+@hostname = localhost
+@port = 5000
+@host = {{hostname}}:{{port}}
+@contentType = application/json
+
+###############################################
+# Health Check Endpoint
+###############################################
+
+### Test 1: Health Check - Should Return 200 OK
+# @name healthCheck
+GET http://{{host}}/api/health HTTP/1.1
+
+###
+# @assert {{healthCheck.response.status}} == 200
+# @assert {{healthCheck.response.headers.content-type}} includes application/json
+# @assert {{healthCheck.response.body.status}} == "Healthy"
+# @assert {{healthCheck.response.body.totalDuration}} > 0
+
+###############################################
+# Players Controller Tests
+###############################################
+
+### Test 2: Get All Players - Should Return 200 OK with Array
+# @name getAllPlayers
+GET http://{{host}}/api/players HTTP/1.1
+
+###
+# @assert {{getAllPlayers.response.status}} == 200
+# @assert {{getAllPlayers.response.headers.content-type}} includes application/json
+# @assert {{getAllPlayers.response.body}} isArray
+
+### Test 3: Get Leaderboard - Should Return 200 OK with Sorted Players
+# @name getLeaderboard
+GET http://{{host}}/api/players/leaderboard HTTP/1.1
+
+###
+# @assert {{getLeaderboard.response.status}} == 200
+# @assert {{getLeaderboard.response.headers.content-type}} includes application/json
+# @assert {{getLeaderboard.response.body}} isArray
+
+### Test 4: Get Player by ID - Should Return 200 OK
+# @name getPlayerById
+GET http://{{host}}/api/players/test-player-1 HTTP/1.1
+
+###
+# Response should be 200 (if exists) or 404 (if not exists)
+# @assert {{getPlayerById.response.status}} in [200, 404]
+
+### Test 5: Create Player - Should Return 201 Created
+# @name createPlayer
+POST http://{{host}}/api/players HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "id": "test-player-{{$randomInt}}",
+  "name": "Test Player {{$randomInt}}",
+  "stats": {
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "totalGames": 0
+  }
+}
+
+###
+# @assert {{createPlayer.response.status}} == 201
+# @assert {{createPlayer.response.headers.content-type}} includes application/json
+# @assert {{createPlayer.response.body.id}} != null
+# @assert {{createPlayer.response.body.name}} != null
+
+@newPlayerId = {{createPlayer.response.body.id}}
+
+### Test 6: Update Player Stats - Should Return 200 OK
+# @name updatePlayer
+PUT http://{{host}}/api/players/{{newPlayerId}} HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "id": "{{newPlayerId}}",
+  "name": "Updated Player Name",
+  "stats": {
+    "wins": 5,
+    "losses": 3,
+    "draws": 2,
+    "totalGames": 10
+  }
+}
+
+###
+# @assert {{updatePlayer.response.status}} == 200
+# @assert {{updatePlayer.response.body.stats.wins}} == 5
+# @assert {{updatePlayer.response.body.stats.totalGames}} == 10
+
+### Test 7: Record Win - Should Return 200 OK
+# @name recordWin
+POST http://{{host}}/api/players/{{newPlayerId}}/win HTTP/1.1
+
+###
+# @assert {{recordWin.response.status}} == 200
+# @assert {{recordWin.response.body.stats.wins}} > 5
+
+### Test 8: Record Loss - Should Return 200 OK
+# @name recordLoss
+POST http://{{host}}/api/players/{{newPlayerId}}/loss HTTP/1.1
+
+###
+# @assert {{recordLoss.response.status}} == 200
+# @assert {{recordLoss.response.body.stats.losses}} > 3
+
+### Test 9: Record Draw - Should Return 200 OK
+# @name recordDraw
+POST http://{{host}}/api/players/{{newPlayerId}}/draw HTTP/1.1
+
+###
+# @assert {{recordDraw.response.status}} == 200
+# @assert {{recordDraw.response.body.stats.draws}} > 2
+
+### Test 10: Delete Player - Should Return 204 No Content
+# @name deletePlayer
+DELETE http://{{host}}/api/players/{{newPlayerId}} HTTP/1.1
+
+###
+# @assert {{deletePlayer.response.status}} == 204
+
+### Test 11: Verify Delete - Should Return 404 Not Found
+# @name verifyDelete
+GET http://{{host}}/api/players/{{newPlayerId}} HTTP/1.1
+
+###
+# @assert {{verifyDelete.response.status}} == 404
+
+###############################################
+# Error Handling Tests
+###############################################
+
+### Test 12: Invalid Player ID - Should Return 404
+# @name invalidPlayerId
+GET http://{{host}}/api/players/non-existent-player-12345 HTTP/1.1
+
+###
+# @assert {{invalidPlayerId.response.status}} == 404
+
+### Test 13: Invalid Request Body - Should Return 400 Bad Request
+# @name invalidRequestBody
+POST http://{{host}}/api/players HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "invalid": "data"
+}
+
+###
+# @assert {{invalidRequestBody.response.status}} == 400
+
+### Test 14: Malformed JSON - Should Return 400 Bad Request
+# @name malformedJson
+POST http://{{host}}/api/players HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "id": "test",
+  "name": "incomplete
+
+###
+# @assert {{malformedJson.response.status}} == 400
+
+###############################################
+# Performance Tests
+###############################################
+
+### Test 15: Health Check Performance - Should Respond Quickly
+# @name healthPerformance
+GET http://{{host}}/api/health HTTP/1.1
+
+###
+# @assert {{healthPerformance.response.status}} == 200
+# @assert {{healthPerformance.response.time}} < 1000
+
+### Test 16: Get All Players Performance - Should Respond Quickly
+# @name getAllPlayersPerformance
+GET http://{{host}}/api/players HTTP/1.1
+
+###
+# @assert {{getAllPlayersPerformance.response.status}} == 200
+# @assert {{getAllPlayersPerformance.response.time}} < 2000
+
+###############################################
+# CORS and Security Headers Tests
+###############################################
+
+### Test 17: OPTIONS Request - Should Return Allowed Methods
+# @name optionsRequest
+OPTIONS http://{{host}}/api/players HTTP/1.1
+
+###
+# @assert {{optionsRequest.response.status}} in [200, 204]
+
+### Test 18: Security Headers - Should Include Security Headers
+# @name securityHeaders
+GET http://{{host}}/api/health HTTP/1.1
+
+###
+# @assert {{securityHeaders.response.headers.x-content-type-options}} != null
+
+###############################################
+# Batch Operations Test
+###############################################
+
+### Test 19: Create Multiple Players
+# @name createPlayer1
+POST http://{{host}}/api/players HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "id": "batch-player-1-{{$randomInt}}",
+  "name": "Batch Player 1",
+  "stats": {
+    "wins": 10,
+    "losses": 5,
+    "draws": 3,
+    "totalGames": 18
+  }
+}
+
+###
+# @assert {{createPlayer1.response.status}} == 201
+
+@batchPlayer1Id = {{createPlayer1.response.body.id}}
+
+### Test 20: Leaderboard Contains New Player
+# @name leaderboardCheck
+GET http://{{host}}/api/players/leaderboard HTTP/1.1
+
+###
+# @assert {{leaderboardCheck.response.status}} == 200
+# @assert {{leaderboardCheck.response.body.length}} > 0
+
+###############################################
+# Cleanup
+###############################################
+
+### Cleanup: Delete Batch Player
+DELETE http://{{host}}/api/players/{{batchPlayer1Id}} HTTP/1.1

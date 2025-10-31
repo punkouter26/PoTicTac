@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <!-- Coverage settings -->
+    <CoverletOutput>../coverage/</CoverletOutput>
+    <CoverletOutputFormat>cobertura,opencover,json</CoverletOutputFormat>
+    <Threshold>80</Threshold>
+    <ThresholdType>line,branch,method</ThresholdType>
+    <ThresholdStat>total</ThresholdStat>
+    
+    <!-- Exclude test projects and auto-generated files from coverage -->
+    <ExcludeByFile>**/*.Designer.cs,**/*.g.cs,**/*.g.i.cs</ExcludeByFile>
+    <ExcludeByAttribute>Obsolete,GeneratedCode,CompilerGenerated</ExcludeByAttribute>
+    
+    <!-- Include only source projects -->
+    <Include>[PoTicTac.*]*</Include>
+    <Exclude>[*.Tests]*,[*.IntegrationTests]*,[*.UnitTests]*,[*.E2ETests]*</Exclude>
+    
+    <!-- Report settings -->
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletReportFormat>cobertura</CoverletReportFormat>
+  </PropertyGroup>
+</Project>

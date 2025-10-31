@@ -1,52 +1,50 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using PoTicTac.Client.Models; // Assuming PlayerStatsDto will be defined here or similar
 
-namespace PoTicTac.Client.Services
+namespace PoTicTac.Client.Services;
+
+public class StatisticsService
 {
-    public class StatisticsService
+    private readonly HttpClient _httpClient;
+
+    public StatisticsService(HttpClient httpClient)
     {
-        private readonly HttpClient _httpClient;
+        _httpClient = httpClient;
+    }
 
-        public StatisticsService(HttpClient httpClient)
+    public async Task<List<PlayerStatsDto>?> GetAllPlayerStatistics()
+    {
+        try
         {
-            _httpClient = httpClient;
+            return await _httpClient.GetFromJsonAsync<List<PlayerStatsDto>>("api/Statistics");
         }
-
-        public async Task<List<PlayerStatsDto>?> GetAllPlayerStatistics()
+        catch (HttpRequestException e)
         {
-            try
-            {
-                return await _httpClient.GetFromJsonAsync<List<PlayerStatsDto>>("api/Statistics");
-            }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine($"Error getting all player statistics: {e.Message}");
-                return null;
-            }
-        }
-
-        public async Task<List<PlayerStatsDto>?> GetLeaderboard(int limit = 10)
-        {
-            try
-            {
-                return await _httpClient.GetFromJsonAsync<List<PlayerStatsDto>>($"api/Statistics/leaderboard?limit={limit}");
-            }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine($"Error getting leaderboard: {e.Message}");
-                return null;
-            }
+            Console.WriteLine($"Error getting all player statistics: {e.Message}");
+            return null;
         }
     }
 
-    // Define PlayerStatsDto for the client-side, mirroring the server-side DTO
-    public class PlayerStatsDto
+    public async Task<List<PlayerStatsDto>?> GetLeaderboard(int limit = 10)
     {
-        public string Name { get; set; } = string.Empty;
-        public PlayerStats Stats { get; set; } = new PlayerStats();
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<List<PlayerStatsDto>>($"api/Statistics/leaderboard?limit={limit}");
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine($"Error getting leaderboard: {e.Message}");
+            return null;
+        }
     }
+}
 
+// Define PlayerStatsDto for the client-side, mirroring the server-side DTO
+public class PlayerStatsDto
+{
+    public string Name { get; set; } = string.Empty;
+    public PlayerStats Stats { get; set; } = new PlayerStats();
 }

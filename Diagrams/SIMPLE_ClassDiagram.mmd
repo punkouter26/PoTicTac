@@ -1,0 +1,22 @@
+classDiagram
+    class GameBoardState {
+        +string[,] Board
+        +string CurrentPlayer
+        +GameStatus Status
+    }
+    
+    class PlayerStats {
+        +int Wins
+        +int Losses
+        +int Draws
+        +double WinRate
+    }
+    
+    class Move {
+        +int Row
+        +int Col
+        +string Player
+    }
+    
+    GameBoardState "1" --> "*" Move
+    PlayerStats "1" --> "*" Move

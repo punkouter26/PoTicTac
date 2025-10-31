@@ -1,0 +1,41 @@
+graph TB
+    subgraph "Azure Cloud"
+        subgraph "App Service Plan B1"
+            Client[Blazor WebAssembly Client<br/>C# WebAssembly Runtime<br/>Port: Browser]
+            API[ASP.NET Core Web API<br/>.NET 9 Runtime<br/>Port: 5000/5001]
+            Hub[SignalR Hub<br/>Real-Time Communication<br/>WebSocket Protocol]
+        end
+        
+        Storage[(Azure Table Storage<br/>PoTicTacPlayerStats Table<br/>NoSQL Key-Value Store)]
+        AI[Application Insights<br/>Telemetry & Monitoring<br/>KQL Queries]
+        Logs[Log Analytics Workspace<br/>Centralized Log Storage<br/>30-day Retention]
+    end
+    
+    subgraph "Client Browser"
+        Browser[Web Browser<br/>Chrome/Edge/Safari/Firefox]
+    end
+    
+    Browser -->|HTTPS GET| Client
+    Client -->|Blazor WASM<br/>Runs in Browser| Browser
+    
+    Client -->|HTTP/HTTPS<br/>REST API Calls| API
+    Client -->|WebSocket<br/>Real-Time Updates| Hub
+    
+    API -->|CRUD Operations<br/>Azure.Data.Tables SDK| Storage
+    API -->|Structured Logs<br/>Serilog Sink| AI
+    API -->|Orchestrates| Hub
+    
+    Hub -->|Broadcasts<br/>Game Moves| Client
+    
+    AI -->|Telemetry<br/>Aggregation| Logs
+    
+    style Client fill:#61DAFB,stroke:#0f0,stroke-width:3px,color:#000
+    style API fill:#512BD4,stroke:#0f0,stroke-width:3px,color:#fff
+    style Hub fill:#00D8FF,stroke:#0f0,stroke-width:3px,color:#000
+    style Storage fill:#0078D4,stroke:#04f,stroke-width:2px,color:#fff
+    style AI fill:#F25022,stroke:#f60,stroke-width:2px,color:#000
+    style Logs fill:#F25022,stroke:#f60,stroke-width:2px,color:#000
+    style Browser fill:#fff,stroke:#0f0,stroke-width:2px,color:#000
+    
+    classDef azure fill:#0078D4,stroke:#04f,stroke-width:2px,color:#fff
+    classDef monitoring fill:#F25022,stroke:#f60,stroke-width:2px

@@ -1,20 +1,24 @@
 param location string
 param resourceName string
+param environmentType string
 param principalId string = ''
-param useExistingAppServicePlan bool = false
-param existingAppServicePlanName string = 'PoShared'
-param existingAppServicePlanResourceGroup string = 'PoShared'
-param deployAppService bool = false
+param tags object = {}
+
+// Constants for shared resources
+var sharedResourceGroup = 'PoShared'
+var sharedAppServicePlanName = 'PoShared'
+var useSharedPlan = environmentType == 'dev'
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
-  name: resourceName
+  name: '${resourceName}-logs'
   location: location
+  tags: tags
   properties: {
     sku: {
-      name: 'PerGB2018' // Pay-as-you-go (cheapest option)
+      name: 'PerGB2018'
     }
-    retentionInDays: 30 // Minimum retention
+    retentionInDays: 30
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }
@@ -23,8 +27,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 
 // Application Insights
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: resourceName
+  name: '${resourceName}-ai'
   location: location
+  tags: tags
   kind: 'web'
   properties: {
     Application_Type: 'web'
@@ -37,10 +42,11 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 
 // Storage Account for Table Storage
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: toLower(replace(resourceName, '-', '')) // Storage account names must be lowercase and no hyphens
+  name: toLower(replace('${resourceName}st', '-', ''))
   location: location
+  tags: tags
   sku: {
-    name: 'Standard_LRS' // Cheapest option - Locally Redundant Storage
+    name: 'Standard_LRS'
   }
   kind: 'StorageV2'
   properties: {
@@ -51,71 +57,141 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
+// Diagnostic Settings for Storage Account
+resource storageDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'storage-diagnostics'
+  scope: storageAccount
+  properties: {
+    workspaceId: logAnalytics.id
+    metrics: [
+      {
+        category: 'Transaction'
+        enabled: true
+      }
+    ]
+  }
+}
+
 // Table Service (part of Storage Account)
 resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-01-01' = {
   parent: storageAccount
   name: 'default'
 }
 
-// Create the PlayerStats table
-resource playerStatsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-01-01' = {
-  parent: tableService
-  name: 'PlayerStats'
-}
-
-// RBAC role assignment for storage (if principalId is provided)
-resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(principalId)) {
-  name: guid(storageAccount.id, principalId, 'Storage Table Data Contributor')
-  scope: storageAccount
+// Diagnostic Settings for Table Service
+resource tableDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'table-diagnostics'
+  scope: tableService
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3') // Storage Table Data Contributor
-    principalId: principalId
-    principalType: 'ServicePrincipal'
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: 'StorageRead'
+        enabled: true
+      }
+      {
+        category: 'StorageWrite'
+        enabled: true
+      }
+      {
+        category: 'StorageDelete'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'Transaction'
+        enabled: true
+      }
+    ]
   }
 }
 
-// Reference existing shared App Service Plan (F1 Free Tier) from another resource group
-// Azure only allows one Free tier plan per subscription
-resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = {
-  name: existingAppServicePlanName
-  scope: resourceGroup(existingAppServicePlanResourceGroup)
+// Create the PoTicTacPlayerStats table
+resource playerStatsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-01-01' = {
+  parent: tableService
+  name: 'PoTicTacPlayerStats'
 }
 
-var appServicePlanId = useExistingAppServicePlan 
-  ? existingAppServicePlan.id
-  : newAppServicePlan.id
-
-// Create new App Service Plan if not using existing
-resource newAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = if (!useExistingAppServicePlan) {
-  name: resourceName
+// Azure Key Vault for secrets
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: '${resourceName}-kv'
   location: location
+  tags: tags
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 7
+    enabledForDeployment: false
+    enabledForDiskEncryption: false
+    enabledForTemplateDeployment: false
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+// Store storage connection string in Key Vault
+resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'AzureStorageConnectionString'
+  properties: {
+    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+  }
+}
+
+// Reference existing shared App Service Plan (F1 Free Tier) for dev
+resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = if (useSharedPlan) {
+  name: sharedAppServicePlanName
+  scope: resourceGroup(sharedResourceGroup)
+}
+
+// Create new App Service Plan for production
+resource newAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = if (!useSharedPlan) {
+  name: '${resourceName}-plan'
+  location: location
+  tags: tags
   sku: {
-    name: 'F1'
-    tier: 'Free'
-    size: 'F1'
-    family: 'F'
+    name: 'B1'
+    tier: 'Basic'
+    size: 'B1'
+    family: 'B'
     capacity: 1
   }
   properties: {
-    reserved: false // false = Windows, true = Linux
+    reserved: false
   }
 }
 
-// App Service
+var appServicePlanId = useSharedPlan ? existingAppServicePlan.id : newAppServicePlan.id
+
+// App Service - Will be deployed later via azd, this is just infrastructure
+// For now, we skip deployment to use local code
+// When ready to deploy, set deployAppService to true in azure.yaml
+var deployAppService = false
+
+// App Service with System-Assigned Managed Identity
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
-  name: resourceName
+  name: '${resourceName}-app'
   location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlanId
     httpsOnly: true
     siteConfig: {
       netFrameworkVersion: 'v9.0'
-      use32BitWorkerProcess: true // Required for F1 tier
-      alwaysOn: false // Must be false for F1 tier
+      use32BitWorkerProcess: useSharedPlan
+      alwaysOn: !useSharedPlan
       http20Enabled: true
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
-      healthCheckPath: '/health'
+      healthCheckPath: '/api/health'
       appSettings: [
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
@@ -125,15 +201,84 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
           name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
           value: '~3'
         }
-      ]
-      connectionStrings: [
         {
-          name: 'AZURE_STORAGE_CONNECTION_STRING'
-          connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-          type: 'Custom'
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: environmentType == 'prod' ? 'Production' : 'Development'
+        }
+        {
+          name: 'KeyVaultEndpoint'
+          value: keyVault.properties.vaultUri
+        }
+        // Key Vault Reference for Storage Connection String
+        {
+          name: 'ConnectionStrings__AZURE_STORAGE_CONNECTION_STRING'
+          value: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecret.properties.secretUri})'
         }
       ]
     }
+  }
+}
+
+// Grant App Service Managed Identity Key Vault Secrets User role
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+  name: guid(keyVault.id, appService.id, 'Key Vault Secrets User')
+  scope: keyVault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
+    principalId: appService.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Grant App Service Managed Identity Storage Table Data Contributor role
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+  name: guid(storageAccount.id, appService.id, 'Storage Table Data Contributor')
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3') // Storage Table Data Contributor
+    principalId: appService.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Diagnostic Settings for App Service
+resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (deployAppService) {
+  name: 'app-diagnostics'
+  scope: appService
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: 'AppServiceHTTPLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceConsoleLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceAppLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceAuditLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceIPSecAuditLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServicePlatformLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
 
@@ -142,7 +287,8 @@ output applicationInsightsConnectionString string = appInsights.properties.Conne
 output applicationInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
 output logAnalyticsWorkspaceId string = logAnalytics.id
 output storageAccountName string = storageAccount.name
-@secure()
-output storageConnectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-output appServiceName string = deployAppService ? appService!.name : ''
-output appServiceUrl string = deployAppService ? 'https://${appService!.properties.defaultHostName}' : ''
+output keyVaultEndpoint string = keyVault.properties.vaultUri
+output keyVaultName string = keyVault.name
+output appServiceName string = deployAppService ? '${resourceName}-app' : ''
+output appServiceUrl string = deployAppService ? 'https://${resourceName}-app.azurewebsites.net' : ''
+output appServicePrincipalId string = ''

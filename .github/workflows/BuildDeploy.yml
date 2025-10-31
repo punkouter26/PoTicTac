@@ -3,44 +3,91 @@ name: Build and Deploy PoTicTac to Azure
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
+  security-events: write
+  actions: read
 
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
   AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+  DOTNET_VERSION: '9.0.x'
 
 jobs:
-  build:
+  # Quality Gate: Static Code Analysis with CodeQL
+  codeql-analysis:
+    name: CodeQL Security Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install azd
-      run: |
-        curl -fsSL https://aka.ms/install-azd.sh | bash
-        echo "$HOME/.azd/bin" >> $GITHUB_PATH
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+        queries: security-and-quality
 
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Log in with Azure
-      run: |
-        azd auth login \
-          --client-id "$AZURE_CLIENT_ID" \
-          --federated-credential-provider "github" \
-          --tenant-id "$AZURE_TENANT_ID"
+    - name: Restore dependencies
+      run: dotnet restore PoTicTac.sln
+
+    - name: Build solution for CodeQL
+      run: dotnet build PoTicTac.sln --configuration Release --no-restore
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+
+  # Quality Gate: Code Formatting & Linting
+  format-check:
+    name: Code Format Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore PoTicTac.sln
+
+    - name: Verify code formatting
+      run: dotnet format PoTicTac.sln --verify-no-changes --verbosity diagnostic
+      continue-on-error: false
+
+  # Quality Gate: Build & Test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [codeql-analysis, format-check]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
       run: dotnet restore PoTicTac.sln
@@ -48,16 +95,44 @@ jobs:
     - name: Build solution
       run: dotnet build PoTicTac.sln --configuration Release --no-restore
 
+    - name: Run unit tests
+      run: dotnet test PoTicTac.UnitTests/PoTicTac.UnitTests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=unit-test-results.trx"
+
+    - name: Run integration tests
+      run: dotnet test PoTicTac.IntegrationTests/PoTicTac.IntegrationTests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=integration-test-results.trx"
+
+    - name: Publish test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          **/TestResults/*.trx
+        retention-days: 7
+
+    - name: Publish build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          PoTicTacServer/bin/Release/net9.0/
+        retention-days: 3
+
+  # Deployment to Azure
   deploy:
-    if: github.event_name != 'pull_request'
+    name: Deploy to Azure
     runs-on: ubuntu-latest
-    needs: build
+    timeout-minutes: 30
+    needs: build-and-test
+    environment:
+      name: production
+      url: ${{ steps.deploy-app.outputs.app-url }}
     
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install azd
+    - name: Install Azure Developer CLI
       run: |
         curl -fsSL https://aka.ms/install-azd.sh | bash
         echo "$HOME/.azd/bin" >> $GITHUB_PATH
@@ -65,24 +140,48 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Log in with Azure
+    - name: Log in to Azure with OIDC
       run: |
         azd auth login \
           --client-id "$AZURE_CLIENT_ID" \
           --federated-credential-provider "github" \
           --tenant-id "$AZURE_TENANT_ID"
 
-    - name: Azure Dev Provision
+    - name: Provision Azure Infrastructure
       run: azd provision --no-prompt
       env:
         AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
         AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
         AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
-        # Infrastructure parameters
-        environmentName: ${{ env.AZURE_ENV_NAME }}
-        location: ${{ vars.AZURE_LOCATION || 'eastus2' }}
 
-    - name: Azure Dev Deploy
-      run: azd deploy --no-prompt
+    - name: Deploy Application to Azure
+      id: deploy-app
+      run: |
+        azd deploy --no-prompt
+        APP_URL=$(azd env get-values | grep APP_SERVICE_URL | cut -d'=' -f2)
+        echo "app-url=$APP_URL" >> $GITHUB_OUTPUT
+
+    - name: Verify deployment health
+      run: |
+        APP_URL=$(azd env get-values | grep APP_SERVICE_URL | cut -d'=' -f2)
+        if [ -n "$APP_URL" ]; then
+          echo "Checking health endpoint: $APP_URL/api/health"
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/api/health" || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ Health check passed (HTTP $HTTP_STATUS)"
+              exit 0
+            fi
+            echo "⏳ Health check attempt $((RETRY_COUNT + 1))/$MAX_RETRIES failed (HTTP $HTTP_STATUS). Retrying in 10s..."
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          done
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          exit 1
+        else
+          echo "⚠️ APP_URL not found, skipping health check"
+        fi

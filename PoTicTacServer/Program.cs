@@ -1,41 +1,93 @@
-using PoTicTacServer.Services;
-using PoTicTacServer.Hubs;
-using Serilog;
-using PoTicTacServer.HealthChecks;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using Microsoft.ApplicationInsights.Extensibility;
+using PoTicTacServer.HealthChecks;
+using PoTicTacServer.Hubs;
+using PoTicTacServer.Services;
+using PoTicTacServer.Telemetry;
+using Serilog;
+using Serilog.Sinks.ApplicationInsights.TelemetryConverters;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Serilog with enrichers
 builder.Host.UseSerilog((context, services, configuration) =>
 {
-    var loggerConfiguration = new LoggerConfiguration()
+    configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.File(
-            Path.Combine(Directory.GetCurrentDirectory(), "log.txt"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 1,
-            flushToDiskInterval: TimeSpan.FromSeconds(1)
-        );
+        .Enrich.WithThreadId()
+        .Enrich.WithProcessId()
+        .Enrich.With(new CorrelationEnricher(services.GetRequiredService<IHttpContextAccessor>()));
 
-    // Conditionally add Application Insights sink
-    if (!string.IsNullOrWhiteSpace(context.Configuration["ApplicationInsights:ConnectionString"]))
+    // Configure sinks based on environment
+    if (context.HostingEnvironment.IsDevelopment())
     {
-        loggerConfiguration.WriteTo.ApplicationInsights(
-            context.Configuration["ApplicationInsights:ConnectionString"],
-            TelemetryConverter.Traces
-        );
+        configuration
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}")
+            .WriteTo.Debug();
+    }
+    else
+    {
+        // Production: write to Application Insights
+        var aiConnectionString = context.Configuration["ApplicationInsights:ConnectionString"];
+        if (!string.IsNullOrWhiteSpace(aiConnectionString))
+        {
+            configuration
+                .WriteTo.ApplicationInsights(
+                    aiConnectionString,
+                    new TraceTelemetryConverter(),
+                    Serilog.Events.LogEventLevel.Information
+                );
+        }
+
+        // Also write to file for local diagnostics
+        configuration
+            .WriteTo.File(
+                path: context.Configuration["Serilog:WriteTo:1:Args:path"] ?? "logs/potictac-.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+            );
+    }
+});
+
+// Add HttpContextAccessor for telemetry enrichers
+builder.Services.AddHttpContextAccessor();
+
+// Configure Application Insights
+var aiConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(aiConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = aiConnectionString;
+        options.EnableAdaptiveSampling = builder.Configuration.GetValue<bool>("ApplicationInsights:EnableAdaptiveSampling", true);
+        options.EnablePerformanceCounterCollectionModule = builder.Configuration.GetValue<bool>("ApplicationInsights:EnablePerformanceCounterCollectionModule", true);
+        options.EnableQuickPulseMetricStream = builder.Configuration.GetValue<bool>("ApplicationInsights:EnableQuickPulseMetricStream", true);
+    });
+
+    // Register custom telemetry initializer
+    builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+
+    // Enable Snapshot Debugger if configured
+    if (builder.Configuration.GetValue<bool>("ApplicationInsights:EnableSnapshotDebugger", false))
+    {
+        builder.Services.AddSnapshotCollector(options =>
+        {
+            options.IsEnabledInDeveloperMode = false;
+            options.ThresholdForSnapshotting = builder.Configuration.GetValue<int>("SnapshotDebugger:ThresholdForSnapshotting", 1);
+            options.MaximumSnapshotsRequired = builder.Configuration.GetValue<int>("SnapshotDebugger:MaximumSnapshotsRequired", 3);
+        });
     }
 
-    loggerConfiguration
-        .MinimumLevel.Override("Microsoft.ApplicationInsights", Serilog.Events.LogEventLevel.Information)
-        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
-        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Information);
-
-    Log.Logger = loggerConfiguration.CreateLogger();
-});
+    // Enable Profiler if configured
+    if (builder.Configuration.GetValue<bool>("ApplicationInsights:EnableProfiler", false))
+    {
+        builder.Services.AddServiceProfiler();
+    }
+}
 
 // Add services to the container.
 builder.Services.AddSingleton<StorageService>();
@@ -52,7 +104,34 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "PoTicTac API",
+        Version = "v1",
+        Description = "RESTful API for PoTicTac - A modern, retro-styled 6x6 Tic Tac Toe game with 4-in-a-row victory conditions. " +
+                      "Provides endpoints for player statistics, leaderboards, health checks, and game data management.",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "PoTicTac Development Team",
+            Url = new Uri("https://github.com/punkouter26/PoTicTac")
+        },
+        License = new Microsoft.OpenApi.Models.OpenApiLicense
+        {
+            Name = "MIT License",
+            Url = new Uri("https://opensource.org/licenses/MIT")
+        }
+    });
+
+    // Include XML comments for better API documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+});
 
 var app = builder.Build();
 
@@ -61,7 +140,22 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseSerilogRequestLogging(); // Add this to log HTTP requests
+// Add Serilog request logging with enrichment
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value ?? "unknown");
+        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+        diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+        if (httpContext.User?.Identity?.IsAuthenticated == true)
+        {
+            diagnosticContext.Set("UserId", httpContext.User.Identity.Name ?? "authenticated");
+        }
+    };
+});
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
@@ -76,11 +170,10 @@ app.MapControllers();
 // Map SignalR hub
 app.MapHub<GameHub>("/gamehub");
 
-// Map Health Checks endpoint
-app.MapHealthChecks("/health");
-
 // Fallback to index.html for SPA routes
 app.MapFallbackToFile("index.html");
+
+Log.Information("PoTicTac server starting on {Environment}", builder.Environment.EnvironmentName);
 
 app.Run();
 

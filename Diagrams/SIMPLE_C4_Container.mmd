@@ -1,0 +1,10 @@
+graph TB
+    Browser[Browser] -->|HTTPS| Client[Blazor WASM]
+    Client -->|REST API| Server[ASP.NET Core]
+    Client -->|WebSocket| Hub[SignalR Hub]
+    Server -->|CRUD| DB[(Table Storage)]
+    
+    style Client fill:#61DAFB,stroke:#0f0,stroke-width:2px
+    style Server fill:#512BD4,stroke:#0f0,stroke-width:2px
+    style Hub fill:#00D8FF,stroke:#0f0,stroke-width:2px
+    style DB fill:#0078D4,stroke:#04f,stroke-width:2px

@@ -1,7 +1,7 @@
-using Azure.Data.Tables;
 using System.Text.Json;
-using PoTicTacServer.Models;
+using Azure.Data.Tables;
 using Microsoft.Extensions.Logging;
+using PoTicTacServer.Models;
 
 namespace PoTicTacServer.Services;
 

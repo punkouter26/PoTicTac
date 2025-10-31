@@ -1,52 +1,51 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Azure.Data.Tables;
 using Azure;
+using Azure.Data.Tables;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace PoTicTacServer.HealthChecks
+namespace PoTicTacServer.HealthChecks;
+
+public class StorageHealthCheck : IHealthCheck
 {
-    public class StorageHealthCheck : IHealthCheck
+    private readonly TableServiceClient _tableServiceClient;
+    private readonly IConfiguration _configuration;
+
+    public StorageHealthCheck(TableServiceClient tableServiceClient, IConfiguration configuration)
     {
-        private readonly TableServiceClient _tableServiceClient;
-        private readonly IConfiguration _configuration;
+        _tableServiceClient = tableServiceClient;
+        _configuration = configuration;
+    }
 
-        public StorageHealthCheck(TableServiceClient tableServiceClient, IConfiguration configuration)
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        try
         {
-            _tableServiceClient = tableServiceClient;
-            _configuration = configuration;
-        }
+            // Attempt to get a table client for a dummy table to check connectivity
+            var tableName = "HealthCheckTable";
+            var tableClient = _tableServiceClient.GetTableClient(tableName);
 
-        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
-        {
+            // Try to create the table if it doesn't exist, or ensure it exists
+            await tableClient.CreateIfNotExistsAsync(cancellationToken);
+
+            // Optionally, try to perform a simple operation like querying a non-existent entity
+            // This verifies read/write permissions and connectivity
             try
             {
-                // Attempt to get a table client for a dummy table to check connectivity
-                var tableName = "HealthCheckTable";
-                var tableClient = _tableServiceClient.GetTableClient(tableName);
-
-                // Try to create the table if it doesn't exist, or ensure it exists
-                await tableClient.CreateIfNotExistsAsync(cancellationToken);
-
-                // Optionally, try to perform a simple operation like querying a non-existent entity
-                // This verifies read/write permissions and connectivity
-                try
-                {
-                    await tableClient.GetEntityAsync<TableEntity>("partitionKey", "rowKey", cancellationToken: cancellationToken);
-                }
-                catch (RequestFailedException ex) when (ex.Status == 404)
-                {
-                    // Expected for a non-existent entity, indicates connectivity is fine
-                }
-                catch (Exception ex)
-                {
-                    return HealthCheckResult.Unhealthy($"Storage health check failed: {ex.Message}");
-                }
-
-                return HealthCheckResult.Healthy("Storage connection is healthy.");
+                await tableClient.GetEntityAsync<TableEntity>("partitionKey", "rowKey", cancellationToken: cancellationToken);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                // Expected for a non-existent entity, indicates connectivity is fine
             }
             catch (Exception ex)
             {
                 return HealthCheckResult.Unhealthy($"Storage health check failed: {ex.Message}");
             }
+
+            return HealthCheckResult.Healthy("Storage connection is healthy.");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy($"Storage health check failed: {ex.Message}");
         }
     }
 }

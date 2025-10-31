@@ -1,59 +1,105 @@
-using Xunit;
-using Microsoft.AspNetCore.Mvc.Testing;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http.Json;
-using PoTicTacServer.Models;
 using System.Threading.Tasks;
+using Bogus;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using PoTicTacServer.Models;
+using Xunit;
 
-namespace PoTicTac.IntegrationTests
+namespace PoTicTac.IntegrationTests;
+
+[Trait("Category", "Integration")]
+[Trait("Component", "StatisticsController")]
+public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Program>>
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+    private readonly Faker _faker = new();
+
+    public StatisticsControllerTests(WebApplicationFactory<Program> factory)
     {
-        private readonly WebApplicationFactory<Program> _factory;
-        private readonly HttpClient _client;
+        _factory = factory;
+        _client = _factory.CreateClient();
+    }
 
-        public StatisticsControllerTests(WebApplicationFactory<Program> factory)
+    [Fact]
+    [Trait("Type", "HappyPath")]
+    public async Task GetAllPlayerStatistics_ReturnsSuccessStatusCode()
+    {
+        // Arrange - No setup needed for GET
+
+        // Act
+        var response = await _client.GetAsync("/api/statistics");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "GET /api/statistics should return 200 OK");
+        response.IsSuccessStatusCode.Should().BeTrue("response should indicate success");
+    }
+
+    [Fact]
+    [Trait("Type", "Validation")]
+    public async Task GetAllPlayerStatistics_ReturnsValidListOfPlayerStats()
+    {
+        // Arrange - No setup needed for GET
+
+        // Act
+        var statsList = await _client.GetFromJsonAsync<List<PlayerStatsDto>>("/api/statistics");
+
+        // Assert
+        statsList.Should().NotBeNull("API should return a list of player stats");
+        statsList.Should().BeOfType<List<PlayerStatsDto>>("response should be a list");
+
+        // If there are any stats, validate their structure
+        if (statsList!.Count > 0)
         {
-            _factory = factory;
-            _client = _factory.CreateClient();
-        }
-
-        [Fact]
-        public async Task GetStats_ReturnsSuccessStatusCode()
-        {
-            var response = await _client.GetAsync("/api/statistics");
-            response.EnsureSuccessStatusCode();
-        }
-
-        [Fact]
-        public async Task GetStats_ReturnsValidPlayerStats()
-        {
-            var stats = await _client.GetFromJsonAsync<PlayerStats>("/api/statistics");
-            Assert.NotNull(stats);
-            Assert.True(stats.TotalGames >= 0);
-            Assert.True(stats.Wins >= 0);
-            Assert.True(stats.Losses >= 0);
-            Assert.True(stats.Draws >= 0);
-        }
-
-        [Fact]
-        public async Task PostStats_UpdatesStatistics()
-        {
-            var initialStats = await _client.GetFromJsonAsync<PlayerStats>("/api/statistics");
-
-            var newStats = new PlayerStats
-            {
-                TotalGames = initialStats!.TotalGames + 1,
-                Wins = initialStats.Wins + 1,
-                Losses = initialStats.Losses,
-                Draws = initialStats.Draws
-            };
-
-            var response = await _client.PostAsJsonAsync("/api/statistics", newStats);
-            response.EnsureSuccessStatusCode();
-
-            var updatedStats = await _client.GetFromJsonAsync<PlayerStats>("/api/statistics");
-            Assert.Equal(newStats.TotalGames, updatedStats!.TotalGames);
-            Assert.Equal(newStats.Wins, updatedStats.Wins);
+            var firstStat = statsList.First();
+            firstStat.Name.Should().NotBeNullOrEmpty("player name should be populated");
+            firstStat.Stats.Should().NotBeNull("player stats should not be null");
+            firstStat.Stats.TotalGames.Should().BeGreaterThanOrEqualTo(0, "total games cannot be negative");
+            firstStat.Stats.Wins.Should().BeGreaterThanOrEqualTo(0, "wins cannot be negative");
+            firstStat.Stats.Losses.Should().BeGreaterThanOrEqualTo(0, "losses cannot be negative");
+            firstStat.Stats.Draws.Should().BeGreaterThanOrEqualTo(0, "draws cannot be negative");
         }
     }
+
+    [Fact]
+    [Trait("Type", "HappyPath")]
+    public async Task GetLeaderboard_ReturnsSuccessStatusCode()
+    {
+        // Arrange
+        int limit = 10;
+
+        // Act
+        var response = await _client.GetAsync($"/api/statistics/leaderboard?limit={limit}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "GET /api/statistics/leaderboard should return 200 OK");
+        response.IsSuccessStatusCode.Should().BeTrue("response should indicate success");
+    }
+
+    [Fact]
+    [Trait("Type", "Validation")]
+    public async Task GetLeaderboard_ReturnsValidListSortedByWinRate()
+    {
+        // Arrange
+        int limit = 10;
+
+        // Act
+        var leaderboard = await _client.GetFromJsonAsync<List<PlayerStatsDto>>($"/api/statistics/leaderboard?limit={limit}");
+
+        // Assert
+        leaderboard.Should().NotBeNull("leaderboard should return a list");
+        leaderboard.Should().BeOfType<List<PlayerStatsDto>>("response should be a list");
+        leaderboard!.Count.Should().BeLessThanOrEqualTo(limit, $"leaderboard should respect the limit of {limit}");
+    }
+}
+
+// DTO must match the server's PlayerStatsDto
+public class PlayerStatsDto
+{
+    public string Name { get; set; } = string.Empty;
+    public PlayerStats Stats { get; set; } = new PlayerStats();
 }

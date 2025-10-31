@@ -1,0 +1,76 @@
+// Client-Side Errors: Top exceptions by browser (client_Type == 'Browser')
+// This query analyzes JavaScript exceptions occurring in the Blazor WebAssembly client
+
+// Top client-side exceptions
+exceptions
+| where timestamp > ago(24h)
+| where client_Type == "Browser" or client_Type == "PC"
+| summarize 
+    ExceptionCount = count(),
+    AffectedUsers = dcount(user_Id),
+    Browsers = make_set(client_Browser),
+    SampleMessage = any(outerMessage)
+by type, problemId
+| order by ExceptionCount desc
+| take 20
+| project 
+    ExceptionType = type,
+    ProblemId = problemId,
+    Occurrences = ExceptionCount,
+    AffectedUsers,
+    Browsers,
+    SampleMessage
+
+// Exception trends over time
+exceptions
+| where timestamp > ago(7d)
+| where client_Type == "Browser" or client_Type == "PC"
+| summarize Count = count() by bin(timestamp, 1h), type
+| render timechart
+
+// Exceptions by browser type
+exceptions
+| where timestamp > ago(24h)
+| where client_Type == "Browser" or client_Type == "PC"
+| summarize 
+    Count = count(),
+    UniqueUsers = dcount(user_Id),
+    ExceptionTypes = make_set(type)
+by client_Browser
+| order by Count desc
+
+// Detailed exception information
+exceptions
+| where timestamp > ago(24h)
+| where client_Type == "Browser" or client_Type == "PC"
+| extend 
+    ErrorMessage = coalesce(outerMessage, innermostMessage, "No message"),
+    StackTrace = details[0].parsedStack
+| project 
+    timestamp,
+    ExceptionType = type,
+    ErrorMessage,
+    Browser = client_Browser,
+    OS = client_OS,
+    UserId = user_Id,
+    SessionId = session_Id,
+    PageUrl = tostring(customDimensions.pageUrl),
+    operation_Id
+| order by timestamp desc
+| take 100
+
+// Exception impact on user experience
+exceptions
+| where timestamp > ago(24h)
+| where client_Type == "Browser" or client_Type == "PC"
+| join kind=inner (
+    pageViews
+    | where timestamp > ago(24h)
+) on operation_Id
+| summarize 
+    TotalExceptions = count(),
+    AffectedSessions = dcount(session_Id),
+    AffectedPageViews = dcount(pageViews.id)
+by type
+| extend ImpactScore = TotalExceptions * AffectedSessions
+| order by ImpactScore desc

@@ -1,0 +1,141 @@
+// Custom Telemetry: Game Analytics
+// Queries for PoTicTac-specific custom events and metrics
+
+// === GAME METRICS ===
+
+// Games started and completed trends
+customMetrics
+| where timestamp > ago(7d)
+| where name in ("potictac.games.started", "potictac.games.completed")
+| summarize Total = sum(value) by bin(timestamp, 1h), name
+| render timechart
+
+// Game completion rate
+let gamesStarted = toscalar(
+    customMetrics
+    | where timestamp > ago(24h)
+    | where name == "potictac.games.started"
+    | summarize sum(value)
+);
+let gamesCompleted = toscalar(
+    customMetrics
+    | where timestamp > ago(24h)
+    | where name == "potictac.games.completed"
+    | summarize sum(value)
+);
+print 
+    GamesStarted = gamesStarted,
+    GamesCompleted = gamesCompleted,
+    CompletionRate = round((gamesCompleted * 100.0) / gamesStarted, 2)
+
+// Average game duration
+customMetrics
+| where timestamp > ago(7d)
+| where name == "potictac.game.duration"
+| summarize 
+    AvgDuration = avg(value),
+    P50Duration = percentile(value, 50),
+    P95Duration = percentile(value, 95),
+    MinDuration = min(value),
+    MaxDuration = max(value),
+    TotalGames = count()
+| project 
+    TotalGames,
+    AvgDurationSeconds = round(AvgDuration, 2),
+    MedianSeconds = round(P50Duration, 2),
+    P95Seconds = round(P95Duration, 2),
+    MinSeconds = round(MinDuration, 2),
+    MaxSeconds = round(MaxDuration, 2)
+
+// Moves per game distribution
+customMetrics
+| where timestamp > ago(7d)
+| where name == "potictac.moves.per_game"
+| summarize 
+    AvgMoves = avg(value),
+    P50Moves = percentile(value, 50),
+    P95Moves = percentile(value, 95),
+    MinMoves = min(value),
+    MaxMoves = max(value)
+| project 
+    AvgMovesPerGame = round(AvgMoves, 1),
+    MedianMoves = round(P50Moves, 1),
+    P95Moves = round(P95Moves, 1),
+    MinMoves,
+    MaxMoves
+
+// Win rate analysis
+let playerWins = toscalar(
+    customMetrics
+    | where timestamp > ago(7d)
+    | where name == "potictac.wins.player"
+    | summarize sum(value)
+);
+let aiWins = toscalar(
+    customMetrics
+    | where timestamp > ago(7d)
+    | where name == "potictac.wins.ai"
+    | summarize sum(value)
+);
+let draws = toscalar(
+    customMetrics
+    | where timestamp > ago(7d)
+    | where name == "potictac.games.draws"
+    | summarize sum(value)
+);
+print 
+    PlayerWins = playerWins,
+    AIWins = aiWins,
+    Draws = draws,
+    TotalGames = playerWins + aiWins + draws,
+    PlayerWinRate = round((playerWins * 100.0) / (playerWins + aiWins + draws), 2),
+    AIWinRate = round((aiWins * 100.0) / (playerWins + aiWins + draws), 2),
+    DrawRate = round((draws * 100.0) / (playerWins + aiWins + draws), 2)
+
+// === AI PERFORMANCE ===
+
+// AI calculation time statistics
+customMetrics
+| where timestamp > ago(7d)
+| where name == "potictac.ai.calculation_time"
+| summarize 
+    AvgTime = avg(value),
+    P50Time = percentile(value, 50),
+    P95Time = percentile(value, 95),
+    P99Time = percentile(value, 99),
+    MaxTime = max(value),
+    Calculations = count()
+| project 
+    TotalCalculations = Calculations,
+    AvgMs = round(AvgTime, 2),
+    MedianMs = round(P50Time, 2),
+    P95Ms = round(P95Time, 2),
+    P99Ms = round(P99Time, 2),
+    MaxMs = round(MaxTime, 2)
+
+// AI calculation time trend
+customMetrics
+| where timestamp > ago(24h)
+| where name == "potictac.ai.calculation_time"
+| summarize AvgTime = avg(value) by bin(timestamp, 1h)
+| render timechart
+
+// === MULTIPLAYER METRICS ===
+
+// Multiplayer game activity
+customMetrics
+| where timestamp > ago(7d)
+| where name == "potictac.multiplayer.games.started"
+| summarize TotalMultiplayerGames = sum(value) by bin(timestamp, 1d)
+| render timechart
+
+// Concurrent players
+customMetrics
+| where timestamp > ago(24h)
+| where name == "potictac.multiplayer.players.connected"
+| summarize 
+    MaxConcurrent = max(value),
+    AvgConcurrent = avg(value),
+    P95Concurrent = percentile(value, 95)
+by bin(timestamp, 15m)
+| render timechart

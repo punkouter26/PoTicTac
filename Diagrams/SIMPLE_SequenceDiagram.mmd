@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant User
+    participant UI as Blazor UI
+    participant API as ASP.NET API
+    participant DB as Table Storage
+    
+    User->>UI: Click Cell
+    UI->>API: POST /api/move
+    API->>DB: Save Stats
+    DB-->>API: OK
+    API-->>UI: Game Result
+    UI-->>User: Display Outcome

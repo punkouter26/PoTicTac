@@ -1,6 +1,6 @@
+using System;
 using Azure;
 using Azure.Data.Tables;
-using System;
 
 namespace PoTicTacServer.Models;
 

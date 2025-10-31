@@ -1,0 +1,49 @@
+// User Activity: Active users and sessions (last 7 days)
+// This query shows unique users, total sessions, and page views for the last 7 days
+
+// Overview of active users
+pageViews
+| where timestamp > ago(7d)
+| summarize 
+    UniqueUsers = dcount(user_Id),
+    TotalPageViews = count(),
+    AvgPageViewsPerUser = count() / dcount(user_Id)
+by bin(timestamp, 1d)
+| order by timestamp desc
+| render timechart 
+
+// Detailed session analysis
+pageViews
+| where timestamp > ago(7d)
+| extend SessionId = session_Id
+| summarize 
+    PageViewsInSession = count(),
+    SessionDuration = max(timestamp) - min(timestamp),
+    PagesVisited = make_set(name),
+    StartTime = min(timestamp),
+    EndTime = max(timestamp)
+by user_Id, SessionId
+| extend SessionDurationMinutes = SessionDuration / 1m
+| project 
+    user_Id,
+    SessionId,
+    PageViewsInSession,
+    SessionDurationMinutes,
+    StartTime,
+    EndTime,
+    PagesVisited
+| order by StartTime desc
+
+// User engagement metrics
+pageViews
+| where timestamp > ago(7d)
+| summarize 
+    TotalSessions = dcount(session_Id),
+    TotalPageViews = count(),
+    AvgPagesPerSession = count() / todouble(dcount(session_Id)),
+    FirstSeen = min(timestamp),
+    LastSeen = max(timestamp)
+by user_Id
+| extend DaysSinceFirstSeen = datetime_diff('day', now(), FirstSeen)
+| order by TotalPageViews desc
+| take 100
