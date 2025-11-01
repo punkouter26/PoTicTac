@@ -30,6 +30,7 @@ __blobstorage__/
 __queuestorage__/
 AzuriteData/
 AzuriteConfig
+*.json
 
 # Logs
 logs
@@ -64,3 +65,12 @@ yarn.lock
 TestResults/
 *.trx
 *.coverage
+
+# Coverage reports
+coverage/
+*.cobertura.xml
+*.opencover.xml
+
+# Node modules (diagram generation)
+node_modules/
+package-lock.json
