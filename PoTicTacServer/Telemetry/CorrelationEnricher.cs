@@ -59,12 +59,6 @@ public class CorrelationEnricher : ILogEventEnricher
             // Add client IP
             var clientIp = httpContext.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ClientIp", clientIp));
-
-            // Add session ID if available
-            if (httpContext.Session != null && httpContext.Session.IsAvailable)
-            {
-                logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("SessionId", httpContext.Session.Id));
-            }
         }
     }
 }

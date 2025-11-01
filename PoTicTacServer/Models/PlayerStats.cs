@@ -1,4 +1,3 @@
-using System;
 using Azure;
 using Azure.Data.Tables;
 
@@ -13,6 +12,7 @@ public class PlayerStats
     public int WinStreak { get; set; }
     public int CurrentStreak { get; set; }
     public double AverageMovesPerGame { get; set; }
+    public int TotalMoves { get; set; }
     public double WinRate { get; set; }
 }
 

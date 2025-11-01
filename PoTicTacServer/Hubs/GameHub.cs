@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using PoTicTacServer.Services;
+using PoTicTacServer.Models;
 
 namespace PoTicTacServer.Hubs;
 
@@ -27,19 +25,6 @@ public class Player
     public required string Type { get; set; }
     public int Symbol { get; set; }
     public required PlayerStats Stats { get; set; }
-}
-
-public class PlayerStats
-{
-    public int Wins { get; set; }
-    public int Losses { get; set; }
-    public int Draws { get; set; }
-    public int TotalGames { get; set; }
-    public int WinStreak { get; set; }
-    public int CurrentStreak { get; set; }
-    public double AverageMovesPerGame { get; set; }
-    public int TotalMoves { get; set; }
-    public double WinRate { get; set; }
 }
 
 public class Move
@@ -167,43 +152,19 @@ public class GameLogic
         };
     }
 
+    /// <summary>
+    /// Lightweight win checker for server-side validation.
+    /// Checks all 4 directions from the last move position.
+    /// Refactored to reduce complexity and eliminate duplication.
+    /// </summary>
     private static List<int[]>? CheckWinner(List<List<int>> board, int row, int col)
     {
         var player = board[row][col];
-        var directions = new[] { new[] { 0, 1 }, new[] { 1, 0 }, new[] { 1, 1 }, new[] { 1, -1 } };
+        (int dx, int dy)[] directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
 
-        foreach (var dir in directions)
+        foreach (var (dx, dy) in directions)
         {
-            var dx = dir[0];
-            var dy = dir[1];
-            var line = new List<int[]> { new[] { row, col } };
-
-            // Check positive direction
-            for (int i = 1; i < WIN_LENGTH; i++)
-            {
-                var newRow = row + dx * i;
-                var newCol = col + dy * i;
-                if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
-                {
-                    break;
-                }
-
-                line.Add(new[] { newRow, newCol });
-            }
-
-            // Check negative direction
-            for (int i = 1; i < WIN_LENGTH; i++)
-            {
-                var newRow = row - dx * i;
-                var newCol = col - dy * i;
-                if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
-                {
-                    break;
-                }
-
-                line.Add(new[] { newRow, newCol });
-            }
-
+            var line = CountLine(board, row, col, dx, dy, player);
             if (line.Count >= WIN_LENGTH)
             {
                 return line;
@@ -213,10 +174,42 @@ public class GameLogic
         return null;
     }
 
-    private static bool IsValidPosition(int row, int col)
+    /// <summary>
+    /// Counts consecutive pieces in both directions from a position.
+    /// </summary>
+    private static List<int[]> CountLine(List<List<int>> board, int row, int col, int dx, int dy, int player)
     {
-        return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
+        var line = new List<int[]> { new[] { row, col } };
+
+        // Check positive direction
+        for (int i = 1; i < WIN_LENGTH; i++)
+        {
+            int newRow = row + dx * i;
+            int newCol = col + dy * i;
+            if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
+            {
+                break;
+            }
+            line.Add(new[] { newRow, newCol });
+        }
+
+        // Check negative direction
+        for (int i = 1; i < WIN_LENGTH; i++)
+        {
+            int newRow = row - dx * i;
+            int newCol = col - dy * i;
+            if (!IsValidPosition(newRow, newCol) || board[newRow][newCol] != player)
+            {
+                break;
+            }
+            line.Add(new[] { newRow, newCol });
+        }
+
+        return line;
     }
+
+    private static bool IsValidPosition(int row, int col) => 
+        row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
 
     private static bool IsDraw(List<List<int>> board)
     {
@@ -228,6 +221,12 @@ public class GameHub : Hub
 {
     private static readonly ConcurrentDictionary<string, GameState> _games = new();
     private static readonly ConcurrentDictionary<string, string> _userGameMap = new();
+    private readonly StorageService _storageService;
+
+    public GameHub(StorageService storageService)
+    {
+        _storageService = storageService;
+    }
 
     public async Task<string> CreateGame(string playerName)
     {
@@ -338,6 +337,8 @@ public class GameHub : Hub
 
         if (newGameState.GameStatus != "playing")
         {
+            // Save player statistics when game ends
+            await SaveGameStatistics(newGameState);
             await Clients.Group(gameId).SendAsync("GameOver", newGameState);
         }
     }
@@ -404,5 +405,81 @@ public class GameHub : Hub
     private string GenerateGameId()
     {
         return Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+    }
+
+    private async Task SaveGameStatistics(GameState gameState)
+    {
+        // Only save stats for human players
+        var humanPlayers = gameState.Players.Where(p => p.Type == "human").ToList();
+        
+        foreach (var player in humanPlayers)
+        {
+            // Get existing stats or create new
+            var existingStats = await _storageService.GetPlayerStatsAsync(player.Name);
+            
+            PlayerStats updatedStats;
+            if (existingStats != null)
+            {
+                updatedStats = existingStats;
+            }
+            else
+            {
+                updatedStats = new PlayerStats
+                {
+                    Wins = 0,
+                    Losses = 0,
+                    Draws = 0,
+                    TotalGames = 0,
+                    WinStreak = 0,
+                    CurrentStreak = 0,
+                    AverageMovesPerGame = 0,
+                    TotalMoves = 0,
+                    WinRate = 0
+                };
+            }
+
+            // Update stats based on game outcome
+            updatedStats.TotalGames++;
+            
+            if (gameState.GameStatus == "won")
+            {
+                if (gameState.Winner == player.Symbol)
+                {
+                    // Player won
+                    updatedStats.Wins++;
+                    updatedStats.CurrentStreak++;
+                    if (updatedStats.CurrentStreak > updatedStats.WinStreak)
+                    {
+                        updatedStats.WinStreak = updatedStats.CurrentStreak;
+                    }
+                }
+                else
+                {
+                    // Player lost
+                    updatedStats.Losses++;
+                    updatedStats.CurrentStreak = 0;
+                }
+            }
+            else if (gameState.GameStatus == "draw")
+            {
+                updatedStats.Draws++;
+                updatedStats.CurrentStreak = 0;
+            }
+
+            // Update total moves and average
+            var playerMoves = gameState.MoveHistory.Count(m => m.Player == player.Symbol);
+            updatedStats.TotalMoves += playerMoves;
+            updatedStats.AverageMovesPerGame = updatedStats.TotalGames > 0 
+                ? (double)updatedStats.TotalMoves / updatedStats.TotalGames 
+                : 0;
+
+            // Update win rate
+            updatedStats.WinRate = updatedStats.TotalGames > 0 
+                ? (double)updatedStats.Wins / updatedStats.TotalGames 
+                : 0;
+
+            // Save to storage
+            await _storageService.SavePlayerStatsAsync(player.Name, updatedStats);
+        }
     }
 }
