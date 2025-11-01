@@ -1,183 +1,236 @@
 .app {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; /* Changed from center to flex-start for better space usage */
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 
+        minmax(var(--space-md), 1fr) 
+        minmax(auto, var(--max-width-container)) 
+        minmax(var(--space-md), 1fr);
+    gap: var(--grid-gap-md);
     min-height: 100vh;
-    background-color: #000;
-    color: #fff;
+    background-color: var(--color-background);
+    color: var(--color-text);
     font-family: 'Press Start 2P', monospace;
-    padding: 20px;
+    padding: 0;
     box-sizing: border-box;
 }
 
+.app > * {
+    grid-column: 2;
+}
+
 h1 {
-    font-size: 3rem;
-    margin-bottom: 2rem;
+    font-size: var(--font-xl);
+    margin-bottom: var(--space-lg);
     text-align: center;
-    color: #0f0;
-    text-shadow: 0 0 10px #0f0,
-                 0 0 20px #0f0,
-                 0 0 30px #0f0;
+    color: var(--color-primary);
+    text-shadow: var(--glow-sm),
+                 var(--glow-md),
+                 var(--glow-lg);
     animation: glow 1.5s ease-in-out infinite alternate;
 }
 
 @keyframes glow {
     from {
-        text-shadow: 0 0 10px #0f0,
-                     0 0 20px #0f0,
-                     0 0 30px #0f0;
+        text-shadow: var(--glow-sm),
+                     var(--glow-md),
+                     var(--glow-lg);
     }
     to {
-        text-shadow: 0 0 20px #0f0,
-                     0 0 30px #0f0,
-                     0 0 40px #0f0;
+        text-shadow: var(--glow-md),
+                     var(--glow-lg),
+                     var(--glow-xl);
     }
 }
 
 .menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    background-color: rgba(0, 0, 0, 0.8);
-    padding: 2rem;
-    border: 2px solid #0f0;
-    /* Remove border-radius */
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-    width: 80%; /* Adjust width as needed */
-    max-width: 500px; /* Max width for larger screens */
+    display: grid;
+    grid-template-areas: 
+        "name"
+        "modes"
+        "difficulty"
+        "stats";
+    gap: var(--grid-gap-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    padding: var(--space-xl);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-glow-md),
+                var(--shadow-lg),
+                inset 0 1px 0 rgba(0, 255, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .menu {
+        grid-template-areas: 
+            "name name"
+            "modes difficulty"
+            "stats stats";
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 /* Style for the player name input container */
 .player-name-input {
+    grid-area: name;
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-bottom: 1rem; /* Add some space below input */
 }
 
 /* Style for the name input field */
 .name-input {
     font-family: 'Press Start 2P', monospace;
-    font-size: 1rem;
-    padding: 0.8rem 1rem;
-    background-color: #000;
-    color: #0f0;
-    border: 2px solid #0f0;
+    font-size: var(--font-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
     text-align: center;
-    width: 80%; /* Make input wider */
+    width: 100%;
     max-width: 300px;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-    outline: none; /* Remove default focus outline */
+    box-shadow: var(--shadow-glow-sm);
+    outline: none;
+    transition: all var(--transition-base);
 }
 
 .name-input::placeholder {
-    color: rgba(0, 255, 0, 0.5); /* Dim green placeholder */
+    color: var(--color-text-dim);
     font-family: 'Press Start 2P', monospace;
 }
 
 .name-input:focus {
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); /* Glow on focus */
+    box-shadow: var(--shadow-glow-md);
+    border-color: var(--color-primary-light);
 }
 
 /* Container for mode selection section */
 .mode-selection {
+    grid-area: modes;
     text-align: center;
     width: 100%;
 }
 
 .mode-selection h3 {
-    color: #0f0;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    text-shadow: 0 0 5px #0f0;
+    color: var(--color-primary);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-md);
+    text-shadow: var(--glow-xs);
 }
 
 /* Container for the mode buttons */
 .mode-buttons {
     display: flex;
     justify-content: center;
-    gap: 1rem; /* Space between buttons */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    margin-bottom: 1.5rem; /* Space below buttons */
+    gap: var(--grid-gap-md);
+    flex-wrap: wrap;
 }
 
 /* Style for the mode buttons (Single Player, Multiplayer) */
 .mode-button {
     font-family: 'Press Start 2P', monospace;
-    font-size: 1rem; /* Slightly smaller than start button */
-    padding: 0.8rem 1.5rem;
-    background-color: #000;
-    color: #0f0;
-    border: 2px solid #0f0;
+    font-size: var(--font-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
     text-transform: uppercase;
-    display: flex; /* Align icon and text */
+    display: flex;
     align-items: center;
-    gap: 0.5rem; /* Space between icon and text */
+    gap: var(--space-sm);
+    box-shadow: var(--shadow-glow-sm);
 }
 
 .mode-button:hover {
-    color: #3f3; /* Slightly brighter green */
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.mode-button:active {
+    transform: translateY(0) scale(0.95);
 }
 
 .mode-icon {
-    font-size: 1.2rem; /* Adjust icon size if needed */
+    font-size: 1.2rem;
 }
 
 .start-button {
     font-family: 'Press Start 2P', monospace;
-    font-size: 1.2rem;
-    padding: 1rem 2rem;
-    background-color: #000;
-    color: #0f0;
-    border: 2px solid #0f0;
-    /* Remove border-radius */
+    font-size: var(--font-md);
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
     text-transform: uppercase;
-    margin-top: 1rem;
+    margin-top: var(--space-md);
+    box-shadow: var(--shadow-glow-sm);
 }
 
 .start-button:hover {
-    /* Simplify hover: remove background change and transform */
-    color: #3f3; /* Slightly brighter green */
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.start-button:active {
+    transform: translateY(0) scale(0.95);
 }
 
 .game-status {
-    font-size: 1.5rem;
-    margin: 1rem 0;
-    color: #0f0;
-    text-shadow: 0 0 5px #0f0;
+    font-size: var(--font-lg);
+    margin: var(--space-md) 0;
+    color: var(--color-primary);
+    text-shadow: var(--glow-xs);
 }
 
 .restart-button, .menu-button, .rematch-button {
     font-family: 'Press Start 2P', monospace;
-    font-size: 1rem;
-    padding: 0.8rem 1.5rem;
-    background-color: #000;
-    color: #0f0;
-    border: 2px solid #0f0;
-    /* Remove border-radius */
+    font-size: var(--font-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin: 0.5rem;
+    transition: all var(--transition-base);
+    margin: var(--space-sm);
+    box-shadow: var(--shadow-glow-sm);
 }
 
 .restart-button:hover, .menu-button:hover, .rematch-button:hover {
-    /* Simplify hover: remove background change */
-    color: #3f3; /* Slightly brighter green */
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.restart-button:active, .menu-button:active, .rematch-button:active {
+    transform: translateY(0) scale(0.95);
 }
 
 .game-controls {
     display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
+    gap: var(--grid-gap-md);
+    margin-top: var(--space-md);
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -205,20 +258,23 @@ h1 {
 .game-stats {
     display: flex;
     justify-content: space-around;
-    margin: 1rem 0;
-    padding: 1rem;
-    border: 2px solid #0f0;
-    /* Remove border-radius */
+    margin: var(--space-md) 0;
+    padding: var(--space-md);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
     background: rgba(0, 255, 0, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 /* Add move history panel */
 .move-history {
     max-height: 200px;
     overflow-y: auto;
-    padding: 1rem;
-    margin: 1rem 0;
-    border: 2px solid #0f0;
+    padding: var(--space-md);
+    margin: var(--space-md) 0;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
 }
 
 /* Add responsive animations */
@@ -229,10 +285,10 @@ h1 {
 }
 
 .game-title {
-    font-size: 3.5em;
-    color: #00ff00;
-    text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
-    margin-bottom: 30px;
+    font-size: var(--font-2xl);
+    color: var(--color-primary);
+    text-shadow: var(--glow-sm);
+    margin-bottom: var(--space-xl);
     font-family: monospace;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -241,36 +297,36 @@ h1 {
 
 @keyframes glow {
     from {
-        text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+        text-shadow: var(--glow-sm);
     }
     to {
-        text-shadow: 0 0 20px rgba(0, 255, 0, 0.9),
-                     0 0 30px rgba(0, 255, 0, 0.7),
+        text-shadow: var(--glow-md),
+                     var(--glow-lg),
                      0 0 40px rgba(0, 255, 0, 0.5);
     }
 }
 
 .stats-button {
-    background: linear-gradient(45deg, #00ff00, #00cc00);
+    grid-area: stats;
+    background: linear-gradient(45deg, var(--color-primary), var(--color-primary-dark));
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-size: 1.1em;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-md);
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 20px;
-    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-glow-sm);
 }
 
 .stats-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 255, 0, 0.4);
+    box-shadow: var(--shadow-glow-md);
 }
 
 .stats-button:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
 }
 
 .stats-modal {
@@ -280,10 +336,12 @@ h1 {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
     animation: fadeIn 0.3s ease;
 }
 
@@ -298,28 +356,31 @@ h1 {
 
 .stats-modal-content {
     position: relative;
-    background: rgba(20, 20, 20, 0.95);
-    border-radius: 15px;
-    padding: 20px;
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
     max-width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+    box-shadow: var(--shadow-glow-lg),
+                var(--shadow-lg);
     border: 1px solid rgba(0, 255, 0, 0.2);
 }
 
 .close-stats {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: var(--space-sm);
+    right: var(--space-sm);
     background: none;
     border: none;
     color: #fff;
     font-size: 1.5em;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
 }
 
 .close-stats:hover {
@@ -342,25 +403,28 @@ h1 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 3rem;
+    font-size: var(--font-2xl);
     font-weight: bold;
-    z-index: 1000;
-    padding: 2rem;
+    z-index: var(--z-modal);
+    padding: var(--space-xl);
     border: 3px solid;
-    background: rgba(0, 0, 0, 0.9);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
     text-align: center;
     animation: celebration 2s ease-in-out;
 }
 
 .game-status-overlay.player-wins {
-    color: #00ff00;
-    border-color: #00ff00;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-glow-lg);
 }
 
 .game-status-overlay.ai-wins {
-    color: #ff0000;
-    border-color: #ff0000;
+    color: var(--color-secondary);
+    border-color: var(--color-secondary);
     box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
 }
 
@@ -373,38 +437,39 @@ h1 {
 /* Mobile-specific adjustments */
 @media (max-width: 600px) {
     .app {
-        padding: 10px;
-        justify-content: flex-start;
+        padding: 0;
+        gap: var(--grid-gap-sm);
     }
     
     h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
+        font-size: var(--font-lg);
+        margin-bottom: var(--space-md);
     }
     
     .menu {
-        padding: 1rem;
-        width: 90%;
+        padding: var(--space-lg);
+        width: 95%;
+        gap: var(--grid-gap-md);
     }
     
     .start-button {
-        font-size: 1rem;
-        padding: 0.8rem 1.5rem;
+        font-size: var(--font-sm);
+        padding: var(--space-md) var(--space-lg);
     }
     
     .mode-button {
-        padding: 0.6rem 1rem;
-        font-size: 0.8rem;
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-xs);
     }
     
     .stats-button {
-        padding: 8px 16px;
-        font-size: 0.9em;
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-sm);
     }
     
     .stats-modal-content {
         max-width: 95%;
-        padding: 15px;
+        padding: var(--space-md);
     }
 
     .game-controls {
@@ -413,33 +478,101 @@ h1 {
     }
 
     .restart-button, .menu-button, .rematch-button {
-        font-size: 0.8rem;
-        padding: 0.6rem 1rem;
+        font-size: var(--font-xs);
+        padding: var(--space-sm) var(--space-md);
     }
 }
 
 @media (max-width: 375px) {
     h1 {
-        font-size: 1.5rem;
+        font-size: var(--font-md);
     }
     
     .menu {
-        padding: 0.8rem;
+        padding: var(--space-md);
     }
     
     .name-input {
-        font-size: 0.8rem;
-        padding: 0.6rem;
+        font-size: var(--font-xs);
+        padding: var(--space-sm);
     }
 }
 
 @media (max-height: 700px) {
     .app {
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding-top: var(--space-sm);
+        padding-bottom: var(--space-sm);
     }
     
     h1 {
-        margin-bottom: 0.5rem;
+        margin-bottom: var(--space-sm);
     }
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Progressive Disclosure Animations */
+.expandable-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-smooth);
+    opacity: 0;
+}
+
+.expandable-section.open {
+    max-height: 800px; /* Large enough for all content */
+    opacity: 1;
+    transition: max-height var(--transition-smooth), opacity var(--transition-base);
+}
+
+.expand-toggle {
+    position: relative;
+}
+
+.expand-toggle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: var(--space-sm);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--color-primary);
+    transform: translateY(-50%);
+    transition: transform var(--transition-base);
+}
+
+.menu-options-content.expandable-section.open + .expand-toggle::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Quick Play Button Enhancement */
+.quick-play-button {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-background);
+    font-size: var(--font-lg);
+    padding: var(--space-lg) var(--space-2xl);
+    box-shadow: var(--shadow-glow-lg);
+    text-shadow: none;
+    border-color: var(--color-primary-light);
+}
+
+.quick-play-button:hover {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    box-shadow: var(--shadow-glow-lg), 0 8px 25px rgba(0, 255, 0, 0.4);
+    transform: translateY(-3px);
+}
+
+.quick-play-button:active {
+    transform: translateY(-1px) scale(0.98);
 }

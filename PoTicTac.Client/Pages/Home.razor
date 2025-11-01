@@ -19,6 +19,7 @@
     @if (gameMode == GameModeType.Menu)
     {
         <h1 class="game-title">PoTicTac</h1>
+
         <div class="menu">
             <div class="player-name-input">
                 <input type="text" 
@@ -28,24 +29,25 @@
                        class="name-input" />
             </div>
             
-            <div class="menu-options">
-                <div class="mode-selection">
-                    <h3>Choose Game Mode</h3>
-                    <div class="mode-buttons">
-                        <button class="mode-button" @onclick="StartSinglePlayerGame">
-                            <span class="mode-icon">🤖</span>
-                            Single Player
-                        </button>
-                        <button class="mode-button" @onclick="StartMultiplayerLobby">
-                            <span class="mode-icon">👥</span>
-                            Multiplayer
-                        </button>
-                    </div>
+            <div class="mode-selection">
+                <h3>Choose Game Mode</h3>
+                <div class="mode-buttons">
+                    <button class="mode-button" @onclick="StartSinglePlayerGame">
+                        <span class="mode-icon">🤖</span>
+                        Single Player
+                    </button>
+                    <button class="mode-button" @onclick="StartMultiplayerLobby">
+                        <span class="mode-icon">👥</span>
+                        Multiplayer
+                    </button>
                 </div>
-                
-                <DifficultySelector CurrentDifficulty="difficulty" 
-                                  OnDifficultyChange="OnDifficultyChanged" />
             </div>
+            
+            <DifficultySelector CurrentDifficulty="difficulty" 
+                              OnDifficultyChange="OnDifficultyChanged" />
+
+            <ThemeSelector OnThemeChange="OnThemeChanged" />
+            
             <button class="stats-button" @onclick="NavigateToStats">
                 View Statistics
             </button>
@@ -110,7 +112,7 @@
     private string playerName = string.Empty;
     private MultiplayerGameInfo? multiplayerGame;
     private PlayerStats playerStats = new();
-    // Removed unused showStats modal handling
+    private DotNetObjectReference<PoTicTac.Client.Pages.Home>? dotNetRef;
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,6 +134,14 @@
     private Task OnDifficultyChanged(Difficulty newDifficulty)
     {
         difficulty = newDifficulty;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnThemeChanged(string newTheme)
+    {
+        // Theme is applied by the ThemeSelector component directly
+        // This callback can be used for any additional theme-related logic
         StateHasChanged();
         return Task.CompletedTask;
     }
@@ -324,6 +334,17 @@
                     // Ignore localStorage errors
                 }
             }
+
+            // Initialize touch gestures for mobile swipes
+            try
+            {
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("initSwipeGestures", dotNetRef);
+            }
+            catch
+            {
+                // Ignore JS interop errors
+            }
         }
     }
 
@@ -332,10 +353,43 @@
         try
         {
             await SignalR.DisconnectAsync();
+            // Cleanup JS gesture listeners
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("cleanupSwipeGestures");
+            }
+            catch { }
+            dotNetRef?.Dispose();
         }
         catch
         {
             // Ignore disposal errors
         }
+    }
+
+    [JSInvokable]
+    public void OnSwipeLeft()
+    {
+        // Navigate to stats on swipe left
+        NavigationManager.NavigateTo("/stats");
+    }
+
+    [JSInvokable]
+    public void OnSwipeRight()
+    {
+        // Return to home/menu on swipe right
+        NavigationManager.NavigateTo("/");
+    }
+
+    [JSInvokable]
+    public void OnSwipeUp()
+    {
+        // Placeholder - could open settings
+    }
+
+    [JSInvokable]
+    public void OnSwipeDown()
+    {
+        // Placeholder - could open menu
     }
 }

@@ -4,21 +4,21 @@
     <div class="game-board retro-glow">
         @for (int row = 0; row < GameState.Board.GetLength(0); row++)
         {
-            <div class="board-row">
-                @for (int col = 0; col < GameState.Board.GetLength(1); col++)
-                {
-                    var currentRow = row;
-                    var currentCol = col;
-                    var value = GameState.Board[row, col];
-                    var isLastMove = LastMove?.Row == row && LastMove?.Col == col;
-                    var isWinningCell = GameState.WinningCells?.Any(cell => cell[0] == row && cell[1] == col) == true;
-                    
-                    <div class="cell @GetCellClasses(value, isLastMove, isWinningCell)"
-                         @onclick="() => HandleCellClick(currentRow, currentCol)">
-                        @GetCellSymbol(value)
-                    </div>
-                }
-            </div>
+            @for (int col = 0; col < GameState.Board.GetLength(1); col++)
+            {
+                var currentRow = row;
+                var currentCol = col;
+                var value = GameState.Board[row, col];
+                var isLastMove = LastMove?.Row == row && LastMove?.Col == col;
+                var isWinningCell = GameState.WinningCells?.Any(cell => cell[0] == row && cell[1] == col) == true;
+                
+                <div class="cell @GetCellClasses(value, isLastMove, isWinningCell)"
+                     style="grid-area: @(row + 1) / @(col + 1)"
+                     @onclick="() => HandleCellClick(currentRow, currentCol)"
+                     data-tooltip="@GetCellTooltip(currentRow, currentCol, value)">
+                    @GetCellSymbol(value)
+                </div>
+            }
         }
     </div>
 </div>
@@ -72,5 +72,14 @@
             PlayerType.O => "O",
             _ => ""
         };
+    }
+
+    private string GetCellTooltip(int row, int col, PlayerType value)
+    {
+        if (value != PlayerType.None)
+        {
+            return $"{GetCellSymbol(value)} at ({row + 1}, {col + 1})";
+        }
+        return $"Click to place at ({row + 1}, {col + 1})";
     }
 }

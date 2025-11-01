@@ -1,9 +1,16 @@
 using PoTicTac.Client.Models;
+using PoTicTac.Client.Services.WinStrategies;
 
 namespace PoTicTac.Client.Services;
 
 public class GameLogicService
 {
+    private readonly WinChecker _winChecker;
+
+    public GameLogicService()
+    {
+        _winChecker = new WinChecker();
+    }
     public GameBoardState CreateInitialState(PlayerType startingPlayer, Player[] players)
     {
         var initialState = new GameBoardState
@@ -29,122 +36,7 @@ public class GameLogicService
 
     public PlayerType? CheckWinner(GameBoardState board)
     {
-        const int winLength = 4; // Need 4 in a row to win
-        int boardSize = GameBoardState.BoardSize;
-
-        // Check rows for 4 in a row
-        for (int row = 0; row < boardSize; row++)
-        {
-            for (int col = 0; col <= boardSize - winLength; col++)
-            {
-                PlayerType first = board.Board[row, col];
-                if (first != PlayerType.None)
-                {
-                    bool win = true;
-                    for (int i = 1; i < winLength; i++)
-                    {
-                        if (board.Board[row, col + i] != first)
-                        {
-                            win = false;
-                            break;
-                        }
-                    }
-                    if (win)
-                    {
-                        return first;
-                    }
-                }
-            }
-        }
-
-        // Check columns for 4 in a row
-        for (int col = 0; col < boardSize; col++)
-        {
-            for (int row = 0; row <= boardSize - winLength; row++)
-            {
-                PlayerType first = board.Board[row, col];
-                if (first != PlayerType.None)
-                {
-                    bool win = true;
-                    for (int i = 1; i < winLength; i++)
-                    {
-                        if (board.Board[row + i, col] != first)
-                        {
-                            win = false;
-                            break;
-                        }
-                    }
-                    if (win)
-                    {
-                        return first;
-                    }
-                }
-            }
-        }
-
-        // Check diagonals (top-left to bottom-right)
-        for (int row = 0; row <= boardSize - winLength; row++)
-        {
-            for (int col = 0; col <= boardSize - winLength; col++)
-            {
-                PlayerType first = board.Board[row, col];
-                if (first != PlayerType.None)
-                {
-                    bool win = true;
-                    for (int i = 1; i < winLength; i++)
-                    {
-                        if (board.Board[row + i, col + i] != first)
-                        {
-                            win = false;
-                            break;
-                        }
-                    }
-                    if (win)
-                    {
-                        return first;
-                    }
-                }
-            }
-        }
-
-        // Check diagonals (top-right to bottom-left)
-        for (int row = 0; row <= boardSize - winLength; row++)
-        {
-            for (int col = winLength - 1; col < boardSize; col++)
-            {
-                PlayerType first = board.Board[row, col];
-                if (first != PlayerType.None)
-                {
-                    bool win = true;
-                    for (int i = 1; i < winLength; i++)
-                    {
-                        if (board.Board[row + i, col - i] != first)
-                        {
-                            win = false;
-                            break;
-                        }
-                    }
-                    if (win)
-                    {
-                        return first;
-                    }
-                }
-            }
-        }
-
-        // Check for draw (no empty cells)
-        for (int row = 0; row < boardSize; row++)
-        {
-            for (int col = 0; col < boardSize; col++)
-            {
-                if (board.Board[row, col] == PlayerType.None)
-                {
-                    return null; // Game still in progress
-                }
-            }
-        }
-
-        return PlayerType.Draw;
+        return _winChecker.CheckWinner(board);
     }
 
     public GameBoardState MakeMove(GameBoardState state, int row, int col)

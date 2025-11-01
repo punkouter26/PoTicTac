@@ -1,0 +1,190 @@
+@inject IJSRuntime JSRuntime
+
+<div class="theme-selector">
+    <h4>Theme</h4>
+    <div class="theme-buttons">
+        <button class="theme-button @(currentTheme == "green" ? "active" : "")" 
+                @onclick="@(() => SetTheme("green"))"
+                data-theme="green">
+            <span class="theme-preview green-theme"></span>
+            Classic
+        </button>
+        <button class="theme-button @(currentTheme == "blue" ? "active" : "")" 
+                @onclick="@(() => SetTheme("blue"))"
+                data-theme="blue">
+            <span class="theme-preview blue-theme"></span>
+            Blue
+        </button>
+        <button class="theme-button @(currentTheme == "purple" ? "active" : "")" 
+                @onclick="@(() => SetTheme("purple"))"
+                data-theme="purple">
+            <span class="theme-preview purple-theme"></span>
+            Purple
+        </button>
+        <button class="theme-button @(currentTheme == "red" ? "active" : "")" 
+                @onclick="@(() => SetTheme("red"))"
+                data-theme="red">
+            <span class="theme-preview red-theme"></span>
+            Red
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnThemeChange { get; set; }
+    
+    private string currentTheme = "green"; // Default theme
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load saved theme from localStorage
+        try
+        {
+            var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "selectedTheme");
+            if (!string.IsNullOrEmpty(savedTheme))
+            {
+                currentTheme = savedTheme;
+                await ApplyTheme(currentTheme);
+            }
+        }
+        catch
+        {
+            // Ignore localStorage errors - use default theme
+        }
+    }
+
+    private async Task SetTheme(string theme)
+    {
+        currentTheme = theme;
+        await ApplyTheme(theme);
+        
+        // Save to localStorage
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "selectedTheme", theme);
+        }
+        catch
+        {
+            // Ignore localStorage errors
+        }
+
+        // Notify parent component
+        if (OnThemeChange.HasDelegate)
+        {
+            await OnThemeChange.InvokeAsync(theme);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ApplyTheme(string theme)
+    {
+        try
+        {
+            if (theme == "green")
+            {
+                await JSRuntime.InvokeVoidAsync("document.documentElement.removeAttribute", "data-theme");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("document.documentElement.setAttribute", "data-theme", theme);
+            }
+        }
+        catch
+        {
+            // Ignore JS interop errors
+        }
+    }
+}
+
+<style>
+.theme-selector {
+    text-align: center;
+    margin: var(--space-md) 0;
+}
+
+.theme-selector h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-md);
+    text-shadow: var(--glow-xs);
+}
+
+.theme-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--space-sm);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.theme-button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: var(--font-xs);
+    padding: var(--space-sm);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    box-shadow: var(--shadow-glow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.theme-button:hover {
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.theme-button:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.theme-button.active {
+    background: rgba(0, 255, 0, 0.2);
+    color: #fff;
+    box-shadow: var(--shadow-glow-md);
+}
+
+.theme-preview {
+    width: 20px;
+    height: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.green-theme {
+    background: linear-gradient(90deg, #00ff00, #00cc00);
+}
+
+.blue-theme {
+    background: linear-gradient(90deg, #00ccff, #0099cc);
+}
+
+.purple-theme {
+    background: linear-gradient(90deg, #cc00ff, #9900cc);
+}
+
+.red-theme {
+    background: linear-gradient(90deg, #ff0033, #cc0029);
+}
+
+@@media (max-width: 600px) {
+    .theme-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .theme-button {
+        font-size: 0.6rem;
+        padding: var(--space-xs);
+    }
+}
+</style>

@@ -13,8 +13,16 @@
 
     @if (isLoading)
     {
-        <div class="stats-loading">
-            <p>Loading statistics...</p>
+        <div class="stats-loading loading-container" role="status" aria-label="Loading statistics">
+            <div class="skeleton skeleton-text title" aria-hidden="true"></div>
+            <div class="skeleton-stats-grid" aria-hidden="true">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+            <div class="skeleton skeleton-card large" aria-hidden="true"></div>
+            <span class="sr-only">Loading player statistics...</span>
         </div>
     }
     else if (playerStats == null || !playerStats.Any())
