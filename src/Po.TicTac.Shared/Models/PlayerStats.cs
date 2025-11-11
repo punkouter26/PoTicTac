@@ -18,7 +18,7 @@ public class PlayerStats
     public DifficultyStats Easy { get; set; } = new DifficultyStats();
     public DifficultyStats Medium { get; set; } = new DifficultyStats();
     public DifficultyStats Hard { get; set; } = new DifficultyStats();
-    
+
     // Overall stats across all difficulties
     public int TotalWins { get; set; }
     public int TotalLosses { get; set; }

@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System;
 using Bogus;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -77,7 +77,7 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
         int limit = 10;
 
         // Act
-    var response = await _client.GetAsync($"/api/statistics/leaderboard?limit={limit}");
+        var response = await _client.GetAsync($"/api/statistics/leaderboard?limit={limit}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "GET /api/statistics/leaderboard should return 200 OK");
@@ -92,7 +92,7 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
         int limit = 10;
 
         // Act
-    var leaderboard = await _client.GetFromJsonAsync<List<PlayerStatsDto>>($"/api/statistics/leaderboard?limit={limit}");
+        var leaderboard = await _client.GetFromJsonAsync<List<PlayerStatsDto>>($"/api/statistics/leaderboard?limit={limit}");
 
         // Assert
         leaderboard.Should().NotBeNull("leaderboard should return a list");
