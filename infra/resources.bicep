@@ -114,7 +114,7 @@ resource playerStatsTable 'Microsoft.Storage/storageAccounts/tableServices/table
 
 // Azure Key Vault for secrets
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: '${resourceName}-kv'
+  name: '${resourceName}-kv2'
   location: location
   tags: tags
   properties: {
