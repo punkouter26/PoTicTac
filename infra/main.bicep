@@ -35,6 +35,7 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 // Reference PoShared resource group for App Service Plan
 resource poSharedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
   name: 'PoShared'
+  scope: subscription()
 }
 
 // Reference existing App Service Plan in PoShared (use PoShared2 which has capacity)
