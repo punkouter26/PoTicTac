@@ -155,10 +155,10 @@ resource newAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = if (!useShar
   location: location
   tags: tags
   sku: {
-    name: 'B1'
-    tier: 'Basic'
-    size: 'B1'
-    family: 'B'
+    name: 'F1'
+    tier: 'Free'
+    size: 'F1'
+    family: 'F'
     capacity: 1
   }
   properties: {
@@ -186,8 +186,8 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
     httpsOnly: true
     siteConfig: {
       netFrameworkVersion: 'v9.0'
-      use32BitWorkerProcess: useSharedPlan
-      alwaysOn: !useSharedPlan
+      use32BitWorkerProcess: true
+      alwaysOn: false // Free tier doesn't support Always On
       http20Enabled: true
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
