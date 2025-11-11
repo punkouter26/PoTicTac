@@ -27,7 +27,7 @@ param tags object = {
 
 // Resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${environmentName}-rg'
+  name: environmentName
   location: location
   tags: tags
 }
