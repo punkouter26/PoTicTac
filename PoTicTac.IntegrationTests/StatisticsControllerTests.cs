@@ -2,11 +2,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System;
 using Bogus;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using PoTicTacServer.Models;
+using Po.TicTac.Api;
+using Po.TicTac.Shared.DTOs;
+using Po.TicTac.Shared.Models;
 using Xunit;
 
 namespace PoTicTac.IntegrationTests;
@@ -59,9 +63,9 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
             firstStat.Name.Should().NotBeNullOrEmpty("player name should be populated");
             firstStat.Stats.Should().NotBeNull("player stats should not be null");
             firstStat.Stats.TotalGames.Should().BeGreaterThanOrEqualTo(0, "total games cannot be negative");
-            firstStat.Stats.Wins.Should().BeGreaterThanOrEqualTo(0, "wins cannot be negative");
-            firstStat.Stats.Losses.Should().BeGreaterThanOrEqualTo(0, "losses cannot be negative");
-            firstStat.Stats.Draws.Should().BeGreaterThanOrEqualTo(0, "draws cannot be negative");
+            firstStat.Stats.TotalWins.Should().BeGreaterThanOrEqualTo(0, "wins cannot be negative");
+            firstStat.Stats.TotalLosses.Should().BeGreaterThanOrEqualTo(0, "losses cannot be negative");
+            firstStat.Stats.TotalDraws.Should().BeGreaterThanOrEqualTo(0, "draws cannot be negative");
         }
     }
 
@@ -73,7 +77,7 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
         int limit = 10;
 
         // Act
-        var response = await _client.GetAsync($"/api/statistics/leaderboard?limit={limit}");
+    var response = await _client.GetAsync($"/api/statistics/leaderboard?limit={limit}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "GET /api/statistics/leaderboard should return 200 OK");
@@ -88,18 +92,56 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
         int limit = 10;
 
         // Act
-        var leaderboard = await _client.GetFromJsonAsync<List<PlayerStatsDto>>($"/api/statistics/leaderboard?limit={limit}");
+    var leaderboard = await _client.GetFromJsonAsync<List<PlayerStatsDto>>($"/api/statistics/leaderboard?limit={limit}");
 
         // Assert
         leaderboard.Should().NotBeNull("leaderboard should return a list");
         leaderboard.Should().BeOfType<List<PlayerStatsDto>>("response should be a list");
         leaderboard!.Count.Should().BeLessThanOrEqualTo(limit, $"leaderboard should respect the limit of {limit}");
     }
-}
 
-// DTO must match the server's PlayerStatsDto
-public class PlayerStatsDto
-{
-    public string Name { get; set; } = string.Empty;
-    public PlayerStats Stats { get; set; } = new PlayerStats();
+    [Fact]
+    [Trait("Type", "Validation")]
+    public async Task GetPlayerStats_UnknownPlayer_ReturnsNotFound()
+    {
+        // Arrange
+        var playerName = $"unknown-{Guid.NewGuid():N}";
+
+        // Act
+        var response = await _client.GetAsync($"/api/players/{playerName}/stats");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    [Trait("Type", "HappyPath")]
+    public async Task SavePlayerStats_PutThenGet_ReturnsPersistedPayload()
+    {
+        // Arrange
+        var playerName = $"integration-{Guid.NewGuid():N}";
+        var payload = new PlayerStats
+        {
+            TotalGames = 1,
+            TotalWins = 1,
+            OverallWinRate = 1.0
+        };
+        payload.Easy.TotalGames = 1;
+        payload.Easy.Wins = 1;
+        payload.Easy.WinRate = 1.0;
+
+        // Act
+        var putResponse = await _client.PutAsJsonAsync($"/api/players/{playerName}/stats", payload);
+        var getResponse = await _client.GetAsync($"/api/players/{playerName}/stats");
+        var dto = await getResponse.Content.ReadFromJsonAsync<PlayerStatsDto>();
+
+        // Assert
+        putResponse.StatusCode.Should().Be(HttpStatusCode.NoContent, "PUT should return 204 No Content");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK, "GET should succeed after saving stats");
+        dto.Should().NotBeNull();
+        dto!.Name.Should().Be(playerName);
+        dto.Stats.TotalGames.Should().Be(payload.TotalGames);
+        dto.Stats.TotalWins.Should().Be(payload.TotalWins);
+        dto.Stats.Easy.TotalGames.Should().Be(payload.Easy.TotalGames);
+    }
 }

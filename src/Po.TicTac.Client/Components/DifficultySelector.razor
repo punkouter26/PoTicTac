@@ -1,0 +1,35 @@
+@namespace PoTicTac.Client.Components
+@using PoTicTac.Client.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+
+<FluentCard>
+    <h3>AI Difficulty</h3>
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Easy ? Appearance.Accent : Appearance.Neutral)"
+                      @onclick="() => SetDifficulty(Difficulty.Easy)">
+            Easy
+        </FluentButton>
+        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Medium ? Appearance.Accent : Appearance.Neutral)"
+                      @onclick="() => SetDifficulty(Difficulty.Medium)">
+            Medium
+        </FluentButton>
+        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Hard ? Appearance.Accent : Appearance.Neutral)"
+                      @onclick="() => SetDifficulty(Difficulty.Hard)">
+            Hard
+        </FluentButton>
+    </FluentStack>
+</FluentCard>
+
+@code {
+    [Parameter] public Difficulty CurrentDifficulty { get; set; } = Difficulty.Medium;
+    [Parameter] public EventCallback<Difficulty> OnDifficultyChange { get; set; }
+
+    private async Task SetDifficulty(Difficulty difficulty)
+    {
+        CurrentDifficulty = difficulty;
+        if (OnDifficultyChange.HasDelegate)
+        {
+            await OnDifficultyChange.InvokeAsync(difficulty);
+        }
+    }
+}

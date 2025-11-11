@@ -282,6 +282,37 @@ resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01
   }
 }
 
+// Cost Management - $5 Monthly Budget Alert
+resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
+  name: '${resourceName}-monthly-budget'
+  properties: {
+    category: 'Cost'
+    amount: 5
+    timeGrain: 'Monthly'
+    timePeriod: {
+      startDate: '2024-01-01'
+      endDate: '2025-12-31'
+    }
+    filter: {}
+    notifications: {
+      actual_GreaterThan_80_Percent: {
+        enabled: true
+        operator: 'GreaterThan'
+        threshold: 80
+        contactEmails: []
+        thresholdType: 'Actual'
+      }
+      forecasted_GreaterThan_100_Percent: {
+        enabled: true
+        operator: 'GreaterThan'
+        threshold: 100
+        contactEmails: []
+        thresholdType: 'Forecasted'
+      }
+    }
+  }
+}
+
 // Outputs
 output applicationInsightsConnectionString string = appInsights.properties.ConnectionString
 output applicationInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey

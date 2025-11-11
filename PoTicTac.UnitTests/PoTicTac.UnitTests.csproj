@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
+    <PackageReference Include="bunit" />
     <PackageReference Include="coverlet.collector">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -33,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PoTicTac.Client\PoTicTac.Client.csproj" />
+    <ProjectReference Include="..\src\Po.TicTac.Client\Po.TicTac.Client.csproj" />
   </ItemGroup>
 
 </Project>

@@ -229,7 +229,7 @@ public class GameLogicServiceTests
         var playerFaker = new Faker<Player>()
             .RuleFor(p => p.Id, f => f.Random.Guid().ToString())
             .RuleFor(p => p.Name, f => f.Person.FullName)
-            .RuleFor(p => p.Stats, f => new PlayerStats
+            .RuleFor(p => p.Stats, f => new PoTicTac.Client.Models.PlayerStats
             {
                 Wins = f.Random.Int(0, 100),
                 Losses = f.Random.Int(0, 100),

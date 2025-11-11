@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Coverage settings -->
-    <CoverletOutput>../coverage/</CoverletOutput>
+    <CoverletOutput>$(MSBuildThisFileDirectory)docs/coverage/</CoverletOutput>
     <CoverletOutputFormat>cobertura,opencover,json</CoverletOutputFormat>
     <Threshold>80</Threshold>
     <ThresholdType>line,branch,method</ThresholdType>
@@ -12,7 +12,7 @@
     <ExcludeByAttribute>Obsolete,GeneratedCode,CompilerGenerated</ExcludeByAttribute>
     
     <!-- Include only source projects -->
-    <Include>[PoTicTac.*]*</Include>
+    <Include>[Po.TicTac.*]*</Include>
     <Exclude>[*.Tests]*,[*.IntegrationTests]*,[*.UnitTests]*,[*.E2ETests]*</Exclude>
     
     <!-- Report settings -->

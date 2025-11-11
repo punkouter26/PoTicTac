@@ -1,0 +1,86 @@
+@using Po.TicTac.Shared.DTOs
+@using Po.TicTac.Shared.Models
+@namespace PoTicTac.Client.Components
+
+<section class="stats-section">
+    <h2 class="stats-section-title">@Title</h2>
+
+    @if (Entries is { Count: > 0 })
+    {
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Win Rate</th>
+                    <th>Games</th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                    <th>Draws</th>
+                    <th>Streak</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Entries.Count; i++)
+                {
+                    var entry = Entries[i];
+                    var stats = StatsSelector(entry);
+                    <tr>
+                        <td class="@GetRankClass(i)">@(i + 1)</td>
+                        <td>@entry.Name</td>
+                        <td>@FormatWinRate(stats.WinRate)</td>
+                        <td>@stats.TotalGames</td>
+                        <td>@stats.Wins</td>
+                        <td>@stats.Losses</td>
+                        <td>@stats.Draws</td>
+                        <td>@stats.WinStreak</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="@EmptyMessageClass">@EmptyMessage</p>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<PlayerStatsDto> Entries { get; set; } = Array.Empty<PlayerStatsDto>();
+
+    [Parameter]
+    public Func<PlayerStatsDto, DifficultyStats> StatsSelector { get; set; } = default!;
+
+    [Parameter]
+    public string EmptyMessage { get; set; } = "No games played yet.";
+
+    [Parameter]
+    public string EmptyMessageClass { get; set; } = "leaderboard-empty";
+
+    protected override void OnParametersSet()
+    {
+        if (StatsSelector is null)
+        {
+            throw new InvalidOperationException($"{nameof(StatsSelector)} must be provided.");
+        }
+
+        Entries ??= Array.Empty<PlayerStatsDto>();
+        EmptyMessageClass = string.IsNullOrWhiteSpace(EmptyMessageClass)
+            ? "leaderboard-empty"
+            : EmptyMessageClass;
+    }
+
+    private static string GetRankClass(int index) => index switch
+    {
+        0 => "leaderboard-rank-1",
+        1 => "leaderboard-rank-2",
+        2 => "leaderboard-rank-3",
+        _ => "leaderboard-rank"
+    };
+
+    private static string FormatWinRate(double winRate) => $"{winRate * 100:F1}%";
+}

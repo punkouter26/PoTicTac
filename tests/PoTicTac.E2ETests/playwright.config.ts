@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: './tests',
   
   // Maximum time one test can run
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,  // Increased to 60s for Blazor WASM loading
   
   // Test execution settings
   fullyParallel: true,
@@ -31,7 +31,7 @@ export default defineConfig({
     // Collect trace on first retry
     trace: 'on-first-retry',
     
-    // Screenshot on failure
+    // Screenshot on failure and for visual regression
     screenshot: 'only-on-failure',
     
     // Video on failure
@@ -47,21 +47,27 @@ export default defineConfig({
         viewport: { width: 1920, height: 1080 }
       },
     },
-    // Mobile testing temporarily disabled - enable when UI components have data-testid attributes
-    // {
-    //   name: 'chromium-mobile',
-    //   use: { 
-    //     ...devices['iPhone 13 Pro'],
-    //     viewport: { width: 414, height: 896 }
-    //   },
-    // },
+    {
+      name: 'chromium-mobile',
+      use: { 
+        viewport: { width: 414, height: 896 },
+        // Use desktop user agent to avoid Blazor WASM loading issues
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        actionTimeout: 30000,
+      },
+    },
+    // Accessibility testing
+    {
+      name: 'accessibility',
+      use: { 
+        ...devices['Desktop Chrome'],
+      },
+      testMatch: '**/*.accessibility.spec.ts',
+    },
   ],
 
-  // Run local dev server before starting tests
-  webServer: {
-    command: 'dotnet run --project ../../PoTicTacServer/PoTicTacServer.csproj',
-    url: 'http://localhost:5000/api/health',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // NOTE: For local development, manually start:
+  // 1. Azurite (for Azure Table Storage emulation)
+  // 2. API Server: dotnet run --project src/Po.TicTac.Api/Po.TicTac.Api.csproj
+  // Then run: npx playwright test
 });

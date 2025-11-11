@@ -215,29 +215,28 @@ dotnet format
 
 ### Deploy Infrastructure and Application
 
+Use Azure Developer CLI (azd) for deployment:
+
 1. **Login to Azure**
    ```powershell
    az login
+   azd auth login
    ```
 
-2. **Run deployment script**
+2. **Provision and Deploy**
    ```powershell
-   .\scripts\deploy-azure.ps1
+   azd up
    ```
 
-   This script will:
+   This will:
    - Create resource group "PoTicTac"
    - Deploy Log Analytics workspace (PerGB2018, 30-day retention)
    - Deploy Application Insights (workspace-based)
    - Deploy Storage Account (Standard_LRS) with "PlayerStats" table
-   - Output connection strings to appsettings.json
-   - Create .env file with connection strings
+   - Deploy App Service with the application
 
 3. **Verify deployment**
    ```powershell
-   # Run integration tests against Azure
-   dotnet test PoTicTac.IntegrationTests/PoTicTac.IntegrationTests.csproj
-
    # Check Azure resources
    az resource list --resource-group PoTicTac --output table
    ```
@@ -245,8 +244,8 @@ dotnet format
 ### Cleanup Azure Resources
 
 ```powershell
-# Remove all Azure resources (WARNING: Deletes everything)
-.\scripts\cleanup-azure.ps1
+# Remove all Azure resources
+azd down
 ```
 
 ### Estimated Azure Costs
@@ -269,11 +268,12 @@ PoTicTac/
 ├── PoTicTac.Client/                   # Blazor WebAssembly project
 │   ├── Pages/
 │   │   ├── Home.razor                 # Main game page (menu + gameplay)
-│   │   ├── Stats.razor                # Player statistics and leaderboard
-│   │   └── Diag.razor                 # System diagnostics and health checks
+│   │   └── Stats.razor                # Player statistics and leaderboard
 │   ├── Components/
 │   │   ├── GameBoard.razor            # 6x6 interactive game grid
-│   │   └── DifficultySelector.razor   # AI difficulty selection component
+│   │   ├── DifficultySelector.razor   # AI difficulty selection component
+│   │   ├── LeaderboardSection.razor   # Leaderboard table component
+│   │   └── StatsSummarySection.razor  # Statistics summary cards
 │   ├── Services/
 │   │   ├── GameLogicService.cs        # Core game mechanics and win detection
 │   │   ├── AILogicService.cs          # AI opponent strategies
@@ -370,10 +370,10 @@ The `/Diagrams` folder contains comprehensive Mermaid diagrams documenting the s
 
 **Swagger/OpenAPI** is available at `https://localhost:5001/swagger` (development) with comprehensive endpoint documentation:
 
-- **GET /api/players**: Retrieve all players and statistics
-- **GET /api/players/{playerName}**: Get specific player statistics
-- **PUT /api/players/{playerName}**: Save/update player statistics
-- **GET /api/players/leaderboard**: Top 10 players by win rate
+- **GET /api/statistics**: Retrieve all players and statistics
+- **GET /api/players/{playerName}/stats**: Get specific player statistics
+- **PUT /api/players/{playerName}/stats**: Save/update player statistics
+- **GET /api/statistics/leaderboard**: Top 10 players by win rate
 - **GET /api/statistics**: All player statistics with detailed metrics
 - **GET /api/statistics/leaderboard**: Ranked leaderboard
 - **POST /api/statistics/test-data**: Create sample test data

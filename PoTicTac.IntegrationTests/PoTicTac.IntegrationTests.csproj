@@ -34,7 +34,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PoTicTacServer\PoTicTacServer.csproj" />
+    <ProjectReference Include="..\src\Po.TicTac.Api\Po.TicTac.Api.csproj" />
+    <ProjectReference Include="..\src\Po.TicTac.Shared\Po.TicTac.Shared.csproj" />
   </ItemGroup>
 
 </Project>

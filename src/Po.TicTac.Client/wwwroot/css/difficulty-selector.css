@@ -1,0 +1,121 @@
+.difficulty-selector {
+    grid-area: difficulty;
+    text-align: center;
+    margin: 0;
+}
+
+.difficulty-selector h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-xs);
+    font-size: 0.75rem;
+    text-shadow: var(--glow-xs);
+}
+
+.difficulty-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+.difficulty-button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    box-shadow: var(--shadow-glow-sm);
+}
+
+.difficulty-button:hover {
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.difficulty-button:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.difficulty-button.active {
+    background: rgba(0, 255, 0, 0.2);
+    color: var(--color-primary, #00ff00) !important;
+    border-color: var(--color-primary, #00ff00) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.4) !important;
+}
+
+/* Theme Selector Styles */
+.theme-selector {
+    grid-area: theme;
+    text-align: center;
+    margin: 0;
+}
+
+.theme-selector h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-sm);
+    font-size: 0.9rem;
+    text-shadow: var(--glow-xs);
+}
+
+.theme-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+.theme-button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    box-shadow: var(--shadow-glow-sm);
+}
+
+.theme-button:hover {
+    color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: translateY(-2px);
+}
+
+.theme-button:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.theme-button.active {
+    background: rgba(0, 255, 0, 0.2);
+    color: var(--color-primary, #00ff00) !important;
+    border-color: var(--color-primary, #00ff00) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.4) !important;
+}
+
+@media (max-width: 600px) {
+    .difficulty-buttons,
+    .theme-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .difficulty-button,
+    .theme-button {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.8rem;
+        width: 100px;
+    }
+}

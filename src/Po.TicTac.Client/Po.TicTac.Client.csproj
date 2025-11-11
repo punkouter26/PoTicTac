@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CompressionEnabled>false</CompressionEnabled>
+    <NoWarn>$(NoWarn);RZ10012</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Po.TicTac.Shared\Po.TicTac.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
