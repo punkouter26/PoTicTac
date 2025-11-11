@@ -190,8 +190,8 @@ app.MapSavePlayerStats();
 // Map SignalR hub
 app.MapHub<GameHub>("/gamehub");
 
-// Fallback to index.html for SPA routes
-app.MapFallbackToFile("index.html");
+// Fallback to index.html for SPA routes (only for non-API routes)
+app.MapFallbackToFile("index.html").ExcludeFromDescription();
 
 Log.Information("PoTicTac server starting on {Environment}", builder.Environment.EnvironmentName);
 
