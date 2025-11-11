@@ -3,11 +3,10 @@ param resourceName string
 param environmentType string
 param principalId string = ''
 param tags object = {}
+param appServicePlanId string
 
-// Constants for shared resources
-var sharedResourceGroup = 'PoShared'
-var sharedAppServicePlanName = 'PoShared'
-var useSharedPlan = false // Create dedicated plan for this app
+// App Service - Deploy the App Service resource
+var deployAppService = true
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -142,31 +141,6 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
   }
 }
-
-// Reference existing shared App Service Plan (F1 Free Tier) for dev
-resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = if (useSharedPlan) {
-  name: sharedAppServicePlanName
-  scope: resourceGroup(subscription().subscriptionId, sharedResourceGroup)
-}
-
-// Create new App Service Plan for production
-resource newAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = if (!useSharedPlan) {
-  name: '${resourceName}-plan'
-  location: location
-  tags: tags
-  sku: {
-    name: 'F1'
-    tier: 'Free'
-    size: 'F1'
-    family: 'F'
-    capacity: 1
-  }
-  properties: {
-    reserved: false
-  }
-}
-
-var appServicePlanId = useSharedPlan ? existingAppServicePlan.id : newAppServicePlan.id
 
 // App Service - Deploy the App Service resource
 var deployAppService = true

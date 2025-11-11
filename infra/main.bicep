@@ -32,6 +32,22 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
+// Reference PoShared resource group for App Service Plan
+resource poSharedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  name: 'PoShared'
+}
+
+// Create App Service Plan in PoShared resource group
+module appServicePlan './appserviceplan.bicep' = {
+  name: 'appServicePlan'
+  scope: poSharedRg
+  params: {
+    planName: '${environmentName}-plan'
+    location: location
+    tags: tags
+  }
+}
+
 // Deploy resources
 module resources './resources.bicep' = {
   name: 'resources'
@@ -42,6 +58,7 @@ module resources './resources.bicep' = {
     environmentType: environmentType
     principalId: principalId
     tags: tags
+    appServicePlanId: appServicePlan.outputs.planId
   }
 }
 
