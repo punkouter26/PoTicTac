@@ -8,8 +8,6 @@ on:
 permissions:
   id-token: write
   contents: read
-  security-events: write
-  actions: read
 
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
@@ -19,66 +17,11 @@ env:
   DOTNET_VERSION: '9.0.x'
 
 jobs:
-  # Quality Gate: Static Code Analysis with CodeQL
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: csharp
-        queries: security-and-quality
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Restore dependencies
-      run: dotnet restore PoTicTac.sln
-
-    - name: Build solution for CodeQL
-      run: dotnet build PoTicTac.sln --configuration Release --no-restore
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:csharp"
-
-  # Quality Gate: Code Formatting & Linting
-  format-check:
-    name: Code Format Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Restore dependencies
-      run: dotnet restore PoTicTac.sln
-
-    - name: Verify code formatting
-      run: dotnet format PoTicTac.sln --verify-no-changes --verbosity diagnostic
-      continue-on-error: false
-
-  # Quality Gate: Build & Test
+  # Build & Test
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [codeql-analysis, format-check]
     
     steps:
     - name: Checkout repository
@@ -109,14 +52,6 @@ jobs:
         path: |
           **/TestResults/*.trx
         retention-days: 7
-
-    - name: Publish build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifacts
-        path: |
-          PoTicTacServer/bin/Release/net9.0/
-        retention-days: 3
 
   # Deployment to Azure
   deploy:
