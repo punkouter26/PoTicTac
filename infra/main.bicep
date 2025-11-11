@@ -32,17 +32,8 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// Reference PoShared resource group for App Service Plan
-resource poSharedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  name: 'PoShared'
-  scope: subscription()
-}
-
-// Reference existing App Service Plan in PoShared (use PoShared2 which has capacity)
-resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = {
-  name: 'PoShared2'
-  scope: poSharedRg
-}
+// Get the existing App Service Plan ID from PoShared resource group
+var appServicePlanId = resourceId(subscription().subscriptionId, 'PoShared', 'Microsoft.Web/serverfarms', 'PoShared2')
 
 // Deploy resources
 module resources './resources.bicep' = {
@@ -54,7 +45,7 @@ module resources './resources.bicep' = {
     environmentType: environmentType
     principalId: principalId
     tags: tags
-    appServicePlanId: existingAppServicePlan.id
+    appServicePlanId: appServicePlanId
   }
 }
 
