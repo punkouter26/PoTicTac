@@ -4,12 +4,12 @@ param environmentType string
 param principalId string = ''
 param tags object = {}
 
-// App Service - Reference existing (created manually to use cross-RG App Service Plan)
+// App Service - Reference existing (azd creates this with the environment name)
 var deployAppService = false
 
-// Reference existing App Service
+// Reference existing App Service (azd uses environment name without suffix)
 resource existingAppService 'Microsoft.Web/sites@2023-01-01' existing = {
-  name: '${resourceName}-app'
+  name: resourceName
 }
 
 // Log Analytics Workspace for Application Insights
