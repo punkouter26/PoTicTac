@@ -44,9 +44,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: build-and-test
-    environment:
-      name: production
-      url: ${{ steps.deploy-app.outputs.app-url }}
     
     steps:
     - name: Checkout repository
