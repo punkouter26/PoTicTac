@@ -118,10 +118,10 @@ resource tableDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-prev
   }
 }
 
-// Create the PoTicTacPlayerStats table
+// Create the PlayerStats table (matches the name used in Program.cs)
 resource playerStatsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-01-01' = {
   parent: tableService
-  name: 'PoTicTacPlayerStats'
+  name: 'PlayerStats'
 }
 
 // Azure Key Vault for secrets
