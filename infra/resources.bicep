@@ -168,10 +168,8 @@ resource newAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = if (!useShar
 
 var appServicePlanId = useSharedPlan ? existingAppServicePlan.id : newAppServicePlan.id
 
-// App Service - Will be deployed later via azd, this is just infrastructure
-// For now, we skip deployment to use local code
-// When ready to deploy, set deployAppService to true in azure.yaml
-var deployAppService = false
+// App Service - Deploy the App Service resource
+var deployAppService = true
 
 // App Service with System-Assigned Managed Identity
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
