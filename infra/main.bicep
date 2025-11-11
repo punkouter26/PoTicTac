@@ -32,8 +32,8 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// Get the existing App Service Plan ID from PoShared resource group
-var appServicePlanId = resourceId(subscription().subscriptionId, 'PoShared', 'Microsoft.Web/serverfarms', 'PoShared2')
+// Get the existing App Service Plan ID from PoShared resource group (PoShared is in East US 2, closest to our East US deployment)
+var appServicePlanId = resourceId(subscription().subscriptionId, 'PoShared', 'Microsoft.Web/serverfarms', 'PoShared')
 
 // Deploy resources
 module resources './resources.bicep' = {
