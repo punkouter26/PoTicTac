@@ -7,7 +7,7 @@ param tags object = {}
 // Constants for shared resources
 var sharedResourceGroup = 'PoShared'
 var sharedAppServicePlanName = 'PoShared'
-var useSharedPlan = environmentType == 'dev'
+var useSharedPlan = false // Set to true only if PoShared App Service Plan exists
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
