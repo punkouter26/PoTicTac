@@ -37,15 +37,10 @@ resource poSharedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
   name: 'PoShared'
 }
 
-// Create App Service Plan in PoShared resource group
-module appServicePlan './appserviceplan.bicep' = {
-  name: 'appServicePlan'
+// Reference existing App Service Plan in PoShared (use PoShared2 which has capacity)
+resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = {
+  name: 'PoShared2'
   scope: poSharedRg
-  params: {
-    planName: '${environmentName}-plan'
-    location: location
-    tags: tags
-  }
 }
 
 // Deploy resources
@@ -58,7 +53,7 @@ module resources './resources.bicep' = {
     environmentType: environmentType
     principalId: principalId
     tags: tags
-    appServicePlanId: appServicePlan.outputs.planId
+    appServicePlanId: existingAppServicePlan.id
   }
 }
 
