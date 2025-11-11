@@ -4,22 +4,13 @@ param environmentType string
 param principalId string = ''
 param tags object = {}
 
-// Create App Service Plan in this resource group
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
-  name: '${resourceName}-plan'
-  location: location
-  tags: tags
-  sku: {
-    name: 'F1'
-    tier: 'Free'
-  }
-  properties: {
-    reserved: false
-  }
-}
+// App Service - Reference existing (created manually to use cross-RG App Service Plan)
+var deployAppService = false
 
-// App Service - Deploy the App Service resource
-var deployAppService = true
+// Reference existing App Service
+resource existingAppService 'Microsoft.Web/sites@2023-01-01' existing = {
+  name: '${resourceName}-app'
+}
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -155,9 +146,9 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-// App Service with System-Assigned Managed Identity
+// App Service with System-Assigned Managed Identity (conditional - not used when referencing existing)
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
-  name: '${resourceName}-app'
+  name: '${resourceName}-app-new'  // Different name to avoid conflict
   location: location
   tags: union(tags, {
     'azd-service-name': 'web'
@@ -166,7 +157,6 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
     type: 'SystemAssigned'
   }
   properties: {
-    serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
       netFrameworkVersion: 'v9.0'
@@ -204,31 +194,31 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
 }
 
 // Grant App Service Managed Identity Key Vault Secrets User role
-resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
-  name: guid(keyVault.id, appService.id, 'Key Vault Secrets User')
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, existingAppService.id, 'Key Vault Secrets User')
   scope: keyVault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
-    principalId: appService.identity.principalId
+    principalId: existingAppService.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Grant App Service Managed Identity Storage Table Data Contributor role
-resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
-  name: guid(storageAccount.id, appService.id, 'Storage Table Data Contributor')
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAccount.id, existingAppService.id, 'Storage Table Data Contributor')
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3') // Storage Table Data Contributor
-    principalId: appService.identity.principalId
+    principalId: existingAppService.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Diagnostic Settings for App Service
-resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (deployAppService) {
+resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'app-diagnostics'
-  scope: appService
+  scope: existingAppService
   properties: {
     workspaceId: logAnalytics.id
     logs: [
@@ -305,6 +295,6 @@ output logAnalyticsWorkspaceId string = logAnalytics.id
 output storageAccountName string = storageAccount.name
 output keyVaultEndpoint string = keyVault.properties.vaultUri
 output keyVaultName string = keyVault.name
-output appServiceName string = deployAppService ? '${resourceName}-app' : ''
-output appServiceUrl string = deployAppService ? 'https://${resourceName}-app.azurewebsites.net' : ''
-output appServicePrincipalId string = ''
+output appServiceName string = existingAppService.name
+output appServiceUrl string = 'https://${existingAppService.properties.defaultHostName}'
+output appServicePrincipalId string = existingAppService.identity.principalId
