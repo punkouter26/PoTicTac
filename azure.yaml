@@ -12,6 +12,6 @@ infra:
 
 services:
   web:
-    project: ./PoTicTacServer
+    project: ./src/Po.TicTac.Api
     language: dotnet
     host: appservice
