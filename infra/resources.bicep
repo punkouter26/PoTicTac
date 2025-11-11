@@ -7,8 +7,18 @@ param tags object = {}
 // Get reference to shared App Service Plan
 var sharedAppServicePlanId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/PoShared/providers/Microsoft.Web/serverfarms/PoShared'
 
-// App Service - Deploy using shared plan
-var deployAppService = true
+// App Service - Don't deploy via Bicep, reference existing
+var deployAppService = false
+
+// Reference existing App Service created by azd
+resource appService 'Microsoft.Web/sites@2023-01-01' existing = {
+  name: resourceName
+}
+
+// Get the App Service principal ID using list operation
+var appServicePrincipalId = appService.identity.principalId
+
+// Log Analytics Workspace for Application Insights
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -144,78 +154,30 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-// App Service with System-Assigned Managed Identity
-resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
-  name: resourceName  // azd expects this to match the environment name
-  location: location
-  tags: union(tags, {
-    'azd-service-name': 'web'
-  })
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    serverFarmId: sharedAppServicePlanId
-    httpsOnly: true
-    siteConfig: {
-      netFrameworkVersion: 'v9.0'
-      use32BitWorkerProcess: true
-      alwaysOn: false // Free tier doesn't support Always On
-      http20Enabled: true
-      minTlsVersion: '1.2'
-      ftpsState: 'Disabled'
-      healthCheckPath: '/api/health'
-      appSettings: [
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: appInsights.properties.ConnectionString
-        }
-        {
-          name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
-          value: '~3'
-        }
-        {
-          name: 'ASPNETCORE_ENVIRONMENT'
-          value: environmentType == 'prod' ? 'Production' : 'Development'
-        }
-        {
-          name: 'KeyVaultEndpoint'
-          value: keyVault.properties.vaultUri
-        }
-        // Key Vault Reference for Storage Connection String
-        {
-          name: 'ConnectionStrings__AZURE_STORAGE_CONNECTION_STRING'
-          value: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecret.properties.secretUri})'
-        }
-      ]
-    }
-  }
-}
-
 // Grant App Service Managed Identity Key Vault Secrets User role
-resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(keyVault.id, appService.id, 'Key Vault Secrets User')
   scope: keyVault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
-    principalId: appService.identity.principalId
+    principalId: appServicePrincipalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Grant App Service Managed Identity Storage Table Data Contributor role
-resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storageAccount.id, appService.id, 'Storage Table Data Contributor')
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3') // Storage Table Data Contributor
-    principalId: appService.identity.principalId
+    principalId: appServicePrincipalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Diagnostic Settings for App Service
-resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (deployAppService) {
+resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'app-diagnostics'
   scope: appService
   properties: {
@@ -294,6 +256,6 @@ output logAnalyticsWorkspaceId string = logAnalytics.id
 output storageAccountName string = storageAccount.name
 output keyVaultEndpoint string = keyVault.properties.vaultUri
 output keyVaultName string = keyVault.name
-output appServiceName string = deployAppService ? appService.name : ''
-output appServiceUrl string = deployAppService ? 'https://${appService.properties.defaultHostName}' : ''
-output appServicePrincipalId string = deployAppService ? appService.identity.principalId : ''
+output appServiceName string = appService.name
+output appServiceUrl string = 'https://${appService.properties.defaultHostName}'
+output appServicePrincipalId string = appServicePrincipalId
