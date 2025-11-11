@@ -177,7 +177,9 @@ var deployAppService = false
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
   name: '${resourceName}-app'
   location: location
-  tags: tags
+  tags: union(tags, {
+    'azd-service-name': 'web'
+  })
   identity: {
     type: 'SystemAssigned'
   }
