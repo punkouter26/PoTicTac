@@ -3,7 +3,20 @@ param resourceName string
 param environmentType string
 param principalId string = ''
 param tags object = {}
-param appServicePlanId string
+
+// Create App Service Plan in this resource group
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
+  name: '${resourceName}-plan'
+  location: location
+  tags: tags
+  sku: {
+    name: 'F1'
+    tier: 'Free'
+  }
+  properties: {
+    reserved: false
+  }
+}
 
 // App Service - Deploy the App Service resource
 var deployAppService = true
@@ -153,7 +166,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
     type: 'SystemAssigned'
   }
   properties: {
-    serverFarmId: appServicePlanId
+    serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
       netFrameworkVersion: 'v9.0'
