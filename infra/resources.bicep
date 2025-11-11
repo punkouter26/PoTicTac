@@ -142,9 +142,6 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-// App Service - Deploy the App Service resource
-var deployAppService = true
-
 // App Service with System-Assigned Managed Identity
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
   name: '${resourceName}-app'
