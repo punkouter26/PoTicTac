@@ -146,7 +146,7 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
 // Reference existing shared App Service Plan (F1 Free Tier) for dev
 resource existingAppServicePlan 'Microsoft.Web/serverfarms@2023-01-01' existing = if (useSharedPlan) {
   name: sharedAppServicePlanName
-  scope: resourceGroup(sharedResourceGroup)
+  scope: resourceGroup(subscription().subscriptionId, sharedResourceGroup)
 }
 
 // Create new App Service Plan for production
