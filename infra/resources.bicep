@@ -4,13 +4,11 @@ param environmentType string
 param principalId string = ''
 param tags object = {}
 
-// App Service - Reference existing (azd creates this with the environment name)
-var deployAppService = false
+// Get reference to shared App Service Plan
+var sharedAppServicePlanId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/PoShared/providers/Microsoft.Web/serverfarms/PoShared'
 
-// Reference existing App Service (azd uses environment name without suffix)
-resource existingAppService 'Microsoft.Web/sites@2023-01-01' existing = {
-  name: resourceName
-}
+// App Service - Deploy using shared plan
+var deployAppService = true
 
 // Log Analytics Workspace for Application Insights
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -146,9 +144,9 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-// App Service with System-Assigned Managed Identity (conditional - not used when referencing existing)
+// App Service with System-Assigned Managed Identity
 resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
-  name: '${resourceName}-app-new'  // Different name to avoid conflict
+  name: resourceName  // azd expects this to match the environment name
   location: location
   tags: union(tags, {
     'azd-service-name': 'web'
@@ -157,6 +155,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
     type: 'SystemAssigned'
   }
   properties: {
+    serverFarmId: sharedAppServicePlanId
     httpsOnly: true
     siteConfig: {
       netFrameworkVersion: 'v9.0'
@@ -194,31 +193,31 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = if (deployAppService) {
 }
 
 // Grant App Service Managed Identity Key Vault Secrets User role
-resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVault.id, existingAppService.id, 'Key Vault Secrets User')
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+  name: guid(keyVault.id, appService.id, 'Key Vault Secrets User')
   scope: keyVault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
-    principalId: existingAppService.identity.principalId
+    principalId: appService.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Grant App Service Managed Identity Storage Table Data Contributor role
-resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, existingAppService.id, 'Storage Table Data Contributor')
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAppService) {
+  name: guid(storageAccount.id, appService.id, 'Storage Table Data Contributor')
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3') // Storage Table Data Contributor
-    principalId: existingAppService.identity.principalId
+    principalId: appService.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // Diagnostic Settings for App Service
-resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (deployAppService) {
   name: 'app-diagnostics'
-  scope: existingAppService
+  scope: appService
   properties: {
     workspaceId: logAnalytics.id
     logs: [
@@ -295,6 +294,6 @@ output logAnalyticsWorkspaceId string = logAnalytics.id
 output storageAccountName string = storageAccount.name
 output keyVaultEndpoint string = keyVault.properties.vaultUri
 output keyVaultName string = keyVault.name
-output appServiceName string = existingAppService.name
-output appServiceUrl string = 'https://${existingAppService.properties.defaultHostName}'
-output appServicePrincipalId string = existingAppService.identity.principalId
+output appServiceName string = deployAppService ? appService.name : ''
+output appServiceUrl string = deployAppService ? 'https://${appService.properties.defaultHostName}' : ''
+output appServicePrincipalId string = deployAppService ? appService.identity.principalId : ''
