@@ -19,10 +19,13 @@ public class PlayerStatsEntity : ITableEntity
 public class StorageService
 {
     private readonly TableClient _tableClient;
+    private const string TableName = "PlayerStats";
 
-    public StorageService(TableClient tableClient)
+    public StorageService(TableServiceClient tableServiceClient)
     {
-        _tableClient = tableClient;
+        // Get or create the PlayerStats table
+        _tableClient = tableServiceClient.GetTableClient(TableName);
+        _tableClient.CreateIfNotExists();
     }
 
     public async Task<List<PlayerStatsDto>> GetAllPlayerStatsAsync()

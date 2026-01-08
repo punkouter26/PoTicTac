@@ -315,8 +315,8 @@ public class GameHub : Hub
 
         if (newGameState.GameStatus != "playing")
         {
-            // TODO: Re-enable multiplayer stats with new per-difficulty schema
-            // await SaveGameStatistics(newGameState);
+            // ISSUE #1: Re-enable multiplayer stats with per-difficulty schema
+            // Tracking: Create GitHub issue to implement SaveGameStatistics for multiplayer
             await Clients.Group(gameId).SendAsync("GameOver", newGameState);
         }
     }

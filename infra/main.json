@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.38.33.27573",
-      "templateHash": "5920521768524610930"
+      "version": "0.39.26.7824",
+      "templateHash": "9171741539149800940"
     }
   },
   "parameters": {
@@ -57,7 +57,7 @@
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2021-04-01",
-      "name": "[format('{0}-rg', parameters('environmentName'))]",
+      "name": "[parameters('environmentName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]"
     },
@@ -65,7 +65,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "resources",
-      "resourceGroup": "[format('{0}-rg', parameters('environmentName'))]",
+      "resourceGroup": "[parameters('environmentName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -94,8 +94,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "16418729383504499876"
+              "version": "0.39.26.7824",
+              "templateHash": "4481035974062565116"
             }
           },
           "parameters": {
@@ -118,10 +118,7 @@
             }
           },
           "variables": {
-            "sharedResourceGroup": "PoShared",
-            "sharedAppServicePlanName": "PoShared",
-            "useSharedPlan": "[equals(parameters('environmentType'), 'dev')]",
-            "appServicePlanId": "[if(variables('useSharedPlan'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('sharedResourceGroup')), 'Microsoft.Web/serverfarms', variables('sharedAppServicePlanName')), resourceId('Microsoft.Web/serverfarms', format('{0}-plan', parameters('resourceName'))))]",
+            "sharedAppServicePlanId": "[format('/subscriptions/{0}/resourceGroups/PoShared/providers/Microsoft.Web/serverfarms/PoShared', subscription().subscriptionId)]",
             "deployAppService": false
           },
           "resources": [
@@ -239,7 +236,7 @@
             {
               "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
               "apiVersion": "2023-01-01",
-              "name": "[format('{0}/{1}/{2}', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')), 'default', 'PoTicTacPlayerStats')]",
+              "name": "[format('{0}/{1}/{2}', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')), 'default', 'PlayerStats')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts/tableServices', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')), 'default')]"
               ]
@@ -247,7 +244,7 @@
             {
               "type": "Microsoft.KeyVault/vaults",
               "apiVersion": "2023-07-01",
-              "name": "[format('{0}-kv', parameters('resourceName'))]",
+              "name": "[format('{0}-kv2', parameters('resourceName'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -268,122 +265,47 @@
             {
               "type": "Microsoft.KeyVault/vaults/secrets",
               "apiVersion": "2023-07-01",
-              "name": "[format('{0}/{1}', format('{0}-kv', parameters('resourceName')), 'AzureStorageConnectionString')]",
+              "name": "[format('{0}/{1}', format('{0}-kv2', parameters('resourceName')), 'AzureStorageConnectionString')]",
               "properties": {
                 "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st', parameters('resourceName')), '-', ''))), '2023-01-01').keys[0].value, environment().suffixes.storage)]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName')))]",
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}-kv2', parameters('resourceName')))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')))]"
               ]
             },
             {
-              "condition": "[not(variables('useSharedPlan'))]",
-              "type": "Microsoft.Web/serverfarms",
-              "apiVersion": "2023-01-01",
-              "name": "[format('{0}-plan', parameters('resourceName'))]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "sku": {
-                "name": "B1",
-                "tier": "Basic",
-                "size": "B1",
-                "family": "B",
-                "capacity": 1
-              },
-              "properties": {
-                "reserved": false
-              }
-            },
-            {
-              "condition": "[variables('deployAppService')]",
-              "type": "Microsoft.Web/sites",
-              "apiVersion": "2023-01-01",
-              "name": "[format('{0}-app', parameters('resourceName'))]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "identity": {
-                "type": "SystemAssigned"
-              },
-              "properties": {
-                "serverFarmId": "[variables('appServicePlanId')]",
-                "httpsOnly": true,
-                "siteConfig": {
-                  "netFrameworkVersion": "v9.0",
-                  "use32BitWorkerProcess": "[variables('useSharedPlan')]",
-                  "alwaysOn": "[not(variables('useSharedPlan'))]",
-                  "http20Enabled": true,
-                  "minTlsVersion": "1.2",
-                  "ftpsState": "Disabled",
-                  "healthCheckPath": "/api/health",
-                  "appSettings": [
-                    {
-                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                      "value": "[reference(resourceId('Microsoft.Insights/components', format('{0}-ai', parameters('resourceName'))), '2020-02-02').ConnectionString]"
-                    },
-                    {
-                      "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
-                      "value": "~3"
-                    },
-                    {
-                      "name": "ASPNETCORE_ENVIRONMENT",
-                      "value": "[if(equals(parameters('environmentType'), 'prod'), 'Production', 'Development')]"
-                    },
-                    {
-                      "name": "KeyVaultEndpoint",
-                      "value": "[reference(resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName'))), '2023-07-01').vaultUri]"
-                    },
-                    {
-                      "name": "ConnectionStrings__AZURE_STORAGE_CONNECTION_STRING",
-                      "value": "[format('@Microsoft.KeyVault(SecretUri={0})', reference(resourceId('Microsoft.KeyVault/vaults/secrets', format('{0}-kv', parameters('resourceName')), 'AzureStorageConnectionString'), '2023-07-01').secretUri)]"
-                    }
-                  ]
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Insights/components', format('{0}-ai', parameters('resourceName')))]",
-                "[resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName')))]",
-                "[resourceId('Microsoft.Web/serverfarms', format('{0}-plan', parameters('resourceName')))]",
-                "[resourceId('Microsoft.KeyVault/vaults/secrets', format('{0}-kv', parameters('resourceName')), 'AzureStorageConnectionString')]"
-              ]
-            },
-            {
-              "condition": "[variables('deployAppService')]",
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', format('{0}-kv', parameters('resourceName')))]",
-              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName'))), resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName'))), 'Key Vault Secrets User')]",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', format('{0}-kv2', parameters('resourceName')))]",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', format('{0}-kv2', parameters('resourceName'))), resourceId('Microsoft.Web/sites', parameters('resourceName')), 'Key Vault Secrets User')]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName'))), '2023-01-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('resourceName')), '2023-01-01', 'full').identity.principalId]",
                 "principalType": "ServicePrincipal"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName')))]",
-                "[resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName')))]"
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}-kv2', parameters('resourceName')))]"
               ]
             },
             {
-              "condition": "[variables('deployAppService')]",
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Storage/storageAccounts/{0}', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st', parameters('resourceName')), '-', ''))), resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName'))), 'Storage Table Data Contributor')]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st', parameters('resourceName')), '-', ''))), resourceId('Microsoft.Web/sites', parameters('resourceName')), 'Storage Table Data Contributor')]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName'))), '2023-01-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('resourceName')), '2023-01-01', 'full').identity.principalId]",
                 "principalType": "ServicePrincipal"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName')))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', toLower(replace(format('{0}st', parameters('resourceName')), '-', '')))]"
               ]
             },
             {
-              "condition": "[variables('deployAppService')]",
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Web/sites/{0}', format('{0}-app', parameters('resourceName')))]",
+              "scope": "[format('Microsoft.Web/sites/{0}', parameters('resourceName'))]",
               "name": "app-diagnostics",
               "properties": {
                 "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('resourceName')))]",
@@ -421,7 +343,6 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-app', parameters('resourceName')))]",
                 "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('resourceName')))]"
               ]
             }
@@ -445,29 +366,29 @@
             },
             "keyVaultEndpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', format('{0}-kv', parameters('resourceName'))), '2023-07-01').vaultUri]"
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', format('{0}-kv2', parameters('resourceName'))), '2023-07-01').vaultUri]"
             },
             "keyVaultName": {
               "type": "string",
-              "value": "[format('{0}-kv', parameters('resourceName'))]"
+              "value": "[format('{0}-kv2', parameters('resourceName'))]"
             },
             "appServiceName": {
               "type": "string",
-              "value": "[if(variables('deployAppService'), format('{0}-app', parameters('resourceName')), '')]"
+              "value": "[parameters('resourceName')]"
             },
             "appServiceUrl": {
               "type": "string",
-              "value": "[if(variables('deployAppService'), format('https://{0}-app.azurewebsites.net', parameters('resourceName')), '')]"
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('resourceName')), '2023-01-01').defaultHostName)]"
             },
             "appServicePrincipalId": {
               "type": "string",
-              "value": ""
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('resourceName')), '2023-01-01', 'full').identity.principalId]"
             }
           }
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', format('{0}-rg', parameters('environmentName')))]"
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('environmentName'))]"
       ]
     }
   ],
@@ -478,31 +399,31 @@
     },
     "AZURE_RESOURCE_GROUP": {
       "type": "string",
-      "value": "[format('{0}-rg', parameters('environmentName'))]"
+      "value": "[parameters('environmentName')]"
     },
     "AZURE_KEY_VAULT_ENDPOINT": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.keyVaultEndpoint.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.keyVaultEndpoint.value]"
     },
     "APPLICATIONINSIGHTS_CONNECTION_STRING": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.applicationInsightsConnectionString.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.applicationInsightsConnectionString.value]"
     },
     "AZURE_STORAGE_ACCOUNT_NAME": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.storageAccountName.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.storageAccountName.value]"
     },
     "APP_SERVICE_NAME": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServiceName.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServiceName.value]"
     },
     "APP_SERVICE_URL": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServiceUrl.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServiceUrl.value]"
     },
     "APP_SERVICE_PRINCIPAL_ID": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('{0}-rg', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServicePrincipalId.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('environmentName')), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.appServicePrincipalId.value]"
     }
   }
 }

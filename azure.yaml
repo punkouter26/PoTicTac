@@ -4,14 +4,11 @@ name: PoTicTac
 metadata:
   template: PoTicTac@0.0.1-beta
 
-# Infrastructure configuration
-infra:
-  provider: bicep
-  path: infra
-  module: main
-
+# Use Aspire AppHost for infrastructure generation
+# Run 'azd infra synth' to generate Bicep from AppHost model
+# The AppHost defines all resources (storage, app service, etc.)
 services:
-  web:
-    project: ./src/Po.TicTac.Api
+  app:
+    project: ./src/Po.TicTac.AppHost
     language: dotnet
-    host: appservice
+    host: containerapp

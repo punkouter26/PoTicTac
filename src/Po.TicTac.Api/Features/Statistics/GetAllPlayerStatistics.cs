@@ -67,11 +67,8 @@ public static class GetAllPlayerStatisticsEndpoint
         })
         .WithName("GetAllPlayerStatistics")
         .WithTags("Statistics")
-        .WithOpenApi(operation => new(operation)
-        {
-            Summary = "Retrieves all player statistics",
-            Description = "Returns statistics for all players in the database including wins, losses, draws, win rate, streaks, and averages."
-        })
+        .WithSummary("Retrieves all player statistics")
+        .WithDescription("Returns statistics for all players in the database including wins, losses, draws, win rate, streaks, and averages.")
         .Produces<IEnumerable<PlayerStatsDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status500InternalServerError);
 

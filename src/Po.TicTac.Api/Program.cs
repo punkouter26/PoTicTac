@@ -1,6 +1,3 @@
-using Azure.Data.Tables;
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
-using Microsoft.ApplicationInsights.Extensibility;
 using Po.TicTac.Api.Features.Health;
 using Po.TicTac.Api.Features.Players;
 using Po.TicTac.Api.Features.Statistics;
@@ -9,9 +6,12 @@ using Po.TicTac.Api.Hubs;
 using Po.TicTac.Api.Services;
 using Po.TicTac.Api.Telemetry;
 using Serilog;
-using Serilog.Sinks.ApplicationInsights.TelemetryConverters;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Aspire ServiceDefaults for telemetry, health checks, and service discovery
+// This configures OpenTelemetry with Azure Monitor for Application Insights
+builder.AddServiceDefaults();
 
 // Ensure static web assets (client + library content) are resolved when hosted by the API
 builder.WebHost.UseStaticWebAssets();
@@ -36,17 +36,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
     }
     else
     {
-        // Production: write to Application Insights
-        var aiConnectionString = context.Configuration["ApplicationInsights:ConnectionString"];
-        if (!string.IsNullOrWhiteSpace(aiConnectionString))
-        {
-            configuration
-                .WriteTo.ApplicationInsights(
-                    aiConnectionString,
-                    new TraceTelemetryConverter(),
-                    Serilog.Events.LogEventLevel.Information
-                );
-        }
+        // Production: OpenTelemetry via ServiceDefaults handles Application Insights
+        // Write to console for container logs (structured for Azure Monitor)
+        configuration.WriteTo.Console();
 
         // Also write to file for local diagnostics
         configuration
@@ -62,50 +54,11 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // Add HttpContextAccessor for telemetry enrichers
 builder.Services.AddHttpContextAccessor();
 
-// Configure Application Insights
-var aiConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
-if (!string.IsNullOrWhiteSpace(aiConnectionString))
-{
-    builder.Services.AddApplicationInsightsTelemetry(options =>
-    {
-        options.ConnectionString = aiConnectionString;
-        options.EnableAdaptiveSampling = builder.Configuration.GetValue<bool>("ApplicationInsights:EnableAdaptiveSampling", true);
-        options.EnablePerformanceCounterCollectionModule = builder.Configuration.GetValue<bool>("ApplicationInsights:EnablePerformanceCounterCollectionModule", true);
-        options.EnableQuickPulseMetricStream = builder.Configuration.GetValue<bool>("ApplicationInsights:EnableQuickPulseMetricStream", true);
-    });
-
-    // Register custom telemetry initializer
-    builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-
-    // Enable Snapshot Debugger if configured
-    if (builder.Configuration.GetValue<bool>("ApplicationInsights:EnableSnapshotDebugger", false))
-    {
-        builder.Services.AddSnapshotCollector(options =>
-        {
-            options.IsEnabledInDeveloperMode = false;
-            options.ThresholdForSnapshotting = builder.Configuration.GetValue<int>("SnapshotDebugger:ThresholdForSnapshotting", 1);
-            options.MaximumSnapshotsRequired = builder.Configuration.GetValue<int>("SnapshotDebugger:MaximumSnapshotsRequired", 3);
-        });
-    }
-
-    // Enable Profiler if configured
-    if (builder.Configuration.GetValue<bool>("ApplicationInsights:EnableProfiler", false))
-    {
-        builder.Services.AddServiceProfiler();
-    }
-}
-
 // Add MediatR for CQRS
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Add services to the container.
-// Register TableServiceClient and TableClient for DI
-builder.Services.AddSingleton(sp =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("AZURE_STORAGE_CONNECTION_STRING") ?? "UseDevelopmentStorage=true";
-    var tableServiceClient = new TableServiceClient(connectionString);
-    return tableServiceClient.GetTableClient("PlayerStats");
-});
+// Add Aspire Azure Table Storage client (connection injected by AppHost)
+builder.AddAzureTableServiceClient("tables");
 
 builder.Services.AddSingleton<StorageService>();
 
@@ -113,47 +66,29 @@ builder.Services.AddSingleton<StorageService>();
 // Add SignalR services
 builder.Services.AddSignalR();
 
-// Add Health Checks
+// Add custom health check for Azure Table Storage (Aspire defaults already added)
 builder.Services.AddHealthChecks()
     .AddCheck<StorageHealthCheck>("AzureTableStorage");
 
-// Add API Explorer and Swagger for Minimal APIs
+// Add API Explorer and OpenAPI for Minimal APIs
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.Services.AddOpenApi("v1", options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        Title = "PoTicTac API",
-        Version = "v1",
-        Description = "RESTful API for PoTicTac - A modern, retro-styled 6x6 Tic Tac Toe game with 4-in-a-row victory conditions. " +
-                      "Provides endpoints for player statistics, leaderboards, health checks, and game data management.",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
-        {
-            Name = "PoTicTac Development Team",
-            Url = new Uri("https://github.com/punkouter26/PoTicTac")
-        },
-        License = new Microsoft.OpenApi.Models.OpenApiLicense
-        {
-            Name = "MIT License",
-            Url = new Uri("https://opensource.org/licenses/MIT")
-        }
+        document.Info.Title = "PoTicTac API";
+        document.Info.Version = "v1";
+        document.Info.Description = "RESTful API for PoTicTac - A modern, retro-styled 6x6 Tic Tac Toe game with 4-in-a-row victory conditions. " +
+                      "Provides endpoints for player statistics, leaderboards, health checks, and game data management.";
+        return Task.CompletedTask;
     });
-
-    // Include XML comments for better API documentation
-    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        options.IncludeXmlComments(xmlPath);
-    }
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// Enable Swagger in all environments for API testing
-app.UseSwagger();
-app.UseSwaggerUI();
+// Enable OpenAPI in all environments for API testing
+app.MapOpenApi();
 
 // Add Serilog request logging with enrichment
 app.UseSerilogRequestLogging(options =>
@@ -189,6 +124,9 @@ app.MapSavePlayerStats();
 
 // Map SignalR hub
 app.MapHub<GameHub>("/gamehub");
+
+// Map Aspire default endpoints (health checks, etc.)
+app.MapDefaultEndpoints();
 
 // Fallback to index.html for SPA routes (only for non-API routes)
 app.MapFallbackToFile("index.html").ExcludeFromDescription();

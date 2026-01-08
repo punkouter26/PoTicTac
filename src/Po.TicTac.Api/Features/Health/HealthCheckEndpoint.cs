@@ -32,11 +32,8 @@ public static class HealthCheckEndpoint
         })
         .WithName("HealthCheck")
         .WithTags("Health")
-        .WithOpenApi(operation => new(operation)
-        {
-            Summary = "Health check endpoint",
-            Description = "Validates connectivity to all external dependencies including Azure Table Storage."
-        })
+        .WithSummary("Health check endpoint")
+        .WithDescription("Validates connectivity to all external dependencies including Azure Table Storage.")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status503ServiceUnavailable);
 

@@ -1,0 +1,82 @@
+@page "/playerstats"
+@using PoTicTac.Client.Services
+@using PoTicTac.Client.Models
+@using Po.TicTac.Shared.DTOs
+@using Po.TicTac.Shared.Models
+@inject StatisticsService StatisticsService
+
+<PageTitle>PoTicTac - Player Stats</PageTitle>
+
+<link href="css/stats.css" rel="stylesheet" />
+
+<div class="stats-container">
+    <h1 class="stats-title">📊 Player Statistics</h1>
+
+    @if (isLoading)
+    {
+        <div class="stats-loading loading-container" role="status" aria-label="Loading statistics">
+            <div class="skeleton skeleton-text title" aria-hidden="true"></div>
+            <div class="skeleton-stats-grid" aria-hidden="true">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+            <span class="sr-only">Loading player statistics...</span>
+        </div>
+    }
+    else if (playerStats == null || !playerStats.Any())
+    {
+        <div class="stats-content">
+            <div class="no-data-message">
+                <h3>No Statistics Available</h3>
+                <p>Play some games to see your statistics!</p>
+                <p>Statistics will be saved automatically after each game.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="stats-content">
+            <StatsSummarySection Summary="summary" />
+        </div>
+    }
+
+    <div class="stats-nav-links">
+        <a href="/" class="stats-back-button">🏠 Back to Home</a>
+        <a href="/leaderboard" class="stats-back-button">🏆 View Leaderboard</a>
+    </div>
+</div>
+
+@code {
+    private List<PlayerStatsDto>? playerStats;
+    private StatsSummaryModel summary = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatistics();
+    }
+
+    private async Task LoadStatistics()
+    {
+        isLoading = true;
+        try
+        {
+            playerStats = await StatisticsService.GetAllPlayerStatistics();
+            if (playerStats != null)
+            {
+                summary = StatsSummaryBuilder.FromPlayers(playerStats);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading statistics: {ex.Message}");
+            playerStats = new List<PlayerStatsDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

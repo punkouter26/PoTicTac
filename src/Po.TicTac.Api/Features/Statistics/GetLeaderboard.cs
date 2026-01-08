@@ -66,11 +66,8 @@ public static class GetLeaderboardEndpoint
         })
         .WithName("GetLeaderboard")
         .WithTags("Statistics")
-        .WithOpenApi(operation => new(operation)
-        {
-            Summary = "Retrieves the top players based on win rate",
-            Description = "Returns players ranked by win rate in descending order. Useful for displaying leaderboards and competitive rankings."
-        })
+        .WithSummary("Retrieves the top players based on win rate")
+        .WithDescription("Returns players ranked by win rate in descending order. Useful for displaying leaderboards and competitive rankings.")
         .Produces<IEnumerable<PlayerStatsDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status500InternalServerError);
 

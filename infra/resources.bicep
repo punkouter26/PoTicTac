@@ -218,7 +218,7 @@ resource appServiceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01
 }
 
 // Cost Management - $5 Monthly Budget Alert
-// TODO: Uncomment and add contactEmails when ready to configure cost alerts
+// ISSUE #2: Configure cost alerts - add contactEmails and uncomment budget resource
 // resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
 //   name: '${resourceName}-monthly-budget'
 //   properties: {

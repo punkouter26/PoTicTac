@@ -254,3 +254,20 @@
     font-size: 0.7rem;
     line-height: 1.5;
 }
+
+/* Navigation links container */
+.stats-nav-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+/* Stats buttons on home page */
+.stats-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}

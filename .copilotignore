@@ -1,0 +1,46 @@
+# PoTicTac - Copilot Context Optimization
+# Exclude generated, third-party, and non-logic files to focus AI on active code
+
+# Build outputs
+bin/
+obj/
+publish/
+artifacts/
+
+# Test coverage reports
+coverage/
+*.cobertura.xml
+TestResults/
+
+# Node modules and JS libraries  
+node_modules/
+wwwroot/lib/
+
+# Generated files
+*.Designer.cs
+*.g.cs
+*.generated.cs
+
+# IDE and tool files
+.vs/
+*.user
+*.suo
+
+# Package caches
+packages/
+
+# Infrastructure outputs (focus on source, not compiled)
+infra/*.json
+!infra/main.bicepparam
+
+# Source maps (large, not needed for AI context)
+**/*.map
+
+# KQL queries (reference docs, not active code)
+docs/KQL/
+
+# Lock files
+**/package-lock.json
+
+# API generated output
+api/tsp-output/

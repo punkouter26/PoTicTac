@@ -55,11 +55,8 @@ public static class SavePlayerStatsEndpoint
         })
         .WithName("SavePlayerStats")
         .WithTags("Players")
-        .WithOpenApi(operation => new(operation)
-        {
-            Summary = "Saves or updates statistics for a specific player",
-            Description = "Stores player statistics including wins, losses, draws, win rate, streaks, and other metrics broken down by difficulty level."
-        })
+        .WithSummary("Saves or updates statistics for a specific player")
+        .WithDescription("Stores player statistics including wins, losses, draws, win rate, streaks, and other metrics broken down by difficulty level.")
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status500InternalServerError);
 

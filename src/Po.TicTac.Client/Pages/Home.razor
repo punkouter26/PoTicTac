@@ -53,9 +53,14 @@
             <DifficultySelector CurrentDifficulty="difficulty" 
                               OnDifficultyChange="OnDifficultyChanged" />
             
-            <button class="stats-button" @onclick="NavigateToStats">
-                View Statistics
-            </button>
+            <div class="stats-buttons">
+                <button class="stats-button" @onclick="NavigateToPlayerStats">
+                    📊 Player Stats
+                </button>
+                <button class="stats-button" @onclick="NavigateToLeaderboard">
+                    🏆 Leaderboard
+                </button>
+            </div>
         </div>
         
     }
@@ -330,7 +335,8 @@
         }
     }
 
-    private void NavigateToStats() => NavigationManager.NavigateTo("/stats");
+    private void NavigateToPlayerStats() => NavigationManager.NavigateTo("/playerstats");
+    private void NavigateToLeaderboard() => NavigationManager.NavigateTo("/leaderboard");
 
     private async Task SaveSinglePlayerStats()
     {

@@ -54,17 +54,22 @@ public static class GetPlayerStatsEndpoint
         app.MapGet("/api/players/{playerName}/stats", async (string playerName, IMediator mediator) =>
         {
             var result = await mediator.Send(new GetPlayerStatsQuery(playerName));
-            return result is null ? Results.NotFound() : Results.Ok(result);
+            // Return empty stats for new players instead of 404
+            if (result is null)
+            {
+                return Results.Ok(new PlayerStatsDto
+                {
+                    Name = playerName,
+                    Stats = new Po.TicTac.Shared.Models.PlayerStats()
+                });
+            }
+            return Results.Ok(result);
         })
         .WithName("GetPlayerStats")
         .WithTags("Players")
-        .WithOpenApi(operation => new(operation)
-        {
-            Summary = "Retrieves statistics for a specific player",
-            Description = "Returns the stored statistics for the requested player, or 404 if not found."
-        })
+        .WithSummary("Retrieves statistics for a specific player")
+        .WithDescription("Returns the stored statistics for the requested player, or empty stats for new players.")
         .Produces<PlayerStatsDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status500InternalServerError);
 
         return app;
