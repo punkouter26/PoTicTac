@@ -2,36 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch PoTicTac (Full Stack)",
+            "name": "Launch PoTicTac (Aspire)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build-server",
-            "cwd": "${workspaceFolder}/src/Po.TicTac.Api",
-            "program": "${workspaceFolder}/src/Po.TicTac.Api/bin/Debug/net9.0/Po.TicTac.Api.dll",
+            "preLaunchTask": "build-apphost",
+            "cwd": "${workspaceFolder}/src/Po.TicTac.AppHost",
+            "program": "${workspaceFolder}/src/Po.TicTac.AppHost/bin/Debug/net10.0/Po.TicTac.AppHost.dll",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "pattern": "Login to the dashboard at (https?://\\S+)",
                 "uriFormat": "%s"
             },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
-        },
-        {
-            "name": "Launch Server Only",
-            "type": "coreclr",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/src/Po.TicTac.Api",
-            "program": "${workspaceFolder}/src/Po.TicTac.Api/bin/Debug/net9.0/Po.TicTac.Api.dll",
-            "args": [],
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ENVIRONMENT": "Development"
             }
         },
         {

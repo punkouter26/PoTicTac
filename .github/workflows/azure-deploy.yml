@@ -1,0 +1,129 @@
+# Azure Developer CLI (azd) deployment workflow with OIDC authentication
+# Deploys PoTicTac to Azure Container Apps using .NET Aspire
+
+name: Azure Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write  # Required for OIDC authentication
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Aspire CLI
+        run: dotnet tool install -g aspirate || dotnet tool update -g aspirate
+
+      - name: Install Azure Developer CLI
+        uses: Azure/setup-azd@v2
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build solution
+        run: dotnet build PoTicTac.sln --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test tests/Po.TicTac.UnitTests/Po.TicTac.UnitTests.csproj --configuration Release --no-build
+
+      - name: Log in to azd (OIDC)
+        run: |
+          azd auth login `
+            --client-id "${{ env.AZURE_CLIENT_ID }}" `
+            --federated-credential-provider "github" `
+            --tenant-id "${{ env.AZURE_TENANT_ID }}"
+        shell: pwsh
+
+      - name: Provision and Deploy
+        run: azd up --no-prompt
+        env:
+          AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
+          AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get deployment outputs
+        id: deploy
+        run: |
+          $outputs = azd env get-values | ConvertFrom-StringData
+          $apiUrl = $outputs['SERVICE_API_URI_EXTERNAL'] -replace '"', ''
+          echo "API_URL=$apiUrl" >> $env:GITHUB_OUTPUT
+          echo "::notice::Deployed to: $apiUrl"
+        shell: pwsh
+
+      - name: Health check
+        run: |
+          $url = "${{ steps.deploy.outputs.API_URL }}/health"
+          Write-Host "Checking health at: $url"
+          $maxRetries = 5
+          $retryCount = 0
+          do {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 30
+              if ($response.StatusCode -eq 200) {
+                Write-Host "✅ Health check passed!"
+                exit 0
+              }
+            } catch {
+              $retryCount++
+              Write-Host "Attempt $retryCount of $maxRetries failed. Waiting 30 seconds..."
+              Start-Sleep -Seconds 30
+            }
+          } while ($retryCount -lt $maxRetries)
+          Write-Host "❌ Health check failed after $maxRetries attempts"
+          exit 1
+        shell: pwsh
+
+  calculate-version:
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.2.1
+        with:
+          versionSpec: '6.x'
+
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.2.1
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+
+      - name: Display SemVer
+        run: |
+          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
+          echo "Major: ${{ steps.gitversion.outputs.major }}"
+          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
+          echo "Patch: ${{ steps.gitversion.outputs.patch }}"

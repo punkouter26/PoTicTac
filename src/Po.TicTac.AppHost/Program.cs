@@ -10,11 +10,17 @@ var storage = builder.AddAzureStorage("storage")
 var tables = storage.AddTables("tables");
 
 // Add the API service which hosts the Blazor WASM client
-builder.AddProject<Projects.Po_TicTac_Api>("api")
-    .WithHttpEndpoint(port: 5000, name: "http")
-    .WithHttpsEndpoint(port: 5001, name: "https")
+// Local dev uses ports 5000/5001, Azure Container Apps uses default ports
+var api = builder.AddProject<Projects.Po_TicTac_Api>("api")
     .WithExternalHttpEndpoints()
     .WithReference(tables)
     .WaitFor(tables);
+
+// Only configure explicit ports for local development
+if (builder.ExecutionContext.IsRunMode)
+{
+    api.WithHttpEndpoint(port: 5000, name: "http")
+       .WithHttpsEndpoint(port: 5001, name: "https");
+}
 
 builder.Build().Run();
