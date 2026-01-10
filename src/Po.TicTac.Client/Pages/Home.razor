@@ -1,4 +1,6 @@
 ﻿@page "/"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@namespace PoTicTac.Client.Pages
 @using PoTicTac.Client.Models
 @using Po.TicTac.Shared.Models
 @using PoTicTac.Client.Services
@@ -28,38 +30,72 @@
         <h1 class="game-title">POTICTAC</h1>
 
         <div class="menu">
-            <div class="player-name-input">
-                <input type="text" 
-                       placeholder="Enter Your Name"
-                       @bind="playerName"
-                       @bind:event="oninput"
-                       class="name-input" />
+            <div class="player-name-section">
+                <label class="section-label">Your Name</label>
+                <div class="player-name-input">
+                    <input type="text" 
+                           placeholder="Enter Your Name"
+                           @bind="playerName"
+                           @bind:event="oninput"
+                           class="name-input @(string.IsNullOrWhiteSpace(playerName) ? "" : "has-value")" />
+                    @if (!string.IsNullOrWhiteSpace(playerName))
+                    {
+                        <span class="input-check">✓</span>
+                    }
+                </div>
             </div>
             
             <div class="mode-selection">
-                <h3>Choose Game Mode</h3>
+                <label class="section-label">Game Mode</label>
                 <div class="mode-buttons">
-                    <button class="mode-button" @onclick="StartSinglePlayerGame">
+                    <button class="mode-button primary @(selectedMode == "single" ? "selected" : "")" 
+                            @onclick="SelectSinglePlayer"
+                            disabled="@isStartingGame">
                         <span class="mode-icon">🤖</span>
-                        Single Player
+                        <span class="mode-text">Single Player</span>
                     </button>
-                    <button class="mode-button" @onclick="StartMultiplayerLobby">
+                    <button class="mode-button secondary @(selectedMode == "multi" ? "selected" : "")" 
+                            @onclick="SelectMultiplayer"
+                            disabled="@isStartingGame">
                         <span class="mode-icon">👥</span>
-                        Multiplayer
+                        <span class="mode-text">Multiplayer</span>
+                        <span class="coming-soon-badge">Soon</span>
                     </button>
                 </div>
             </div>
             
-            <DifficultySelector CurrentDifficulty="difficulty" 
-                              OnDifficultyChange="OnDifficultyChanged" />
+            @if (selectedMode == "single")
+            {
+                <div class="difficulty-section animate-in">
+                    <DifficultySelector CurrentDifficulty="difficulty" 
+                                      OnDifficultyChange="OnDifficultyChanged" />
+                </div>
+            }
             
-            <div class="stats-buttons">
-                <button class="stats-button" @onclick="NavigateToPlayerStats">
-                    📊 Player Stats
-                </button>
-                <button class="stats-button" @onclick="NavigateToLeaderboard">
-                    🏆 Leaderboard
-                </button>
+            @if (canStartGame)
+            {
+                <div class="start-game-section">
+                    <button class="start-game-button" 
+                            @onclick="StartSelectedGame"
+                            disabled="@isStartingGame">
+                        @if (isStartingGame)
+                        {
+                            <span class="loading-spinner"></span>
+                            <span>Starting...</span>
+                        }
+                        else
+                        {
+                            <span class="start-icon">▶</span>
+                            <span>Start Game</span>
+                        }
+                    </button>
+                </div>
+            }
+            
+            <div class="stats-links">
+                <a class="stats-link" @onclick="NavigateToPlayerStats" @onclick:preventDefault href="#">📊 My Stats</a>
+                <span class="link-divider">|</span>
+                <a class="stats-link" @onclick="NavigateToLeaderboard" @onclick:preventDefault href="#">🏆 Leaderboard</a>
             </div>
         </div>
         
@@ -123,6 +159,9 @@
     private string playerName = string.Empty;
     private MultiplayerGameInfo? multiplayerGame;
     private ClientPlayerStats playerStats = new();
+    private string selectedMode = string.Empty;
+    private bool isStartingGame = false;
+    private bool canStartGame => !string.IsNullOrWhiteSpace(selectedMode);
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,6 +185,44 @@
         difficulty = newDifficulty;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    private void SelectSinglePlayer()
+    {
+        selectedMode = "single";
+        StateHasChanged();
+    }
+
+    private void SelectMultiplayer()
+    {
+        selectedMode = "multi";
+        StateHasChanged();
+    }
+
+    private async Task StartSelectedGame()
+    {
+        if (string.IsNullOrWhiteSpace(selectedMode)) return;
+        
+        isStartingGame = true;
+        StateHasChanged();
+        
+        try
+        {
+            await Task.Delay(300); // Brief delay for visual feedback
+            
+            if (selectedMode == "single")
+            {
+                StartSinglePlayerGame();
+            }
+            else if (selectedMode == "multi")
+            {
+                await StartMultiplayerLobby();
+            }
+        }
+        finally
+        {
+            isStartingGame = false;
+        }
     }
 
     private async Task HandleCellClick((int Row, int Col) move)

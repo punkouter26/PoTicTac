@@ -1,4 +1,4 @@
-namespace PoTicTac.Client.Models;
+namespace Po.TicTac.Shared.Models;
 
 /// <summary>
 /// Aggregated statistics derived from the player statistics collection.

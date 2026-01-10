@@ -1,9 +1,9 @@
 @page "/playerstats"
-@using PoTicTac.Client.Services
-@using PoTicTac.Client.Models
+@rendermode InteractiveServer
+@using Po.TicTac.Api.Services
 @using Po.TicTac.Shared.DTOs
 @using Po.TicTac.Shared.Models
-@inject StatisticsService StatisticsService
+@inject StorageService StorageService
 
 <PageTitle>PoTicTac - Player Stats</PageTitle>
 
@@ -25,7 +25,7 @@
             <span class="sr-only">Loading player statistics...</span>
         </div>
     }
-    else if (playerStats == null || !playerStats.Any())
+    else if (playerStats == null || playerStats.Count == 0)
     {
         <div class="stats-content">
             <div class="no-data-message">
@@ -63,7 +63,7 @@
         isLoading = true;
         try
         {
-            playerStats = await StatisticsService.GetAllPlayerStatistics();
+            playerStats = await StorageService.GetAllPlayerStatsAsync();
             if (playerStats != null)
             {
                 summary = StatsSummaryBuilder.FromPlayers(playerStats);
@@ -72,7 +72,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading statistics: {ex.Message}");
-            playerStats = new List<PlayerStatsDto>();
+            playerStats = [];
         }
         finally
         {

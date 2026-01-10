@@ -75,6 +75,11 @@ builder.Services.AddSingleton<StorageService>();
 // Add SignalR services
 builder.Services.AddSignalR();
 
+// Add Razor Components with Interactive Server (for business pages) and WebAssembly (for game)
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddInteractiveWebAssemblyComponents();
+
 // Add custom health check for Azure Table Storage (Aspire defaults already added)
 builder.Services.AddHealthChecks()
     .AddCheck<StorageHealthCheck>("AzureTableStorage");
@@ -119,10 +124,9 @@ app.UseSerilogRequestLogging(options =>
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// Serve static files from wwwroot
-app.UseDefaultFiles();
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
+// Serve static files with fingerprinting support (.NET 8+)
+app.MapStaticAssets();
+app.UseAntiforgery();
 
 // Map Minimal API endpoints
 app.MapHealthCheck();
@@ -134,11 +138,14 @@ app.MapSavePlayerStats();
 // Map SignalR hub
 app.MapHub<GameHub>("/gamehub");
 
+// Map Razor Components with Interactive Server (business pages) and WebAssembly (game)
+app.MapRazorComponents<Po.TicTac.Api.Components.App>()
+    .AddInteractiveServerRenderMode()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(PoTicTac.Client.Pages.Home).Assembly);
+
 // Map Aspire default endpoints (health checks, etc.)
 app.MapDefaultEndpoints();
-
-// Fallback to index.html for SPA routes (only for non-API routes)
-app.MapFallbackToFile("index.html").ExcludeFromDescription();
 
 Log.Information("PoTicTac server starting on {Environment}", builder.Environment.EnvironmentName);
 

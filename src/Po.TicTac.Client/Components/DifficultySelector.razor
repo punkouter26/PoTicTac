@@ -1,24 +1,26 @@
 @namespace PoTicTac.Client.Components
 @using PoTicTac.Client.Models
-@using Microsoft.FluentUI.AspNetCore.Components
 
-<FluentCard>
-    <h3>AI Difficulty</h3>
-    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
-        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Easy ? Appearance.Accent : Appearance.Neutral)"
-                      @onclick="() => SetDifficulty(Difficulty.Easy)">
-            Easy
-        </FluentButton>
-        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Medium ? Appearance.Accent : Appearance.Neutral)"
-                      @onclick="() => SetDifficulty(Difficulty.Medium)">
-            Medium
-        </FluentButton>
-        <FluentButton Appearance="@(CurrentDifficulty == Difficulty.Hard ? Appearance.Accent : Appearance.Neutral)"
-                      @onclick="() => SetDifficulty(Difficulty.Hard)">
-            Hard
-        </FluentButton>
-    </FluentStack>
-</FluentCard>
+<div class="difficulty-selector">
+    <label class="section-label">AI Difficulty</label>
+    <div class="difficulty-buttons">
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Easy ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Easy)">
+            <span class="difficulty-icon">😊</span>
+            <span>Easy</span>
+        </button>
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Medium ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Medium)">
+            <span class="difficulty-icon">🤔</span>
+            <span>Medium</span>
+        </button>
+        <button class="difficulty-button @(CurrentDifficulty == Difficulty.Hard ? "active" : "")"
+                @onclick="() => SetDifficulty(Difficulty.Hard)">
+            <span class="difficulty-icon">🔥</span>
+            <span>Hard</span>
+        </button>
+    </div>
+</div>
 
 @code {
     [Parameter] public Difficulty CurrentDifficulty { get; set; } = Difficulty.Medium;

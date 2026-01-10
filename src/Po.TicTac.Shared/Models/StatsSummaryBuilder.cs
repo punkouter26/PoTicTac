@@ -1,6 +1,6 @@
 using Po.TicTac.Shared.DTOs;
 
-namespace PoTicTac.Client.Models;
+namespace Po.TicTac.Shared.Models;
 
 /// <summary>
 /// Builds aggregate statistics for the statistics dashboard.

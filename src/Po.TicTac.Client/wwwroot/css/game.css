@@ -64,45 +64,53 @@ h1 {
 }
 
 .menu {
-    display: grid;
-    grid-template-areas: 
-        "name"
-        "modes"
-        "difficulty"
-        "theme"
-        "stats";
-    gap: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
     background: var(--color-surface-glass);
     backdrop-filter: blur(10px) saturate(180%);
     -webkit-backdrop-filter: blur(10px) saturate(180%);
-    padding: var(--space-md);
+    padding: var(--space-lg);
     border: 2px solid var(--color-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-glow-md),
                 var(--shadow-lg),
                 inset 0 1px 0 rgba(0, 255, 0, 0.1);
     width: 100%;
-    max-width: 450px;
+    max-width: 400px;
 }
 
-@media (min-width: 768px) {
-    .menu {
-        grid-template-areas: 
-            "name name"
-            "modes modes"
-            "difficulty theme"
-            "stats stats";
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-md);
-    }
+/* Section Labels */
+.section-label {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: var(--space-xs);
+    text-align: center;
 }
 
 /* Style for the player name input container */
+.player-name-section {
+    width: 100%;
+}
+
 .player-name-input {
-    grid-area: name;
     width: 100%;
     display: flex;
     justify-content: center;
+    position: relative;
+}
+
+.input-check {
+    position: absolute;
+    right: calc(50% - 115px);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    animation: fadeIn 0.3s ease;
 }
 
 /* Style for the name input field */
@@ -110,6 +118,7 @@ h1 {
     font-family: 'Press Start 2P', monospace;
     font-size: 0.65rem;
     padding: var(--space-xs) var(--space-sm);
+    padding-right: var(--space-lg);
     background: var(--color-surface-glass);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -126,6 +135,11 @@ h1 {
     min-height: 2rem;
 }
 
+.name-input.has-value {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+}
+
 .name-input::placeholder {
     color: var(--color-text-dim);
     font-family: 'Press Start 2P', monospace;
@@ -139,16 +153,8 @@ h1 {
 
 /* Container for mode selection section */
 .mode-selection {
-    grid-area: modes;
     text-align: center;
     width: 100%;
-}
-
-.mode-selection h3 {
-    color: var(--color-primary);
-    margin-bottom: var(--space-xs);
-    font-size: 0.75rem;
-    text-shadow: var(--glow-xs);
 }
 
 /* Container for the mode buttons */
@@ -162,35 +168,197 @@ h1 {
 /* Style for the mode buttons (Single Player, Multiplayer) */
 .mode-button {
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.6rem;
-    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.55rem;
+    padding: var(--space-sm) var(--space-md);
     background: var(--color-surface-glass);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    color: var(--color-primary);
-    border: 2px solid var(--color-primary);
+    color: var(--color-text-muted);
+    border: 2px solid var(--color-text-dim);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all var(--transition-base);
     text-transform: uppercase;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
+    box-shadow: var(--shadow-sm);
+    min-width: 130px;
+    position: relative;
+}
+
+.mode-button .mode-text {
+    font-size: 0.5rem;
+}
+
+.mode-button.primary {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
     box-shadow: var(--shadow-glow-sm);
 }
 
-.mode-button:hover {
+.mode-button.secondary {
+    opacity: 0.7;
+}
+
+.mode-button.selected {
+    background: rgba(0, 255, 0, 0.15);
+    border-color: var(--color-primary-light);
     color: var(--color-primary-light);
+    box-shadow: var(--shadow-glow-md);
+    transform: scale(1.02);
+}
+
+.mode-button:hover:not(:disabled) {
+    color: var(--color-primary-light);
+    border-color: var(--color-primary);
     box-shadow: var(--shadow-glow-md);
     transform: translateY(-2px);
 }
 
-.mode-button:active {
-    transform: translateY(0) scale(0.95);
+.mode-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+.mode-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.coming-soon-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--color-accent);
+    color: var(--color-background);
+    font-size: 0.4rem;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: bold;
 }
 
 .mode-icon {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+}
+
+/* Difficulty Section Animation */
+.difficulty-section {
+    width: 100%;
+}
+
+.difficulty-section.animate-in {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 200px;
+    }
+}
+
+/* Start Game Button */
+.start-game-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: var(--space-xs);
+}
+
+.start-game-button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    padding: var(--space-md) var(--space-xl);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-background);
+    border: 2px solid var(--color-primary-light);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    box-shadow: var(--shadow-glow-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 180px;
+    justify-content: center;
+}
+
+.start-game-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    box-shadow: var(--shadow-glow-lg), 0 8px 25px rgba(0, 255, 0, 0.5);
+    transform: translateY(-3px);
+}
+
+.start-game-button:active:not(:disabled) {
+    transform: translateY(-1px) scale(0.98);
+}
+
+.start-game-button.disabled,
+.start-game-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--color-surface-glass);
+    color: var(--color-text-dim);
+    border-color: var(--color-text-dim);
+    box-shadow: none;
+}
+
+.start-icon {
+    font-size: 1rem;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-background);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Stats Links (instead of buttons) */
+.stats-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid rgba(0, 255, 0, 0.2);
+    margin-top: auto;
+    white-space: nowrap;
+}
+
+.stats-link {
+    color: var(--color-text-muted);
+    font-size: 0.55rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    padding: var(--space-xs);
+    white-space: nowrap;
+}
+
+.stats-link:hover {
+    color: var(--color-primary-light);
+    text-shadow: var(--glow-sm);
+}
+
+.link-divider {
+    color: var(--color-text-dim);
+    font-size: 0.5rem;
 }
 
 .start-button {
@@ -487,7 +655,7 @@ h1 {
 /* Mobile-specific adjustments */
 @media (max-width: 600px) {
     .app {
-        padding: 0;
+        padding: var(--space-sm);
         gap: var(--grid-gap-sm);
     }
     
@@ -497,24 +665,33 @@ h1 {
     }
     
     .menu {
-        padding: var(--space-lg);
+        padding: var(--space-md);
         width: 95%;
-        gap: var(--grid-gap-md);
+        gap: var(--space-sm);
     }
     
-    .start-button {
-        font-size: var(--font-sm);
-        padding: var(--space-md) var(--space-lg);
+    .start-game-button {
+        font-size: 0.6rem;
+        padding: var(--space-sm) var(--space-lg);
+        width: 100%;
     }
     
     .mode-button {
-        padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-xs);
+        min-width: 110px;
+        padding: var(--space-sm);
     }
     
-    .stats-button {
-        padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-sm);
+    .mode-button .mode-text {
+        font-size: 0.45rem;
+    }
+    
+    .difficulty-button {
+        min-width: 60px;
+        padding: var(--space-xs);
+    }
+    
+    .stats-link {
+        font-size: 0.5rem;
     }
     
     .stats-modal-content {
@@ -523,13 +700,26 @@ h1 {
     }
 
     .game-controls {
-        flex-direction: column;
-        align-items: center;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--color-surface-glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: var(--space-sm);
+        border-top: 1px solid var(--color-primary);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        flex-direction: row;
+        justify-content: center;
+        z-index: var(--z-overlay);
+        margin: 0;
     }
 
     .restart-button, .menu-button, .rematch-button {
-        font-size: var(--font-xs);
+        font-size: 0.55rem;
         padding: var(--space-sm) var(--space-md);
+        margin: 0 var(--space-xs);
     }
 }
 
