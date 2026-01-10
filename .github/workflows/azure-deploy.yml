@@ -33,9 +33,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Install Aspire CLI
-        run: dotnet tool install -g aspirate || dotnet tool update -g aspirate
-
       - name: Install Azure Developer CLI
         uses: Azure/setup-azd@v2
 
@@ -55,9 +52,9 @@ jobs:
       - name: Log in to azd (OIDC)
         run: |
           azd auth login `
-            --client-id "${{ env.AZURE_CLIENT_ID }}" `
+            --client-id "${{ vars.AZURE_CLIENT_ID }}" `
             --federated-credential-provider "github" `
-            --tenant-id "${{ env.AZURE_TENANT_ID }}"
+            --tenant-id "${{ vars.AZURE_TENANT_ID }}"
         shell: pwsh
 
       - name: Initialize azd environment
@@ -66,82 +63,30 @@ jobs:
           azd env select ${{ env.AZURE_ENV_NAME }}
           azd env set AZURE_LOCATION ${{ env.AZURE_LOCATION }}
           azd env set AZURE_SUBSCRIPTION_ID ${{ env.AZURE_SUBSCRIPTION_ID }}
-          azd env set AZURE_ENV_NAME ${{ env.AZURE_ENV_NAME }}
-          azd env set environmentName ${{ env.AZURE_ENV_NAME }}
           azd env set STORAGE_TABLEENDPOINT "https://stpotictac.table.core.windows.net/"
           azd env set AZURE_KEY_VAULT_URI "https://kv-poshared.vault.azure.net/"
         shell: pwsh
 
-      - name: Provision and Deploy
-        run: azd up --no-prompt -e ${{ env.AZURE_ENV_NAME }}
-        env:
-          AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
-          AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
-          AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Get deployment outputs
-        id: deploy
-        run: |
-          $outputs = azd env get-values | ConvertFrom-StringData
-          $apiUrl = $outputs['SERVICE_API_URI_EXTERNAL'] -replace '"', ''
-          echo "API_URL=$apiUrl" >> $env:GITHUB_OUTPUT
-          echo "::notice::Deployed to: $apiUrl"
-        shell: pwsh
+      - name: Deploy to Azure Container Apps
+        run: azd deploy --no-prompt -e ${{ env.AZURE_ENV_NAME }}
 
       - name: Health check
         run: |
-          $url = "${{ steps.deploy.outputs.API_URL }}/health"
+          $url = "https://api.braveground-e6b1356c.eastus.azurecontainerapps.io/health"
           Write-Host "Checking health at: $url"
           $maxRetries = 5
-          $retryCount = 0
-          do {
+          for ($i = 1; $i -le $maxRetries; $i++) {
             try {
-              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 30
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 60
               if ($response.StatusCode -eq 200) {
-                Write-Host "✅ Health check passed!"
+                Write-Host "Health check passed!"
                 exit 0
               }
             } catch {
-              $retryCount++
-              Write-Host "Attempt $retryCount of $maxRetries failed. Waiting 30 seconds..."
+              Write-Host "Attempt $i of $maxRetries failed. Waiting 30 seconds..."
               Start-Sleep -Seconds 30
             }
-          } while ($retryCount -lt $maxRetries)
-          Write-Host "❌ Health check failed after $maxRetries attempts"
+          }
+          Write-Host "Health check failed after $maxRetries attempts"
           exit 1
         shell: pwsh
-
-  calculate-version:
-    runs-on: ubuntu-latest
-    outputs:
-      semver: ${{ steps.gitversion.outputs.semVer }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3.2.1
-        with:
-          versionSpec: '6.x'
-
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v3.2.1
-        with:
-          useConfigFile: true
-          configFilePath: GitVersion.yml
-        continue-on-error: true
-
-      - name: Fallback Version
-        if: steps.gitversion.outcome == 'failure'
-        run: echo "semVer=0.0.0" >> $GITHUB_OUTPUT
-
-      - name: Display SemVer
-        run: |
-          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-          echo "Major: ${{ steps.gitversion.outputs.major }}"
-          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
-          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
