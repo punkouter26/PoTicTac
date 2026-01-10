@@ -67,12 +67,13 @@ jobs:
           azd env set AZURE_LOCATION ${{ env.AZURE_LOCATION }}
           azd env set AZURE_SUBSCRIPTION_ID ${{ env.AZURE_SUBSCRIPTION_ID }}
           azd env set AZURE_ENV_NAME ${{ env.AZURE_ENV_NAME }}
+          azd env set environmentName ${{ env.AZURE_ENV_NAME }}
           azd env set STORAGE_TABLEENDPOINT "https://stpotictac.table.core.windows.net/"
           azd env set AZURE_KEY_VAULT_URI "https://kv-poshared.vault.azure.net/"
         shell: pwsh
 
       - name: Provision and Deploy
-        run: azd up --no-prompt
+        run: azd up --no-prompt --env ${{ env.AZURE_ENV_NAME }}
         env:
           AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
           AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
