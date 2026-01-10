@@ -77,7 +77,10 @@ jobs:
 
       - name: Enable ingress
         run: |
-          az containerapp ingress enable --name api --resource-group PoTicTac --type external --target-port 8080 --transport http 2>$null || true
+          # Enable external ingress after deployment (azd deploy may disable it)
+          az containerapp ingress enable --name api --resource-group PoTicTac --type external --target-port 8080 --transport auto || echo "Ingress already enabled"
+          # Verify ingress is configured
+          az containerapp show --name api --resource-group PoTicTac --query "properties.configuration.ingress.fqdn" -o tsv
 
       - name: Health check
         continue-on-error: true
