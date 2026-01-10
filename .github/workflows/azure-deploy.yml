@@ -73,7 +73,7 @@ jobs:
         shell: pwsh
 
       - name: Provision and Deploy
-        run: azd up --no-prompt --env ${{ env.AZURE_ENV_NAME }}
+        run: azd up --no-prompt -e ${{ env.AZURE_ENV_NAME }}
         env:
           AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME }}
           AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
