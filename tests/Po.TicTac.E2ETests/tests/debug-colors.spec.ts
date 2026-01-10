@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { waitForBlazorLoad } from './helpers';
 
 test('Debug cell classes and styles', async ({ page }) => {
-  await page.goto('http://localhost:5000');
-  await page.waitForSelector('text=Single Player');
-  await page.click('text=Single Player');
-  await page.waitForSelector('.game-board');
+  await page.goto('/');
+  await waitForBlazorLoad(page);
+  const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+  await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+  await singlePlayerButton.click();
+  await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
   
   // Click first cell (player X)
   const firstCell = page.locator('.cell').first();

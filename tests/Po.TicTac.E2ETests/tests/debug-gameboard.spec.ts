@@ -37,7 +37,8 @@ test.describe('Debug Game Board Rendering', () => {
     console.log('\n=== CLICKING SINGLE PLAYER ===\n');
     
     // Click single player
-    const singlePlayerButton = page.locator('button.mode-button:has-text("Single Player")');
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     await singlePlayerButton.click();
     
     // Wait for any console output

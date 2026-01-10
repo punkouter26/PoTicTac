@@ -34,6 +34,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Po.TicTac.Api\Po.TicTac.Api.csproj" />
     <ProjectReference Include="..\..\src\Po.TicTac.Shared\Po.TicTac.Shared.csproj" />
   </ItemGroup>

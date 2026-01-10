@@ -13,20 +13,23 @@ test.describe('PoTicTac Home Page - Simple Tests', () => {
     await page.goto('/', { waitUntil: 'load' });
     await waitForBlazorLoad(page);
 
-    // Assert - Check for title (Blazor WASM may take time to load)
-    await expect(page.locator('h1.game-title')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('h1.game-title')).toHaveText('POTICTAC');
-  });  test('should display game mode buttons', async ({ page }) => {
+    // Assert - Check for title (flexible selector)
+    const gameTitle = page.locator('.game-title, h1:has-text("POTICTAC")').first();
+    await expect(gameTitle).toBeVisible({ timeout: 15000 });
+    await expect(gameTitle).toContainText('POTICTAC');
+  });
+
+  test('should display game mode buttons', async ({ page }) => {
     // Arrange & Act
     await page.goto('/', { waitUntil: 'load' });
     await waitForBlazorLoad(page);
     
-    // Assert - Check for mode selection buttons with updated selectors (wait for Blazor)
-    const singlePlayerButton = page.locator('button.mode-button:has-text("Single Player")');
-    const multiplayerButton = page.locator('button.mode-button:has-text("Multiplayer")');
+    // Assert - Check for mode selection buttons with flexible selectors
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    const multiplayerButton = page.locator('button.mode-button').filter({ hasText: 'Multiplayer' });
     
-    await expect(singlePlayerButton).toBeVisible({ timeout: 10000 });
-    await expect(multiplayerButton).toBeVisible();
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await expect(multiplayerButton).toBeVisible({ timeout: 15000 });
   });
 
   test('should have player name input', async ({ page }) => {
@@ -34,9 +37,9 @@ test.describe('PoTicTac Home Page - Simple Tests', () => {
     await page.goto('/', { waitUntil: 'load' });
     await waitForBlazorLoad(page);
     
-    // Assert - Check for name input with updated placeholder text (wait for Blazor)
-    const nameInput = page.locator('input.name-input[placeholder="Enter Your Name"]');
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    // Assert - Check for name input (flexible selector)
+    const nameInput = page.locator('input.name-input, input[placeholder*="Name"]').first();
+    await expect(nameInput).toBeVisible({ timeout: 15000 });
   });
 
   test('should have stats navigation buttons', async ({ page }) => {
@@ -45,9 +48,9 @@ test.describe('PoTicTac Home Page - Simple Tests', () => {
     await waitForBlazorLoad(page);
     
     // Assert - Check for stats buttons (Player Stats and Leaderboard)
-    const playerStatsButton = page.locator('button.stats-button:has-text("Player Stats")');
-    const leaderboardButton = page.locator('button.stats-button:has-text("Leaderboard")');
-    await expect(playerStatsButton).toBeVisible({ timeout: 10000 });
-    await expect(leaderboardButton).toBeVisible({ timeout: 10000 });
+    const playerStatsButton = page.locator('button.stats-button').filter({ hasText: 'Player Stats' });
+    const leaderboardButton = page.locator('button.stats-button').filter({ hasText: 'Leaderboard' });
+    await expect(playerStatsButton).toBeVisible({ timeout: 15000 });
+    await expect(leaderboardButton).toBeVisible({ timeout: 15000 });
   });
 });

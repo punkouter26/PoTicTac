@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForBlazorLoad } from './helpers';
 
 test.describe('CSS Debugging', () => {
   test('should inspect computed styles of game board', async ({ page }) => {
-    await page.goto('http://localhost:5000');
-    await page.waitForSelector('text=Single Player');
+    await page.goto('/');
+    await waitForBlazorLoad(page);
     
     // Click Single Player
-    await page.click('text=Single Player');
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     await page.waitForTimeout(1000);
     
     // Get the game board element

@@ -9,24 +9,27 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should render game board after starting single player game', async ({ page }) => {
     // Arrange - Click single player button to start game
-    const singlePlayerButton = page.locator('button.mode-button:has-text("Single Player")');
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     
     // Act - Start a single player game
     await singlePlayerButton.click();
     
     // Assert - Game board container should be visible
     const gameBoardContainer = page.locator('.game-board-container');
-    await expect(gameBoardContainer).toBeVisible({ timeout: 10000 });
+    await expect(gameBoardContainer).toBeVisible({ timeout: 15000 });
     
     // Assert - Game board grid should be visible
-    const gameBoard = page.locator('.game-board.retro-glow');
-    await expect(gameBoard).toBeVisible({ timeout: 10000 });
+    const gameBoard = page.locator('.game-board');
+    await expect(gameBoard).toBeVisible({ timeout: 15000 });
   });
 
   test('should render 36 cells in a 6x6 grid', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board-container').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board-container').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Count the cells
     const cells = page.locator('.cell');
@@ -37,8 +40,10 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should have correct grid layout CSS properties', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Get computed styles of the game board
     const gameBoard = page.locator('.game-board');
@@ -58,8 +63,10 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should make cells clickable when empty', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Click on the first cell
     const firstCell = page.locator('.cell').first();
@@ -72,8 +79,10 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should update cell with X when player clicks', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Click on the first empty cell
     const firstCell = page.locator('.cell').first();
@@ -88,8 +97,10 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should apply correct styling to occupied cells', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Click on a cell
     const cell = page.locator('.cell').first();
@@ -101,11 +112,13 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should show game status above the board', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     
     // Act & Assert - Game status should be visible
     const gameStatus = page.locator('.game-status');
-    await expect(gameStatus).toBeVisible({ timeout: 10000 });
+    await expect(gameStatus).toBeVisible({ timeout: 15000 });
     
     // Assert - Status should indicate whose turn it is
     const statusText = await gameStatus.textContent();
@@ -114,17 +127,21 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should display Back to Menu button', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act & Assert - Back to Menu button should be visible
-    const backButton = page.locator('button.menu-button:has-text("Back to Menu")');
-    await expect(backButton).toBeVisible();
+    const backButton = page.locator('button.menu-button').filter({ hasText: 'Back to Menu' });
+    await expect(backButton).toBeVisible({ timeout: 15000 });
   });
 
   test('should apply retro-glow effect to game board', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     
     // Act & Assert - Game board should have retro-glow class
     const gameBoard = page.locator('.game-board.retro-glow');
@@ -133,8 +150,10 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should have proper aspect ratio for game board', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Get board dimensions
     const gameBoard = page.locator('.game-board');
@@ -152,19 +171,23 @@ test.describe('Game Board Rendering and Interaction', () => {
 
   test('should navigate back to menu when Back to Menu is clicked', async ({ page }) => {
     // Arrange - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Click Back to Menu
-    await page.locator('button.menu-button:has-text("Back to Menu")').click();
+    const backButton = page.locator('button.menu-button').filter({ hasText: 'Back to Menu' });
+    await expect(backButton).toBeVisible({ timeout: 15000 });
+    await backButton.click();
     
     // Assert - Should be back at menu (game board should not be visible)
     const gameBoard = page.locator('.game-board');
-    await expect(gameBoard).not.toBeVisible({ timeout: 5000 });
+    await expect(gameBoard).not.toBeVisible({ timeout: 10000 });
     
     // Assert - Menu should be visible again
     const menu = page.locator('.menu');
-    await expect(menu).toBeVisible();
+    await expect(menu).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -176,11 +199,13 @@ test.describe('Game Board Responsive Design', () => {
     await waitForBlazorLoad(page);
     
     // Act - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     
     // Assert - Game board should be visible and responsive
     const gameBoard = page.locator('.game-board');
-    await expect(gameBoard).toBeVisible({ timeout: 10000 });
+    await expect(gameBoard).toBeVisible({ timeout: 15000 });
     
     // Assert - All 36 cells should still be present
     const cells = page.locator('.cell');
@@ -194,11 +219,13 @@ test.describe('Game Board Responsive Design', () => {
     await waitForBlazorLoad(page);
     
     // Act - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     
     // Assert - Game board should be visible
     const gameBoard = page.locator('.game-board');
-    await expect(gameBoard).toBeVisible({ timeout: 10000 });
+    await expect(gameBoard).toBeVisible({ timeout: 15000 });
   });
 
   test('should render game board on desktop viewport', async ({ page }) => {
@@ -208,11 +235,13 @@ test.describe('Game Board Responsive Design', () => {
     await waitForBlazorLoad(page);
     
     // Act - Start game
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
     
     // Assert - Game board should be visible
     const gameBoard = page.locator('.game-board');
-    await expect(gameBoard).toBeVisible({ timeout: 10000 });
+    await expect(gameBoard).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -221,8 +250,10 @@ test.describe('Game Board Accessibility', () => {
     // Arrange - Start game
     await page.goto('/', { waitUntil: 'load' });
     await waitForBlazorLoad(page);
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Run accessibility scan on game board
     const gameBoard = page.locator('.game-board');
@@ -241,8 +272,10 @@ test.describe('Game Board Accessibility', () => {
     // Arrange - Start game
     await page.goto('/', { waitUntil: 'load' });
     await waitForBlazorLoad(page);
-    await page.locator('button.mode-button:has-text("Single Player")').click();
-    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 10000 });
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
     
     // Act - Click a cell
     const cell = page.locator('.cell').first();

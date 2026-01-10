@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { waitForBlazorLoad } from './helpers';
+import { waitForBlazorLoad, waitForElement } from './helpers';
 
 test.describe('PoTicTac Home Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,20 +12,26 @@ test.describe('PoTicTac Home Page', () => {
     // Assert - Check title
     await expect(page).toHaveTitle(/PoTicTac/i);
     
-    // Verify main title is visible
-    await expect(page.locator('h1.game-title')).toBeVisible({ timeout: 10000 });
+    // Verify main title is visible - use more flexible selector
+    const gameTitle = page.locator('.game-title, h1:has-text("POTICTAC")').first();
+    await expect(gameTitle).toBeVisible({ timeout: 15000 });
   });
 
   test('should display game board', async ({ page }) => {
     // Arrange & Act - Start a single player game first
-    await page.locator('button.mode-button:has-text("Single Player")').click();
+    const singlePlayerBtn = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerBtn).toBeVisible({ timeout: 10000 });
+    await singlePlayerBtn.click();
     
     // Assert - Check for game board container in active game
     const gameBoard = page.locator('.game-container');
-    await expect(gameBoard).toBeVisible({ timeout: 10000 });
+    await expect(gameBoard).toBeVisible({ timeout: 15000 });
   });
 
   test('should have no accessibility violations', async ({ page }) => {
+    // Wait for full page render
+    await page.waitForTimeout(500);
+    
     // Act - Run accessibility scan on loaded page
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { waitForBlazorLoad } from './helpers';
 
 test.describe('Game Colors and Modal Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5000');
-    await page.waitForSelector('text=Single Player');
-    await page.click('text=Single Player');
-    await page.waitForSelector('.game-board');
+    await page.goto('/');
+    await waitForBlazorLoad(page);
+    const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
+    await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
+    await singlePlayerButton.click();
+    await page.locator('.game-board').waitFor({ state: 'visible', timeout: 15000 });
   });
 
   test('X should be green and O should be red', async ({ page }) => {
@@ -16,7 +19,7 @@ test.describe('Game Colors and Modal Tests', () => {
 
     // Check that X is green
     const xCell = page.locator('.cell.x-move').first();
-    await expect(xCell).toBeVisible();
+    await expect(xCell).toBeVisible({ timeout: 15000 });
     
     const xColor = await xCell.evaluate((el) => {
       const computed = window.getComputedStyle(el);
@@ -29,11 +32,11 @@ test.describe('Game Colors and Modal Tests', () => {
     expect(xColor).toBe('rgb(0, 255, 0)');
 
     // Wait for AI to make a move (O)
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
     
     // Check that O is red
     const oCell = page.locator('.cell.o-move').first();
-    await expect(oCell).toBeVisible();
+    await expect(oCell).toBeVisible({ timeout: 15000 });
     
     const oColor = await oCell.evaluate((el) => {
       const computed = window.getComputedStyle(el);
@@ -60,7 +63,7 @@ test.describe('Game Colors and Modal Tests', () => {
       const emptyCells = await page.locator('.cell:not(.occupied)').all();
       if (emptyCells.length > 0) {
         await emptyCells[0].click();
-        await page.waitForTimeout(800); // Wait for AI response
+        await page.waitForTimeout(1200); // Wait for AI response
         
         // Check if game ended
         const overlay = page.locator('.game-status-overlay');
@@ -127,12 +130,12 @@ test.describe('Game Colors and Modal Tests', () => {
     
     // Move 1
     await page.locator('.cell').nth(0).click();
-    await page.waitForTimeout(1500); // Wait for AI
+    await page.waitForTimeout(2000); // Wait for AI
     
     // Move 2
     const emptyCells = await page.locator('.cell:not(.occupied)').first();
     await emptyCells.click();
-    await page.waitForTimeout(1500); // Wait for AI
+    await page.waitForTimeout(2000); // Wait for AI
     
     // Count X's and O's
     const xCells = await page.locator('.cell.x-move').all();
@@ -158,7 +161,7 @@ test.describe('Game Colors and Modal Tests', () => {
 
   test('game status text should be readable and not overlap', async ({ page }) => {
     const gameStatus = page.locator('.game-status').first();
-    await expect(gameStatus).toBeVisible();
+    await expect(gameStatus).toBeVisible({ timeout: 15000 });
     
     const statusStyles = await gameStatus.evaluate((el) => {
       const computed = window.getComputedStyle(el);

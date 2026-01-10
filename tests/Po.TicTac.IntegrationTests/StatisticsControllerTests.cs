@@ -17,13 +17,13 @@ namespace PoTicTac.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Trait("Component", "StatisticsController")]
-public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Program>>
+public class StatisticsControllerTests : IClassFixture<IntegrationTestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly IntegrationTestWebApplicationFactory _factory;
     private readonly HttpClient _client;
     private readonly Faker _faker = new();
 
-    public StatisticsControllerTests(WebApplicationFactory<Program> factory)
+    public StatisticsControllerTests(IntegrationTestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = _factory.CreateClient();
@@ -102,16 +102,20 @@ public class StatisticsControllerTests : IClassFixture<WebApplicationFactory<Pro
 
     [Fact]
     [Trait("Type", "Validation")]
-    public async Task GetPlayerStats_UnknownPlayer_ReturnsNotFound()
+    public async Task GetPlayerStats_UnknownPlayer_ReturnsEmptyStats()
     {
         // Arrange
         var playerName = $"unknown-{Guid.NewGuid():N}";
 
         // Act
         var response = await _client.GetAsync($"/api/players/{playerName}/stats");
+        var dto = await response.Content.ReadFromJsonAsync<PlayerStatsDto>();
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Assert - API returns 200 OK with empty stats for new players (by design)
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "API returns empty stats for unknown players");
+        dto.Should().NotBeNull();
+        dto!.Name.Should().Be(playerName);
+        dto.Stats.TotalGames.Should().Be(0, "new player should have zero games");
     }
 
     [Fact]

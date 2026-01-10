@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForBlazorLoad } from './helpers';
+import { waitForBlazorLoad, stabilizeForScreenshot } from './helpers';
 
 test.describe('Visual Regression Tests', () => {
   test.describe('Desktop Viewport', () => {
@@ -9,11 +9,13 @@ test.describe('Visual Regression Tests', () => {
       // Arrange
       await page.goto('/', { waitUntil: 'load' });
       await waitForBlazorLoad(page);
+      await stabilizeForScreenshot(page);
       
       // Act & Assert
       await expect(page).toHaveScreenshot('home-desktop.png', {
         fullPage: true,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
 
@@ -26,22 +28,26 @@ test.describe('Visual Regression Tests', () => {
       // Act - Wait for game to load
       const gameContainer = page.locator('.game-container');
       await gameContainer.waitFor({ state: 'visible', timeout: 10000 });
+      await stabilizeForScreenshot(page);
       
       // Assert
       await expect(gameContainer).toHaveScreenshot('game-board-desktop.png', {
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
 
     test('statistics page should match snapshot', async ({ page }) => {
       // Arrange
-      await page.goto('/stats', { waitUntil: 'load' });
+      await page.goto('/playerstats', { waitUntil: 'load' });
       await waitForBlazorLoad(page);
+      await stabilizeForScreenshot(page);
       
       // Act & Assert
       await expect(page).toHaveScreenshot('statistics-desktop.png', {
         fullPage: true,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
   });
@@ -53,11 +59,13 @@ test.describe('Visual Regression Tests', () => {
       // Arrange
       await page.goto('/', { waitUntil: 'load' });
       await waitForBlazorLoad(page);
+      await stabilizeForScreenshot(page);
       
       // Act & Assert
       await expect(page).toHaveScreenshot('home-mobile.png', {
         fullPage: true,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
 
@@ -70,22 +78,26 @@ test.describe('Visual Regression Tests', () => {
       // Act - Wait for game to load
       const gameContainer = page.locator('.game-container');
       await gameContainer.waitFor({ state: 'visible', timeout: 10000 });
+      await stabilizeForScreenshot(page);
       
       // Assert
       await expect(gameContainer).toHaveScreenshot('game-board-mobile.png', {
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
 
     test('statistics page mobile should match snapshot', async ({ page }) => {
       // Arrange
-      await page.goto('/stats', { waitUntil: 'load' });
+      await page.goto('/playerstats', { waitUntil: 'load' });
       await waitForBlazorLoad(page);
+      await stabilizeForScreenshot(page);
       
       // Act & Assert
       await expect(page).toHaveScreenshot('statistics-mobile.png', {
         fullPage: true,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 15000
       });
     });
   });
@@ -104,11 +116,13 @@ test.describe('Visual Regression Tests', () => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await page.goto('/', { waitUntil: 'load' });
         await waitForBlazorLoad(page);
+        await stabilizeForScreenshot(page);
         
         // Act & Assert
         await expect(page).toHaveScreenshot(`home-${viewport.name}-${viewport.width}x${viewport.height}.png`, {
           fullPage: true,
-          animations: 'disabled'
+          animations: 'disabled',
+          timeout: 15000
         });
       });
     }
