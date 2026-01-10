@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using PoTicTac.Client.Models;
 namespace PoTicTac.Client.Services;
@@ -5,19 +6,23 @@ namespace PoTicTac.Client.Services;
 public class SignalRService : IAsyncDisposable
 {
     private HubConnection? _hubConnection;
-    private readonly string _hubUrl;
+    private readonly NavigationManager _navigationManager;
 
-    public SignalRService()
+    public SignalRService(NavigationManager navigationManager)
     {
-        _hubUrl = "/gamehub"; // Relative URL since client is hosted by server
+        _navigationManager = navigationManager;
     }
 
     public async Task<HubConnection> ConnectAsync()
     {
         if (_hubConnection == null)
         {
+            // Build absolute URL using NavigationManager to ensure correct base URI
+            var hubUrl = _navigationManager.ToAbsoluteUri("/gamehub");
+            
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl(_hubUrl)
+                .WithUrl(hubUrl)
+                .WithAutomaticReconnect()
                 .Build();
 
             await _hubConnection.StartAsync();

@@ -4,7 +4,13 @@ using PoTicTac.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+// Configure HttpClient with the host's base address
+// In Blazor Web App, HostEnvironment.BaseAddress correctly resolves to the server URL
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+});
 
 // Add FluentUI Blazor services
 builder.Services.AddFluentUIComponents();
