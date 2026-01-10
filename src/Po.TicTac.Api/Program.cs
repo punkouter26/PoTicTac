@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Po.TicTac.Api.Features.Health;
 using Po.TicTac.Api.Features.Players;
 using Po.TicTac.Api.Features.Statistics;
@@ -8,6 +9,14 @@ using Po.TicTac.Api.Telemetry;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Azure Key Vault as configuration provider for centralized secrets
+// Uses DefaultAzureCredential: Managed Identity in Azure, Visual Studio/CLI credentials locally
+var keyVaultUri = builder.Configuration["KeyVault:Uri"] ?? "https://kv-poshared.vault.azure.net/";
+builder.Configuration.AddAzureKeyVault(
+    new Uri(keyVaultUri),
+    new DefaultAzureCredential(),
+    new Azure.Extensions.AspNetCore.Configuration.Secrets.KeyVaultSecretManager());
 
 // Add Aspire ServiceDefaults for telemetry, health checks, and service discovery
 // This configures OpenTelemetry with Azure Monitor for Application Insights

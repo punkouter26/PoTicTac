@@ -14,7 +14,8 @@ var tables = storage.AddTables("tables");
 var api = builder.AddProject<Projects.Po_TicTac_Api>("api")
     .WithExternalHttpEndpoints()
     .WithReference(tables)
-    .WaitFor(tables);
+    .WaitFor(tables)
+    .WithEnvironment("KeyVault__Uri", "https://kv-poshared.vault.azure.net/");
 
 // Only configure explicit ports for local development
 if (builder.ExecutionContext.IsRunMode)

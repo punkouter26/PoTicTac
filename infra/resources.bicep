@@ -22,6 +22,11 @@ resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2024-02-02-p
   scope: resourceGroup('PoShared')
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: 'kv-poshared'
+  scope: resourceGroup('PoShared')
+}
+
 // Create managed identity in this resource group for the app
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'id-potictac'
@@ -40,3 +45,4 @@ output AZURE_CONTAINER_REGISTRY_NAME string = 'acrposhared'
 output AZURE_CONTAINER_APPS_ENVIRONMENT_NAME string = 'cae-poshared'
 output AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = '/subscriptions/${subscription().subscriptionId}/resourceGroups/PoShared/providers/Microsoft.App/managedEnvironments/cae-poshared'
 output AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN string = 'braveground-e6b1356c.eastus.azurecontainerapps.io'
+output AZURE_KEY_VAULT_URI string = 'https://kv-poshared.vault.azure.net/'
