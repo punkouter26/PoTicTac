@@ -412,8 +412,9 @@
         }
     }
 
-    private void NavigateToPlayerStats() => NavigationManager.NavigateTo("/playerstats");
-    private void NavigateToLeaderboard() => NavigationManager.NavigateTo("/leaderboard");
+    // Force full page load when navigating to server-rendered pages (different render mode)
+    private void NavigateToPlayerStats() => NavigationManager.NavigateTo("/playerstats", forceLoad: true);
+    private void NavigateToLeaderboard() => NavigationManager.NavigateTo("/leaderboard", forceLoad: true);
 
     private async Task SaveSinglePlayerStats()
     {
