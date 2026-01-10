@@ -63,8 +63,13 @@ jobs:
           azd env select ${{ env.AZURE_ENV_NAME }}
           azd env set AZURE_LOCATION ${{ env.AZURE_LOCATION }}
           azd env set AZURE_SUBSCRIPTION_ID ${{ env.AZURE_SUBSCRIPTION_ID }}
+          azd env set AZURE_RESOURCE_GROUP "PoTicTac"
           azd env set STORAGE_TABLEENDPOINT "https://stpotictac.table.core.windows.net/"
           azd env set AZURE_KEY_VAULT_URI "https://kv-poshared.vault.azure.net/"
+          azd env set MANAGED_IDENTITY_CLIENT_ID "c33cdcd2-6df9-4202-9c3a-2e3f5d5e1da5"
+          azd env set AZURE_CONTAINER_REGISTRY_ENDPOINT "acrposhared.azurecr.io"
+          azd env set AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID "/subscriptions/${{ env.AZURE_SUBSCRIPTION_ID }}/resourceGroups/PoTicTac/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-potictac"
+          azd env set AZURE_CONTAINER_APPS_ENVIRONMENT_ID "/subscriptions/${{ env.AZURE_SUBSCRIPTION_ID }}/resourceGroups/PoShared/providers/Microsoft.App/managedEnvironments/cae-poshared"
         shell: pwsh
 
       - name: Deploy to Azure Container Apps
