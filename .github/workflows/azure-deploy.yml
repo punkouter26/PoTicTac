@@ -60,6 +60,17 @@ jobs:
             --tenant-id "${{ env.AZURE_TENANT_ID }}"
         shell: pwsh
 
+      - name: Initialize azd environment
+        run: |
+          azd env new ${{ env.AZURE_ENV_NAME }} --no-prompt --location ${{ env.AZURE_LOCATION }} --subscription ${{ env.AZURE_SUBSCRIPTION_ID }} 2>$null || true
+          azd env select ${{ env.AZURE_ENV_NAME }}
+          azd env set AZURE_LOCATION ${{ env.AZURE_LOCATION }}
+          azd env set AZURE_SUBSCRIPTION_ID ${{ env.AZURE_SUBSCRIPTION_ID }}
+          azd env set AZURE_ENV_NAME ${{ env.AZURE_ENV_NAME }}
+          azd env set STORAGE_TABLEENDPOINT "https://stpotictac.table.core.windows.net/"
+          azd env set AZURE_KEY_VAULT_URI "https://kv-poshared.vault.azure.net/"
+        shell: pwsh
+
       - name: Provision and Deploy
         run: azd up --no-prompt
         env:
@@ -108,6 +119,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.2.1
@@ -120,6 +132,11 @@ jobs:
         with:
           useConfigFile: true
           configFilePath: GitVersion.yml
+        continue-on-error: true
+
+      - name: Fallback Version
+        if: steps.gitversion.outcome == 'failure'
+        run: echo "semVer=0.0.0" >> $GITHUB_OUTPUT
 
       - name: Display SemVer
         run: |
