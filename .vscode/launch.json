@@ -2,6 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch API Server",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-server",
+            "program": "${workspaceFolder}/src/Po.TicTac.Api/bin/Debug/net10.0/Po.TicTac.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Po.TicTac.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:5000;https://localhost:5001"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Launch Client (Chrome)",
+            "type": "chrome",
+            "request": "launch",
+            "preLaunchTask": "start-client",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/src/Po.TicTac.Web"
+        },
+        {
             "name": "Launch PoTicTac (Aspire)",
             "type": "coreclr",
             "request": "launch",
@@ -23,6 +46,18 @@
             "name": "Attach to PoTicTac.Api",
             "type": "coreclr",
             "request": "attach"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full Stack (API + Client)",
+            "configurations": ["Launch API Server", "Launch Client (Chrome)"],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "group": "PoTicTac",
+                "order": 1
+            }
         }
     ]
 }

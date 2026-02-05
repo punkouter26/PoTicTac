@@ -74,3 +74,18 @@ coverage/
 # Node modules (diagram generation)
 node_modules/
 package-lock.json
+# Playwright test artifacts
+playwright-report/
+test-results/
+test-results.json
+
+# Build outputs
+dist/
+
+# Temporary/generated files
+.potune-state.json
+.playwright-mcp/
+infra/main.json
+
+# API logs
+src/Po.TicTac.Api/logs/

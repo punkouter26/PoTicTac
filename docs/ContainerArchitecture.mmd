@@ -1,0 +1,93 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff', 'primaryTextColor': '#fff', 'lineColor': '#39ff14', 'secondaryColor': '#1a1a2e' } } }%%
+
+%% PoTicTac Container Architecture Diagram (C4 Level 2)
+%% Detailed view of application containers and their interactions
+
+graph TB
+    subgraph Browser["🌐 Web Browser"]
+        SPA["📱 React SPA<br/>(Po.TicTac.Web)<br/>────────────────<br/>• React 19 + TypeScript<br/>• Vite Build Tool<br/>• Client-side Game Logic<br/>• Local Storage Fallback"]
+        
+        subgraph ClientServices["Client Services"]
+            GameLogic["🎮 GameLogicService<br/>Win Detection, Board State"]
+            AILogic["🤖 AILogicService<br/>Easy/Medium/Hard AI"]
+            LocalStorage["💾 LocalStorageService<br/>Offline Player Stats"]
+            ApiClient["📡 StatisticsApi<br/>REST Client"]
+        end
+    end
+
+    subgraph AzureContainerApps["☁️ Azure Container Apps (cae-poshared)"]
+        subgraph APIContainer["🐳 API Container"]
+            AspNetApi["⚙️ ASP.NET Core API<br/>(Po.TicTac.Api)<br/>────────────────<br/>• .NET 10 Minimal APIs<br/>• MediatR (CQRS)<br/>• HybridCache<br/>• Serilog Logging"]
+            
+            subgraph Features["Feature Modules"]
+                HealthFeature["❤️ Health<br/>/api/health<br/>/alive"]
+                StatisticsFeature["📊 Statistics<br/>/api/statistics<br/>/api/statistics/leaderboard"]
+                PlayersFeature["👤 Players<br/>/api/players/{name}/stats"]
+            end
+            
+            subgraph CoreServices["Core Services"]
+                StorageService["💾 StorageService<br/>Azure Table CRUD"]
+                OpenTelemetry["📈 OpenTelemetry<br/>Distributed Tracing"]
+                Serilog["📝 Serilog<br/>Structured Logging"]
+            end
+        end
+    end
+
+    subgraph AzureServices["☁️ Azure Services"]
+        TableStorage["💾 Azure Table Storage<br/>(stpotictac)<br/>────────────────<br/>• PlayerStats Table<br/>• PartitionKey: 'Players'<br/>• RowKey: PlayerName"]
+        
+        KeyVault["🔐 Azure Key Vault<br/>(kv-poshared)<br/>────────────────<br/>• Connection Strings<br/>• API Keys<br/>• App Insights Key"]
+        
+        AppInsights["📈 Application Insights<br/>────────────────<br/>• Request Tracing<br/>• Performance Metrics<br/>• Error Logging"]
+        
+        ACR["📦 Container Registry<br/>(acrposhared)<br/>────────────────<br/>• API Images<br/>• Web Images"]
+    end
+
+    subgraph Identity["🔐 Identity & Access"]
+        ManagedIdentity["🆔 Managed Identity<br/>(id-potictac)<br/>────────────────<br/>• DefaultAzureCredential<br/>• No Stored Secrets"]
+    end
+
+    %% SPA to Services
+    SPA --> GameLogic
+    SPA --> AILogic
+    SPA --> LocalStorage
+    SPA --> ApiClient
+
+    %% API Calls
+    ApiClient -->|"HTTP/REST<br/>JSON"| AspNetApi
+
+    %% API Internal
+    AspNetApi --> HealthFeature
+    AspNetApi --> StatisticsFeature
+    AspNetApi --> PlayersFeature
+    HealthFeature --> StorageService
+    StatisticsFeature --> StorageService
+    PlayersFeature --> StorageService
+    AspNetApi --> OpenTelemetry
+    AspNetApi --> Serilog
+
+    %% Azure Connections
+    StorageService -->|"Table API<br/>Managed Identity"| TableStorage
+    AspNetApi -->|"Configuration<br/>Managed Identity"| KeyVault
+    OpenTelemetry -->|"Telemetry"| AppInsights
+    Serilog -->|"Logs"| AppInsights
+    
+    %% Identity
+    StorageService --> ManagedIdentity
+    AspNetApi --> ManagedIdentity
+    ManagedIdentity -->|"RBAC"| TableStorage
+    ManagedIdentity -->|"RBAC"| KeyVault
+
+    %% Container Registry
+    ACR -.->|"Docker Images"| APIContainer
+
+    %% Styling
+    classDef browser fill:#2d2d44,stroke:#00d9ff,stroke-width:2px,color:#fff
+    classDef container fill:#1a1a2e,stroke:#39ff14,stroke-width:2px,color:#fff
+    classDef azure fill:#16213e,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    classDef identity fill:#0f3460,stroke:#ffd93d,stroke-width:2px,color:#fff
+
+    class SPA,GameLogic,AILogic,LocalStorage,ApiClient browser
+    class AspNetApi,HealthFeature,StatisticsFeature,PlayersFeature,StorageService,OpenTelemetry,Serilog container
+    class TableStorage,KeyVault,AppInsights,ACR azure
+    class ManagedIdentity identity

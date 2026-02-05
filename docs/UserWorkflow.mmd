@@ -1,0 +1,97 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff', 'lineColor': '#39ff14' } } }%%
+
+%% PoTicTac User Workflow Diagram
+%% Shows typical user workflows from start to finish
+
+flowchart TB
+    subgraph StartFlow["🚀 Start Flow"]
+        A1[Open Website] --> A2[See Main Menu]
+        A2 --> A3{Returning Player?}
+        A3 -->|Yes| A4[Name Auto-filled]
+        A3 -->|No| A5[Enter Player Name]
+        A4 --> A6[Select Single Player]
+        A5 --> A6
+    end
+
+    subgraph DifficultyFlow["🎯 Difficulty Selection"]
+        A6 --> B1{Choose Difficulty}
+        B1 -->|🟢| B2[Easy Mode<br/>Random + 30% blocking]
+        B1 -->|🟡| B3[Medium Mode<br/>Threat detection]
+        B1 -->|🔴| B4[Hard Mode<br/>Minimax AI]
+        B2 --> B5[Click START GAME]
+        B3 --> B5
+        B4 --> B5
+    end
+
+    subgraph GameplayFlow["🎮 Gameplay Loop"]
+        B5 --> C1[See 6x6 Board]
+        C1 --> C2[Player's Turn - X]
+        C2 --> C3[Click Empty Cell]
+        C3 --> C4{Valid Move?}
+        C4 -->|No| C2
+        C4 -->|Yes| C5[X Placed on Board]
+        C5 --> C6{Win Check}
+        C6 -->|4 in a row| C7[🎉 Player Wins!]
+        C6 -->|No winner| C8{Board Full?}
+        C8 -->|Yes| C9[🤝 Draw!]
+        C8 -->|No| C10[AI's Turn - O]
+        C10 --> C11[AI Calculates Move]
+        C11 --> C12[O Placed on Board]
+        C12 --> C13{Win Check}
+        C13 -->|4 in a row| C14[😔 AI Wins!]
+        C13 -->|No winner| C15{Board Full?}
+        C15 -->|Yes| C9
+        C15 -->|No| C2
+    end
+
+    subgraph EndGameFlow["🏁 End Game Flow"]
+        C7 --> D1[Show Result Modal]
+        C9 --> D1
+        C14 --> D1
+        D1 --> D2[Display Win/Loss/Draw]
+        D2 --> D3[Update Local Stats]
+        D3 --> D4{API Available?}
+        D4 -->|Yes| D5[Save to Cloud]
+        D4 -->|No| D6[Keep Local Only]
+        D5 --> D7[Stats Synchronized]
+        D6 --> D7
+        D7 --> D8{User Choice}
+        D8 -->|Play Again| B5
+        D8 -->|Back to Menu| A2
+        D8 -->|View Leaderboard| E1
+    end
+
+    subgraph LeaderboardFlow["🏆 Leaderboard Flow"]
+        E1[Navigate to /leaderboard] --> E2[Fetch Top 10 Players]
+        E2 --> E3{API Available?}
+        E3 -->|Yes| E4[Display Podium + Rankings]
+        E3 -->|No| E5[Show Offline Message]
+        E4 --> E6[View Player Stats]
+        E6 --> E7[Win Rate, Games, Streaks]
+        E7 --> E8{Return to Game?}
+        E8 -->|Yes| A2
+        E8 -->|Stay| E6
+    end
+
+    subgraph StatsFlow["📊 Stats Tracking"]
+        F1[Per-Difficulty Stats]
+        F1 --> F2[Wins / Losses / Draws]
+        F1 --> F3[Win Streaks]
+        F1 --> F4[Average Moves per Game]
+        F1 --> F5[Total Games Played]
+        F2 --> F6[Overall Win Rate]
+        F3 --> F6
+        F4 --> F6
+        F5 --> F6
+    end
+
+    %% Styling
+    classDef startNode fill:#1a1a2e,stroke:#00d9ff,stroke-width:2px,color:#fff
+    classDef gameNode fill:#16213e,stroke:#39ff14,stroke-width:2px,color:#fff
+    classDef endNode fill:#2d2d44,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    classDef decisionNode fill:#0f3460,stroke:#ffd93d,stroke-width:2px,color:#fff
+
+    class A1,A2,A3,A4,A5,A6 startNode
+    class C1,C2,C3,C5,C10,C11,C12 gameNode
+    class C7,C9,C14,D1,D2,D3,D4,D5,D6,D7,D8 endNode
+    class C4,C6,C8,C13,C15 decisionNode

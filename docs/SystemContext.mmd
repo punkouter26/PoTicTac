@@ -1,0 +1,67 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff', 'primaryTextColor': '#fff', 'primaryBorderColor': '#00d9ff', 'lineColor': '#39ff14', 'secondaryColor': '#1a1a2e', 'tertiaryColor': '#16213e' } } }%%
+
+%% PoTicTac System Context Diagram (C4 Level 1)
+%% Shows the high-level ecosystem including users, external systems, and Azure infrastructure
+
+graph TB
+    subgraph Users["👤 Users"]
+        Player["🎮 Player<br/>Web Browser User<br/>Plays Tic Tac Toe games"]
+        Admin["🔧 Admin<br/>Developer/Operator<br/>Monitors and maintains system"]
+    end
+
+    subgraph PoTicTacSystem["🎯 PoTicTac System"]
+        WebApp["🌐 React Web App<br/>(Po.TicTac.Web)<br/>Single Page Application<br/>React 19 + TypeScript + Vite"]
+        API["⚙️ .NET 10 API<br/>(Po.TicTac.Api)<br/>RESTful Minimal APIs<br/>Statistics & Leaderboards"]
+    end
+
+    subgraph AzureCloud["☁️ Azure Cloud Platform"]
+        subgraph SharedResources["PoShared Resource Group"]
+            ACR["📦 Azure Container Registry<br/>(acrposhared)<br/>Container Images"]
+            CAE["🚀 Container Apps Environment<br/>(cae-poshared)<br/>Hosting Platform"]
+            LAW["📊 Log Analytics Workspace<br/>(law-poshared)<br/>Centralized Logging"]
+            KV["🔐 Key Vault<br/>(kv-poshared)<br/>Secrets Management"]
+        end
+        
+        subgraph AppResources["PoTicTac Resource Group"]
+            Storage["💾 Azure Table Storage<br/>(stpotictac)<br/>Player Statistics"]
+            ManagedId["🆔 Managed Identity<br/>(id-potictac)<br/>Secure Access"]
+        end
+        
+        AppInsights["📈 Application Insights<br/>Telemetry & Monitoring"]
+    end
+
+    subgraph DevOps["🔄 DevOps"]
+        GitHub["🐙 GitHub Actions<br/>CI/CD Pipeline<br/>OIDC Authentication"]
+    end
+
+    %% User Interactions
+    Player -->|"Plays games via HTTPS"| WebApp
+    Player -->|"Views leaderboard"| WebApp
+    Admin -->|"Monitors via Azure Portal"| AppInsights
+    Admin -->|"Deploys via GitHub"| GitHub
+
+    %% System Interactions
+    WebApp -->|"REST API calls<br/>/api/*"| API
+    API -->|"Stores/retrieves stats"| Storage
+    API -->|"Reads secrets"| KV
+    API -->|"Authenticates with"| ManagedId
+    API -->|"Sends telemetry"| AppInsights
+
+    %% Infrastructure
+    GitHub -->|"Builds & pushes images"| ACR
+    GitHub -->|"Deploys to"| CAE
+    ACR -->|"Provides images to"| CAE
+    CAE -->|"Hosts"| API
+    CAE -->|"Logs to"| LAW
+    LAW -->|"Feeds data to"| AppInsights
+
+    %% Styling
+    classDef user fill:#2d2d44,stroke:#00d9ff,stroke-width:2px,color:#fff
+    classDef app fill:#1a1a2e,stroke:#39ff14,stroke-width:2px,color:#fff
+    classDef azure fill:#16213e,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    classDef devops fill:#0f3460,stroke:#ffd93d,stroke-width:2px,color:#fff
+
+    class Player,Admin user
+    class WebApp,API app
+    class ACR,CAE,LAW,KV,Storage,ManagedId,AppInsights azure
+    class GitHub devops

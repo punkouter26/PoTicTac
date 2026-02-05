@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Azure.Data.Tables;
-using Po.TicTac.Shared.DTOs;
-using Po.TicTac.Shared.Models;
+using Po.TicTac.Api.DTOs;
+using Po.TicTac.Api.Models;
 
 namespace Po.TicTac.Api.Services;
 
@@ -65,14 +65,41 @@ public class StorageService
 
     public async Task SavePlayerStatsAsync(string playerName, PlayerStats stats)
     {
+        // Sanitize player name for Azure Table RowKey (disallows: / \ # ? and control chars)
+        var sanitizedName = SanitizeRowKey(playerName);
+        if (string.IsNullOrWhiteSpace(sanitizedName))
+        {
+            throw new ArgumentException("Player name cannot be empty or contain only invalid characters", nameof(playerName));
+        }
+
         var entity = new PlayerStatsEntity
         {
             PartitionKey = "Players",
-            RowKey = playerName,
+            RowKey = sanitizedName,
             StatsJson = JsonSerializer.Serialize(stats)
         };
 
         await _tableClient.UpsertEntityAsync(entity);
+    }
+
+    /// <summary>
+    /// Sanitizes a string for use as Azure Table Storage RowKey.
+    /// Removes: / \ # ? and control characters (0x00-0x1F, 0x7F-0x9F)
+    /// </summary>
+    private static string SanitizeRowKey(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        
+        var sanitized = new System.Text.StringBuilder(input.Length);
+        foreach (var c in input)
+        {
+            // Skip disallowed characters for Azure Table RowKey
+            if (c == '/' || c == '\\' || c == '#' || c == '?') continue;
+            // Skip control characters
+            if (c < 0x20 || (c >= 0x7F && c <= 0x9F)) continue;
+            sanitized.Append(c);
+        }
+        return sanitized.ToString().Trim();
     }
 
     public async Task<List<(string Name, PlayerStats Stats)>> GetAllPlayersAsync()

@@ -9,12 +9,15 @@ test.describe('Game Play Flow', () => {
   });
 
   test('should start a new game', async ({ page }) => {
-    // Arrange - Click single player button to start game
+    // Arrange - Click single player button to select game mode
     const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
     await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     
-    // Act - Start a single player game
+    // Act - Select single player mode and start game
     await singlePlayerButton.click();
+    const startGameButton = page.locator('.start-game-button');
+    await expect(startGameButton).toBeVisible({ timeout: 5000 });
+    await startGameButton.click();
     
     // Assert - Game board should be visible
     const gameBoard = page.locator('.game-container');
@@ -26,6 +29,9 @@ test.describe('Game Play Flow', () => {
     const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
     await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     await singlePlayerButton.click();
+    const startGameButton = page.locator('.start-game-button');
+    await expect(startGameButton).toBeVisible({ timeout: 5000 });
+    await startGameButton.click();
     
     // Act & Assert - Status should be visible in game
     const statusElement = page.locator('.game-status');
@@ -33,20 +39,14 @@ test.describe('Game Play Flow', () => {
   });
 
   test('should allow selecting difficulty level', async ({ page }) => {
-    // Arrange - Start a single player game to see difficulty selector
+    // Arrange - Click single player to reveal difficulty selector
     const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
     await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     await singlePlayerButton.click();
     
-    // Wait for game to initialize
-    await page.locator('.game-container').waitFor({ state: 'visible', timeout: 15000 });
-    
-    // Act & Assert - Look for difficulty selector
-    const difficultySelector = page.locator('select, .difficulty-selector, [data-testid="difficulty-selector"]');
-    
-    // Check if difficulty selector exists (it should be visible)
-    const count = await difficultySelector.count();
-    expect(count).toBeGreaterThanOrEqual(0); // It may not be visible initially depending on game state
+    // Act & Assert - Difficulty selector should be visible in menu
+    const difficultySelector = page.locator('.difficulty-selector').first();
+    await expect(difficultySelector).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow making a move on the board', async ({ page }) => {
@@ -54,6 +54,9 @@ test.describe('Game Play Flow', () => {
     const singlePlayerButton = page.locator('button.mode-button').filter({ hasText: 'Single Player' });
     await expect(singlePlayerButton).toBeVisible({ timeout: 15000 });
     await singlePlayerButton.click();
+    const startGameButton = page.locator('.start-game-button');
+    await expect(startGameButton).toBeVisible({ timeout: 5000 });
+    await startGameButton.click();
     const gameContainer = page.locator('.game-container');
     await gameContainer.waitFor({ state: 'visible', timeout: 15000 });
     

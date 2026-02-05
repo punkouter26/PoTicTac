@@ -1,0 +1,86 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff' } } }%%
+
+%% PoTicTac Service Dependencies Diagram
+%% Shows external touchpoints and integrations
+
+graph TB
+    subgraph Application["🎯 PoTicTac Application"]
+        WebApp["🌐 React Web App<br/>(Po.TicTac.Web)"]
+        API["⚙️ .NET 10 API<br/>(Po.TicTac.Api)"]
+    end
+
+    subgraph AzureDataServices["💾 Azure Data Services"]
+        TableStorage["📊 Azure Table Storage<br/>────────────────<br/>• Player statistics<br/>• Leaderboard data<br/>• stpotictac account<br/>• Serverless, pay-per-use"]
+    end
+
+    subgraph AzureSecurityServices["🔐 Azure Security Services"]
+        KeyVault["🔑 Azure Key Vault<br/>────────────────<br/>• Connection strings<br/>• API keys<br/>• Managed by PoShared<br/>• Accessed via Managed Identity"]
+        
+        ManagedIdentity["🆔 Managed Identity<br/>────────────────<br/>• id-potictac<br/>• No stored credentials<br/>• Automatic rotation"]
+    end
+
+    subgraph AzureHostingServices["🚀 Azure Hosting Services"]
+        ContainerApps["📦 Container Apps<br/>────────────────<br/>• cae-poshared environment<br/>• Auto-scaling 0-10<br/>• Managed Kubernetes<br/>• HTTPS with custom domain"]
+        
+        ContainerRegistry["🐳 Container Registry<br/>────────────────<br/>• acrposhared<br/>• Docker images<br/>• Vulnerability scanning"]
+    end
+
+    subgraph AzureMonitoringServices["📈 Azure Monitoring Services"]
+        AppInsights["📊 Application Insights<br/>────────────────<br/>• Request tracing<br/>• Performance metrics<br/>• Error tracking<br/>• Live metrics stream"]
+        
+        LogAnalytics["📝 Log Analytics Workspace<br/>────────────────<br/>• law-poshared<br/>• Kusto queries<br/>• Log retention 30 days"]
+    end
+
+    subgraph DevOpsPlatform["🔄 DevOps Platform"]
+        GitHub["🐙 GitHub<br/>────────────────<br/>• Source repository<br/>• Actions CI/CD<br/>• OIDC authentication<br/>• Issue tracking"]
+    end
+
+    subgraph CDN["🌍 Content Delivery (Planned)"]
+        AzureCDN["📡 Azure CDN<br/>────────────────<br/>• Static asset caching<br/>• Global edge locations<br/>• HTTPS termination"]
+    end
+
+    subgraph FutureDependencies["🔮 Future Dependencies (Planned)"]
+        SignalR["📡 Azure SignalR<br/>────────────────<br/>• Real-time multiplayer<br/>• WebSocket connections"]
+        
+        EntraID["🔒 Azure Entra ID<br/>────────────────<br/>• OAuth authentication<br/>• User profiles"]
+        
+        Redis["⚡ Azure Cache for Redis<br/>────────────────<br/>• Distributed caching<br/>• Session state"]
+    end
+
+    %% Current Dependencies
+    WebApp -->|"REST API<br/>JSON/HTTPS"| API
+    API -->|"Table SDK<br/>Managed Identity"| TableStorage
+    API -->|"Configuration<br/>Managed Identity"| KeyVault
+    API -->|"Identity"| ManagedIdentity
+    API -->|"Telemetry<br/>OpenTelemetry"| AppInsights
+    AppInsights -->|"Logs"| LogAnalytics
+    
+    ContainerRegistry -->|"Images"| ContainerApps
+    ContainerApps -->|"Hosts"| API
+    
+    GitHub -->|"CI/CD<br/>OIDC"| ContainerApps
+    GitHub -->|"Pushes to"| ContainerRegistry
+
+    %% Planned Dependencies (dashed)
+    WebApp -.->|"Static assets<br/>(planned)"| AzureCDN
+    API -.->|"Real-time<br/>(planned)"| SignalR
+    WebApp -.->|"SignalR<br/>(planned)"| SignalR
+    API -.->|"Auth<br/>(planned)"| EntraID
+    API -.->|"Distributed cache<br/>(planned)"| Redis
+
+    %% Styling
+    classDef app fill:#1a1a2e,stroke:#00d9ff,stroke-width:2px,color:#fff
+    classDef data fill:#16213e,stroke:#39ff14,stroke-width:2px,color:#fff
+    classDef security fill:#0f3460,stroke:#ffd93d,stroke-width:2px,color:#fff
+    classDef hosting fill:#2d2d44,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    classDef monitoring fill:#1e3a5f,stroke:#00d9ff,stroke-width:2px,color:#fff
+    classDef devops fill:#3d1a4a,stroke:#e040fb,stroke-width:2px,color:#fff
+    classDef future fill:#333,stroke:#666,stroke-width:1px,stroke-dasharray:5 5,color:#999
+
+    class WebApp,API app
+    class TableStorage data
+    class KeyVault,ManagedIdentity security
+    class ContainerApps,ContainerRegistry hosting
+    class AppInsights,LogAnalytics monitoring
+    class GitHub devops
+    class AzureCDN,SignalR,EntraID,Redis future

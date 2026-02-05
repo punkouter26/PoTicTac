@@ -1,0 +1,80 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff', 'primaryTextColor': '#fff', 'lineColor': '#39ff14' } } }%%
+
+%% PoTicTac Data Workflow Diagram
+%% Visual flow of CRUD operations from UI through API to database
+
+sequenceDiagram
+    autonumber
+    
+    participant Player as 👤 Player
+    participant UI as 🌐 React UI
+    participant LocalStore as 💾 LocalStorage
+    participant API as ⚙️ .NET API
+    participant Cache as 💨 HybridCache
+    participant Storage as 💾 Azure Tables
+
+    Note over Player,Storage: 🎮 GAME START - Load Existing Stats
+    
+    Player->>UI: Enter player name
+    UI->>LocalStore: getPlayerName()
+    LocalStore-->>UI: Cached name (if exists)
+    UI->>API: GET /api/players/{name}/stats
+    API->>Cache: Check cache
+    alt Cache Hit
+        Cache-->>API: Cached stats
+    else Cache Miss
+        API->>Storage: QueryAsync<PlayerStatsEntity>
+        Storage-->>API: PlayerStats JSON
+        API->>Cache: Store in cache (5min TTL)
+    end
+    API-->>UI: PlayerStatsDto
+    UI-->>Player: Display stats in UI
+
+    Note over Player,Storage: 🎮 GAMEPLAY - Client-Side Only
+    
+    loop Each Move
+        Player->>UI: Click cell (row, col)
+        UI->>UI: GameLogicService.makeMove()
+        UI->>UI: Check win/draw condition
+        alt Game Not Over
+            UI->>UI: AILogicService.makeAIMove()
+            UI->>UI: Check win/draw condition
+        end
+        UI-->>Player: Update board display
+    end
+
+    Note over Player,Storage: 🏆 GAME END - Save Statistics
+    
+    UI->>UI: Calculate updated stats
+    UI->>LocalStore: setPlayerStats(name, stats)
+    LocalStore-->>UI: Saved locally (offline backup)
+    
+    UI->>API: PUT /api/players/{name}/stats
+    API->>API: Validate & sanitize player name
+    API->>Storage: UpsertEntityAsync(PlayerStatsEntity)
+    Storage-->>API: Success
+    API->>Cache: Invalidate leaderboard cache
+    API-->>UI: 204 No Content
+    UI-->>Player: "Stats saved!" toast
+
+    Note over Player,Storage: 📊 LEADERBOARD - Read Operation
+    
+    Player->>UI: Navigate to /leaderboard
+    UI->>API: GET /api/statistics/leaderboard?limit=10
+    API->>Cache: GetOrCreateAsync("leaderboard:10")
+    alt Cache Hit
+        Cache-->>API: Cached leaderboard
+    else Cache Miss
+        API->>Storage: QueryAsync (all players)
+        Storage-->>API: All PlayerStats
+        API->>API: Sort by WinRate, take top 10
+        API->>Cache: Store result (5min TTL)
+    end
+    API-->>UI: PlayerStatsDto[]
+    UI-->>Player: Display podium + rankings
+
+    Note over Player,Storage: ❤️ HEALTH CHECK - Monitoring
+    
+    API->>Storage: Ping TableClient
+    Storage-->>API: Connection OK
+    API-->>API: Return "Healthy" status

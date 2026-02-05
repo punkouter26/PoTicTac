@@ -1,0 +1,91 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff' } } }%%
+
+%% PoTicTac State Transition Diagram
+%% Tracks the lifecycle of a game from start to end
+
+stateDiagram-v2
+    [*] --> Menu: App Loaded
+    
+    state Menu {
+        [*] --> NameEntry
+        NameEntry --> ModeSelection: Name entered
+        ModeSelection --> DifficultySelection: "Single Player" selected
+        DifficultySelection --> ReadyToStart: Difficulty chosen
+        ReadyToStart --> [*]: Click "Start Game"
+    }
+    
+    Menu --> Playing: startSinglePlayerGame()
+    
+    state Playing {
+        [*] --> PlayerTurn
+        
+        PlayerTurn --> ValidatingMove: Click cell
+        ValidatingMove --> PlayerTurn: Invalid move (cell occupied)
+        ValidatingMove --> CheckingWin: Valid move made
+        
+        CheckingWin --> PlayerWon: 4-in-a-row detected
+        CheckingWin --> CheckingDraw: No winner
+        
+        CheckingDraw --> Draw: Board full
+        CheckingDraw --> AIThinking: Board not full
+        
+        AIThinking --> AIMove: AI calculates move
+        AIMove --> CheckingAIWin: AI places mark
+        
+        CheckingAIWin --> AIWon: 4-in-a-row detected
+        CheckingAIWin --> CheckingAIDraw: No winner
+        
+        CheckingAIDraw --> Draw: Board full
+        CheckingAIDraw --> PlayerTurn: Board not full
+    }
+    
+    Playing --> GameOver: Game ends
+    
+    state GameOver {
+        [*] --> DisplayResult
+        DisplayResult --> SavingStats: Stats not saved yet
+        SavingStats --> LocalSave: Save to LocalStorage
+        LocalSave --> CloudSave: Attempt API save
+        CloudSave --> StatsComplete: Success or offline fallback
+        StatsComplete --> [*]
+    }
+    
+    state GameResult <<choice>>
+    GameOver --> GameResult
+    GameResult --> PlayerWonState: Player won
+    GameResult --> AIWonState: AI won
+    GameResult --> DrawState: Draw
+    
+    state PlayerWonState {
+        WinAnimation: Show winning cells
+        WinMessage: "You Win! 🎉"
+        UpdateStreak: Increment win streak
+    }
+    
+    state AIWonState {
+        LoseAnimation: Show AI winning cells
+        LoseMessage: "AI Wins!"
+        ResetStreak: Reset win streak to 0
+    }
+    
+    state DrawState {
+        DrawAnimation: Flash all cells
+        DrawMessage: "It's a Draw!"
+        KeepStreak: Maintain current streak
+    }
+    
+    GameOver --> Menu: "Play Again" or "Back to Menu"
+    
+    note right of Playing
+        Race Condition Prevention:
+        - moveLockRef prevents double moves
+        - isAiThinking blocks user input
+        - statsSaved prevents double save
+    end note
+    
+    note right of Menu
+        State Persistence:
+        - playerName → LocalStorage
+        - difficulty → LocalStorage
+        - Stats synced on game end
+    end note

@@ -1,0 +1,82 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff', 'actorLineColor': '#39ff14' } } }%%
+
+%% PoTicTac Authentication Flow Diagram
+%% Note: PoTicTac currently uses name-only identification (no OAuth)
+%% This diagram shows the current flow and planned OAuth integration
+
+sequenceDiagram
+    autonumber
+    
+    participant User as 👤 User
+    participant Browser as 🌐 React SPA
+    participant LocalStore as 💾 LocalStorage
+    participant API as ⚙️ .NET API
+    participant Storage as 💾 Azure Tables
+    
+    Note over User,Storage: 🔓 CURRENT: Name-Only Identification (No Auth)
+    
+    rect rgb(30, 30, 60)
+        Note right of User: Player Identification Flow
+        User->>Browser: Enter player name
+        Browser->>Browser: Validate name (client-side)
+        Browser->>LocalStore: setPlayerName(name)
+        LocalStore-->>Browser: Stored
+        Browser-->>User: Name saved, ready to play
+    end
+    
+    rect rgb(30, 60, 30)
+        Note right of User: Stats Save Flow (Unauthenticated)
+        User->>Browser: Complete game
+        Browser->>API: PUT /api/players/{name}/stats
+        Note over API: No auth token required
+        API->>API: sanitizeRowKey(name)
+        API->>Storage: UpsertEntity (no auth check)
+        Storage-->>API: Success
+        API-->>Browser: 204 No Content
+    end
+    
+    Note over User,Storage: 🔐 FUTURE: OAuth with Azure Entra ID (Planned)
+    
+    rect rgb(60, 30, 30)
+        Note right of User: Planned OAuth Flow
+        
+        participant Entra as 🔑 Azure Entra ID
+        
+        User->>Browser: Click "Sign In"
+        Browser->>Entra: Redirect to /authorize
+        Entra->>Entra: User authenticates (Microsoft/Google)
+        Entra-->>Browser: Authorization code
+        Browser->>API: POST /auth/callback?code=xxx
+        API->>Entra: Exchange code for tokens
+        Entra-->>API: Access token + ID token
+        API->>API: Create session / JWT
+        API-->>Browser: Set auth cookie
+        Browser->>LocalStore: Store user info
+        Browser-->>User: Signed in as {email}
+    end
+    
+    rect rgb(60, 60, 30)
+        Note right of User: Planned Authenticated Stats Flow
+        
+        User->>Browser: Complete game
+        Browser->>API: PUT /api/players/me/stats
+        Note over Browser,API: Authorization: Bearer {token}
+        API->>API: Validate JWT
+        API->>API: Extract userId from claims
+        API->>Storage: UpsertEntity (userId as RowKey)
+        Storage-->>API: Success
+        API-->>Browser: 204 No Content
+    end
+    
+    Note over User,Storage: 🧪 DEV/TEST: Bypass Authentication
+    
+    rect rgb(40, 40, 60)
+        Note right of User: Development Login (E2E Testing)
+        
+        User->>Browser: Navigate to /dev-login
+        Browser->>API: POST /dev-login?name=TestUser
+        Note over API: Only available in Development
+        API->>API: Create test session
+        API-->>Browser: Set test auth cookie
+        Browser-->>User: Logged in as TestUser
+    end

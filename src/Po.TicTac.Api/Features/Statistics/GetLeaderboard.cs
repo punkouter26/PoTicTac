@@ -1,6 +1,7 @@
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using Po.TicTac.Api.Services;
-using Po.TicTac.Shared.DTOs;
+using Po.TicTac.Api.DTOs;
 
 namespace Po.TicTac.Api.Features.Statistics;
 
@@ -10,43 +11,36 @@ namespace Po.TicTac.Api.Features.Statistics;
 public record GetLeaderboardQuery(int Limit = 10) : IRequest<IEnumerable<PlayerStatsDto>>;
 
 /// <summary>
-/// Handler for GetLeaderboardQuery
+/// Handler for GetLeaderboardQuery using primary constructor (C# 14) with HybridCache.
 /// </summary>
-public class GetLeaderboardHandler : IRequestHandler<GetLeaderboardQuery, IEnumerable<PlayerStatsDto>>
+public sealed class GetLeaderboardHandler(
+    StorageService storageService,
+    HybridCache cache,
+    ILogger<GetLeaderboardHandler> logger) : IRequestHandler<GetLeaderboardQuery, IEnumerable<PlayerStatsDto>>
 {
-    private readonly StorageService _storageService;
-    private readonly ILogger<GetLeaderboardHandler> _logger;
-
-    public GetLeaderboardHandler(StorageService storageService, ILogger<GetLeaderboardHandler> logger)
-    {
-        _storageService = storageService;
-        _logger = logger;
-    }
-
     public async Task<IEnumerable<PlayerStatsDto>> Handle(GetLeaderboardQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Retrieving leaderboard with limit: {Limit}", request.Limit);
+        logger.LogInformation("Retrieving leaderboard with limit: {Limit}", request.Limit);
 
         try
         {
-            var leaderboard = await _storageService.GetLeaderboardAsync(request.Limit);
-            var playerStatsDtos = new List<PlayerStatsDto>();
-
-            foreach (var player in leaderboard)
-            {
-                playerStatsDtos.Add(new PlayerStatsDto
+            var cacheKey = $"leaderboard:{request.Limit}";
+            var playerStatsDtos = await cache.GetOrCreateAsync(
+                cacheKey,
+                async ct =>
                 {
-                    Name = player.Name,
-                    Stats = player.Stats
-                });
-            }
+                    logger.LogDebug("Cache miss for leaderboard, fetching from storage");
+                    var leaderboard = await storageService.GetLeaderboardAsync(request.Limit);
+                    return leaderboard.Select(p => new PlayerStatsDto { Name = p.Name, Stats = p.Stats }).ToList();
+                },
+                cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Successfully retrieved {Count} players for the leaderboard", playerStatsDtos.Count);
-            return playerStatsDtos;
+            logger.LogInformation("Successfully retrieved {Count} players for the leaderboard", playerStatsDtos?.Count ?? 0);
+            return playerStatsDtos ?? [];
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving leaderboard");
+            logger.LogError(ex, "Error retrieving leaderboard");
             throw;
         }
     }

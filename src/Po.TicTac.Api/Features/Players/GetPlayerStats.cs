@@ -2,7 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Po.TicTac.Api.Services;
-using Po.TicTac.Shared.DTOs;
+using Po.TicTac.Api.DTOs;
+using Po.TicTac.Api.Models;
 
 namespace Po.TicTac.Api.Features.Players;
 
@@ -12,27 +13,20 @@ namespace Po.TicTac.Api.Features.Players;
 public sealed record GetPlayerStatsQuery(string PlayerName) : IRequest<PlayerStatsDto?>;
 
 /// <summary>
-/// Handler for <see cref="GetPlayerStatsQuery"/>.
+/// Handler for <see cref="GetPlayerStatsQuery"/> using primary constructor (C# 14).
 /// </summary>
-public sealed class GetPlayerStatsHandler : IRequestHandler<GetPlayerStatsQuery, PlayerStatsDto?>
+public sealed class GetPlayerStatsHandler(
+    StorageService storageService,
+    ILogger<GetPlayerStatsHandler> logger) : IRequestHandler<GetPlayerStatsQuery, PlayerStatsDto?>
 {
-    private readonly StorageService _storageService;
-    private readonly ILogger<GetPlayerStatsHandler> _logger;
-
-    public GetPlayerStatsHandler(StorageService storageService, ILogger<GetPlayerStatsHandler> logger)
-    {
-        _storageService = storageService;
-        _logger = logger;
-    }
-
     public async Task<PlayerStatsDto?> Handle(GetPlayerStatsQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Retrieving stats for player: {PlayerName}", request.PlayerName);
+        logger.LogInformation("Retrieving stats for player: {PlayerName}", request.PlayerName);
 
-        var stats = await _storageService.GetPlayerStatsAsync(request.PlayerName);
+        var stats = await storageService.GetPlayerStatsAsync(request.PlayerName);
         if (stats is null)
         {
-            _logger.LogInformation("No stats found for player: {PlayerName}", request.PlayerName);
+            logger.LogInformation("No stats found for player: {PlayerName}", request.PlayerName);
             return null;
         }
 
@@ -60,7 +54,7 @@ public static class GetPlayerStatsEndpoint
                 return Results.Ok(new PlayerStatsDto
                 {
                     Name = playerName,
-                    Stats = new Po.TicTac.Shared.Models.PlayerStats()
+                    Stats = new PlayerStats()
                 });
             }
             return Results.Ok(result);

@@ -1,6 +1,7 @@
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using Po.TicTac.Api.Services;
-using Po.TicTac.Shared.Models;
+using Po.TicTac.Api.Models;
 
 namespace Po.TicTac.Api.Features.Players;
 
@@ -10,32 +11,32 @@ namespace Po.TicTac.Api.Features.Players;
 public record SavePlayerStatsCommand(string PlayerName, PlayerStats Stats) : IRequest<Unit>;
 
 /// <summary>
-/// Handler for SavePlayerStatsCommand
+/// Handler for SavePlayerStatsCommand using primary constructor (C# 14).
+/// Issue 9 fix: Invalidates leaderboard cache on stats update.
 /// </summary>
-public class SavePlayerStatsHandler : IRequestHandler<SavePlayerStatsCommand, Unit>
+public sealed class SavePlayerStatsHandler(
+    StorageService storageService,
+    HybridCache cache,
+    ILogger<SavePlayerStatsHandler> logger) : IRequestHandler<SavePlayerStatsCommand, Unit>
 {
-    private readonly StorageService _storageService;
-    private readonly ILogger<SavePlayerStatsHandler> _logger;
-
-    public SavePlayerStatsHandler(StorageService storageService, ILogger<SavePlayerStatsHandler> logger)
-    {
-        _storageService = storageService;
-        _logger = logger;
-    }
-
     public async Task<Unit> Handle(SavePlayerStatsCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Saving stats for player: {PlayerName}", request.PlayerName);
+        logger.LogInformation("Saving stats for player: {PlayerName}", request.PlayerName);
 
         try
         {
-            await _storageService.SavePlayerStatsAsync(request.PlayerName, request.Stats);
-            _logger.LogInformation("Successfully saved stats for player: {PlayerName}", request.PlayerName);
+            await storageService.SavePlayerStatsAsync(request.PlayerName, request.Stats);
+            
+            // Issue 9 fix: Invalidate leaderboard cache to reflect updated stats
+            await cache.RemoveAsync("leaderboard:10", cancellationToken);
+            logger.LogDebug("Invalidated leaderboard cache after stats update");
+            
+            logger.LogInformation("Successfully saved stats for player: {PlayerName}", request.PlayerName);
             return Unit.Value;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving stats for player: {PlayerName}", request.PlayerName);
+            logger.LogError(ex, "Error saving stats for player: {PlayerName}", request.PlayerName);
             throw;
         }
     }

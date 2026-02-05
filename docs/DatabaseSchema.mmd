@@ -1,0 +1,60 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff' } } }%%
+
+%% PoTicTac Database Schema (Entity Relationship Diagram)
+%% Azure Table Storage - NoSQL key-value store
+
+erDiagram
+    PLAYERSTATS_TABLE {
+        string PartitionKey PK "Always 'Players'"
+        string RowKey PK "Player Name (sanitized)"
+        datetime Timestamp "Last modified (auto)"
+        string ETag "Concurrency token"
+        string StatsJson "Serialized PlayerStats"
+    }
+
+    PLAYERSTATS_JSON {
+        string PlayerId "Unique identifier"
+        string PlayerName "Display name"
+        int TotalWins "Sum across difficulties"
+        int TotalLosses "Sum across difficulties"
+        int TotalDraws "Sum across difficulties"
+        int TotalGames "Sum across difficulties"
+        double WinRate "TotalWins / TotalGames"
+        double OverallWinRate "Same as WinRate"
+        datetime CreatedAt "First record creation"
+        datetime UpdatedAt "Last update time"
+    }
+
+    DIFFICULTY_STATS {
+        int Wins "Wins at this difficulty"
+        int Losses "Losses at this difficulty"
+        int Draws "Draws at this difficulty"
+        int TotalGames "Total games at difficulty"
+        int WinStreak "Best consecutive wins"
+        int CurrentStreak "Current win streak"
+        int TotalMoves "Cumulative moves made"
+        double AverageMovesPerGame "TotalMoves / TotalGames"
+        double WinRate "Wins / TotalGames"
+    }
+
+    PLAYERSTATS_TABLE ||--|| PLAYERSTATS_JSON : "StatsJson contains"
+    PLAYERSTATS_JSON ||--|{ DIFFICULTY_STATS : "Easy, Medium, Hard"
+
+    %% Notes on Azure Table Storage Structure
+    %% 
+    %% Table Name: PlayerStats
+    %% 
+    %% Partition Strategy:
+    %% - Single partition "Players" for all data
+    %% - Suitable for < 10,000 players
+    %% - Consider partitioning by first letter for scale
+    %%
+    %% Query Patterns:
+    %% 1. Get single player: PartitionKey='Players', RowKey='{name}'
+    %% 2. Get all players: PartitionKey='Players'
+    %% 3. Leaderboard: Get all, sort client-side by WinRate
+    %%
+    %% Indexing:
+    %% - PartitionKey + RowKey = Primary index
+    %% - No secondary indexes in Azure Table Storage
+    %% - For complex queries, consider Cosmos DB

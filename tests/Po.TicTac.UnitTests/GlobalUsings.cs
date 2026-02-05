@@ -1,1 +1,1 @@
-global using Po.TicTac.Shared.Models;
+global using Po.TicTac.Api.Models;

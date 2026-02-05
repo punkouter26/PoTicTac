@@ -1,50 +1,46 @@
 import { Page, expect } from '@playwright/test';
 
 /**
- * Wait for Blazor WebAssembly to finish loading
+ * Wait for React app to finish loading
  * 
- * This helper waits for Blazor to remove the loading spinner and render the app content.
- * Critical for E2E tests as Blazor WASM can take several seconds to initialize.
+ * This helper waits for the React app to render content.
  * 
  * @param page - Playwright Page object
- * @param timeout - Maximum time to wait in milliseconds (default: 60000)
+ * @param timeout - Maximum time to wait in milliseconds (default: 30000)
  */
-export async function waitForBlazorLoad(page: Page, timeout: number = 60000) {
+export async function waitForReactLoad(page: Page, timeout: number = 30000) {
   try {
-    // Wait for Blazor to remove the loading indicator
+    // Wait for the root element to have content
     await page.waitForFunction(
       () => {
-        const app = document.querySelector('#app');
-        const loading = document.querySelector('.loading-progress');
-        const errorUi = document.querySelector('#blazor-error-ui') as HTMLElement;
-        
-        // Check if error occurred
-        if (errorUi && errorUi.style.display !== 'none') {
-          console.error('Blazor error detected');
-          return true;
-        }
-        
-        // Check if loading is complete (loading indicator removed)
-        return app && !loading;
+        const root = document.querySelector('#root');
+        return root && root.children.length > 0;
       },
       { timeout }
     );
     
-    // Additional stabilization wait for CSS/fonts to load
+    // Wait for network to settle
     await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     
     // Wait for fonts to be ready
     await page.evaluate(() => document.fonts.ready);
     
-    // Small delay to allow CSS animations to settle
+    // Small delay to allow React state to settle
     await page.waitForTimeout(100);
   } catch (e) {
-    console.error('Blazor loading timeout:', e);
-    // Log page content for debugging
+    console.error('React loading timeout:', e);
     const content = await page.content();
     console.log('Page content:', content.substring(0, 500));
     throw e;
   }
+}
+
+/**
+ * Wait for Blazor WebAssembly to finish loading (legacy - kept for compatibility)
+ * @deprecated Use waitForReactLoad instead
+ */
+export async function waitForBlazorLoad(page: Page, timeout: number = 60000) {
+  return waitForReactLoad(page, timeout);
 }
 
 /**

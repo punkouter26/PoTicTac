@@ -2,18 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-apphost",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/src/Po.TicTac.AppHost/Po.TicTac.AppHost.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "build-server",
             "command": "dotnet",
             "type": "process",
@@ -26,6 +14,32 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "start-client",
+            "type": "npm",
+            "script": "dev",
+            "path": "src/Po.TicTac.Web",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "vite",
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "VITE",
+                    "endsPattern": "ready in"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "dev"
+            }
+        },
+        {
             "label": "start-server",
             "dependsOn": "build-server",
             "command": "dotnet",
@@ -35,24 +49,36 @@
                 "--project",
                 "${workspaceFolder}/src/Po.TicTac.Api/Po.TicTac.Api.csproj"
             ],
-            "problemMatcher": "$msCompile",
+            "problemMatcher": {
+                "owner": "dotnet",
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Building",
+                    "endsPattern": "Application started"
+                }
+            },
             "isBackground": true,
             "presentation": {
                 "reveal": "always",
-                "panel": "dedicated"
+                "panel": "dedicated",
+                "group": "dev"
             }
         },
         {
-            "label": "build-client",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/src/Po.TicTac.Client/Po.TicTac.Client.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
+            "label": "start-fullstack",
+            "dependsOn": ["start-server", "start-client"],
+            "dependsOrder": "parallel",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "format-code",

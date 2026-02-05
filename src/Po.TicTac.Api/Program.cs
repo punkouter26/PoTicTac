@@ -1,9 +1,10 @@
+using Azure.Data.Tables;
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Po.TicTac.Api.Features.Health;
 using Po.TicTac.Api.Features.Players;
 using Po.TicTac.Api.Features.Statistics;
 using Po.TicTac.Api.HealthChecks;
-using Po.TicTac.Api.Hubs;
 using Po.TicTac.Api.Services;
 using Po.TicTac.Api.Telemetry;
 using Serilog;
@@ -12,18 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Azure Key Vault as configuration provider for centralized secrets
 // Uses DefaultAzureCredential: Managed Identity in Azure, Visual Studio/CLI credentials locally
-var keyVaultUri = builder.Configuration["KeyVault:Uri"] ?? "https://kv-poshared.vault.azure.net/";
-builder.Configuration.AddAzureKeyVault(
-    new Uri(keyVaultUri),
-    new DefaultAzureCredential(),
-    new Azure.Extensions.AspNetCore.Configuration.Secrets.KeyVaultSecretManager());
-
-// Add Aspire ServiceDefaults for telemetry, health checks, and service discovery
-// This configures OpenTelemetry with Azure Monitor for Application Insights
-builder.AddServiceDefaults();
-
-// Ensure static web assets (client + library content) are resolved when hosted by the API
-builder.WebHost.UseStaticWebAssets();
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrEmpty(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new DefaultAzureCredential(),
+        new Azure.Extensions.AspNetCore.Configuration.Secrets.KeyVaultSecretManager());
+}
 
 // Configure Serilog with enrichers
 builder.Host.UseSerilog((context, services, configuration) =>
@@ -45,8 +42,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
     }
     else
     {
-        // Production: OpenTelemetry via ServiceDefaults handles Application Insights
-        // Write to console for container logs (structured for Azure Monitor)
+        // Production: Write to console for container logs
         configuration.WriteTo.Console();
 
         // Also write to file for local diagnostics
@@ -63,29 +59,75 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // Add HttpContextAccessor for telemetry enrichers
 builder.Services.AddHttpContextAccessor();
 
+// Add OpenTelemetry with Azure Monitor for distributed tracing
+var appInsightsConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+if (!string.IsNullOrEmpty(appInsightsConnectionString))
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor(options =>
+    {
+        options.ConnectionString = appInsightsConnectionString;
+    });
+}
+
+// Add HybridCache for in-memory + distributed caching (.NET 10)
+#pragma warning disable EXTEXP0018 // HybridCache is experimental in .NET 10
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(5),
+        LocalCacheExpiration = TimeSpan.FromMinutes(1)
+    };
+});
+#pragma warning restore EXTEXP0018
+
 // Add MediatR for CQRS
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Add Aspire Azure Table Storage client (connection injected by AppHost)
-builder.AddAzureTableServiceClient("tables");
+// Add Azure Table Storage client
+// Use connection string for local development (Azurite) or Managed Identity for Azure
+var tableConnectionString = builder.Configuration.GetConnectionString("Tables")
+    ?? builder.Configuration["ConnectionStrings:AzureTableStorage"]
+    ?? "UseDevelopmentStorage=true";
+
+builder.Services.AddSingleton(sp =>
+{
+    if (tableConnectionString == "UseDevelopmentStorage=true" || tableConnectionString.Contains("devstoreaccount1"))
+    {
+        return new TableServiceClient(tableConnectionString);
+    }
+    // Use DefaultAzureCredential for Azure Table Storage with Managed Identity
+    var tableUri = new Uri(tableConnectionString);
+    return new TableServiceClient(tableUri, new DefaultAzureCredential());
+});
 
 builder.Services.AddSingleton<StorageService>();
 
+// Add CORS for React frontend
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? ["http://localhost:3000", "https://localhost:3000"];
 
-// Add SignalR services
-builder.Services.AddSignalR();
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 
-// Add Razor Components with Interactive Server (for business pages) and WebAssembly (for game)
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
-
-// Add custom health check for Azure Table Storage (Aspire defaults already added)
+// Add health checks
 builder.Services.AddHealthChecks()
     .AddCheck<StorageHealthCheck>("AzureTableStorage");
 
-// Add API Explorer and OpenAPI for Minimal APIs
+// Add Authorization (required for UseAuthorization middleware)
+builder.Services.AddAuthorization();
+
+// Add API Explorer and OpenAPI/Swagger for Minimal APIs
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -101,8 +143,14 @@ builder.Services.AddOpenApi("v1", options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// Enable OpenAPI in all environments for API testing
+// Enable OpenAPI and Swagger UI in all environments for API testing
 app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PoTicTac API v1");
+    options.RoutePrefix = "swagger"; // Access at /swagger
+});
 
 // Add Serilog request logging with enrichment
 app.UseSerilogRequestLogging(options =>
@@ -122,11 +170,11 @@ app.UseSerilogRequestLogging(options =>
 });
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
 
-// Serve static files with fingerprinting support (.NET 8+)
-app.MapStaticAssets();
-app.UseAntiforgery();
+// Enable CORS before authorization
+app.UseCors();
+
+app.UseAuthorization();
 
 // Map Minimal API endpoints
 app.MapHealthCheck();
@@ -135,19 +183,14 @@ app.MapGetLeaderboard();
 app.MapGetPlayerStats();
 app.MapSavePlayerStats();
 
-// Map SignalR hub
-app.MapHub<GameHub>("/gamehub");
+// Map health check endpoints
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false // Liveness check - just returns healthy if app is running
+});
 
-// Map Razor Components with Interactive Server (business pages) and WebAssembly (game)
-app.MapRazorComponents<Po.TicTac.Api.Components.App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(PoTicTac.Client.Pages.Home).Assembly);
-
-// Map Aspire default endpoints (health checks, etc.)
-app.MapDefaultEndpoints();
-
-Log.Information("PoTicTac server starting on {Environment}", builder.Environment.EnvironmentName);
+Log.Information("PoTicTac API server starting on {Environment}", builder.Environment.EnvironmentName);
 
 app.Run();
 

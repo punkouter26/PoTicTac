@@ -23,6 +23,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.Azurite" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -41,7 +43,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Po.TicTac.Api\Po.TicTac.Api.csproj" />
-    <ProjectReference Include="..\..\src\Po.TicTac.Shared\Po.TicTac.Shared.csproj" />
   </ItemGroup>
 
 </Project>

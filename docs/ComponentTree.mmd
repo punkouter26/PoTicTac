@@ -1,0 +1,157 @@
+%%{ init: { 'theme': 'dark', 'themeVariables': { 'primaryColor': '#00d9ff' } } }%%
+
+%% PoTicTac Component Tree Diagram
+%% Maps the React component hierarchy showing state inheritance
+
+classDiagram
+    direction TB
+    
+    %% Root Application
+    class App {
+        <<Router>>
+        Routes configuration
+        BrowserRouter wrapper
+    }
+    
+    %% Layout Components
+    class Layout {
+        <<Layout>>
+        App shell wrapper
+        <Outlet/> for child routes
+        CSS: app-layout, main-content
+    }
+    
+    %% Page Components
+    class HomePage {
+        <<Page>>
+        Route: /
+        Renders: Game component
+    }
+    
+    class LeaderboardPage {
+        <<Page>>
+        Route: /leaderboard
+        ────────────────
+        State:
+        - leaderboard: PlayerStatsDto[]
+        - loading: boolean
+        - error: string | null
+        ────────────────
+        Effects:
+        - fetchLeaderboard() on mount
+        ────────────────
+        Renders: Podium + Rankings
+    }
+    
+    %% Core Game Components
+    class Game {
+        <<Component>>
+        Main game orchestrator
+        ────────────────
+        State:
+        - gameMode: GameMode
+        - gameState: GameBoardState
+        - lastMove: LastMoveInfo
+        - difficulty: Difficulty
+        - playerName: string
+        - isAiThinking: boolean
+        - statsSaved: boolean
+        ────────────────
+        Callbacks:
+        - handleCellClick()
+        - handleStartGame()
+        - saveStats()
+        ────────────────
+        Refs:
+        - moveLockRef (race condition prevention)
+    }
+    
+    class GameBoard {
+        <<Component>>
+        6x6 grid renderer
+        ────────────────
+        Props:
+        - gameState: GameBoardState
+        - onCellClick: (row, col) => void
+        - lastMove: LastMoveInfo
+        ────────────────
+        Renders: 36 cell divs
+        CSS: game-board, cell, x-move, o-move
+    }
+    
+    class DifficultySelector {
+        <<Component>>
+        AI difficulty picker
+        ────────────────
+        Props:
+        - currentDifficulty: Difficulty
+        - onDifficultyChange: (d) => void
+        ────────────────
+        Renders: 3 difficulty buttons
+    }
+    
+    %% Service Layer (not components, but state providers)
+    class GameLogicService {
+        <<Service>>
+        Pure functions
+        ────────────────
+        createInitialState()
+        makeMove()
+        checkWin()
+        checkDraw()
+    }
+    
+    class AILogicService {
+        <<Service>>
+        AI algorithms
+        ────────────────
+        makeAIMove()
+        easyMove()
+        mediumMove()
+        hardMove() [minimax]
+    }
+    
+    class StatisticsApi {
+        <<Service>>
+        REST client
+        ────────────────
+        getAllPlayerStatistics()
+        getLeaderboard()
+        getPlayerStats()
+        savePlayerStats()
+    }
+    
+    class LocalStorageService {
+        <<Service>>
+        Browser storage
+        ────────────────
+        getPlayerName()
+        setPlayerName()
+        getDifficulty()
+        setDifficulty()
+        getPlayerStats()
+        setPlayerStats()
+    }
+    
+    %% Relationships
+    App --> Layout : contains
+    Layout --> HomePage : route /
+    Layout --> LeaderboardPage : route /leaderboard
+    
+    HomePage --> Game : renders
+    
+    Game --> GameBoard : renders
+    Game --> DifficultySelector : renders
+    Game ..> GameLogicService : uses
+    Game ..> AILogicService : uses
+    Game ..> StatisticsApi : uses
+    Game ..> LocalStorageService : uses
+    
+    LeaderboardPage ..> StatisticsApi : uses
+    
+    %% State Flow Notes
+    note for Game "Central state manager\nLifts state up from child components\nManages AI thinking delays\nSaves stats on game end"
+    
+    note for GameBoard "Presentational component\nReceives all data via props\nNo internal state"
+    
+    note for LocalStorageService "Offline-first pattern\nFallback when API unavailable\nSyncs with cloud when online"

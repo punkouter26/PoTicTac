@@ -1,7 +1,7 @@
 using MediatR;
 using Po.TicTac.Api.Services;
-using Po.TicTac.Shared.DTOs;
-using Po.TicTac.Shared.Models;
+using Po.TicTac.Api.DTOs;
+using Po.TicTac.Api.Models;
 
 namespace Po.TicTac.Api.Features.Statistics;
 
@@ -11,43 +11,27 @@ namespace Po.TicTac.Api.Features.Statistics;
 public record GetAllPlayerStatisticsQuery : IRequest<IEnumerable<PlayerStatsDto>>;
 
 /// <summary>
-/// Handler for GetAllPlayerStatisticsQuery
+/// Handler for GetAllPlayerStatisticsQuery using primary constructor (C# 14).
 /// </summary>
-public class GetAllPlayerStatisticsHandler : IRequestHandler<GetAllPlayerStatisticsQuery, IEnumerable<PlayerStatsDto>>
+public sealed class GetAllPlayerStatisticsHandler(
+    StorageService storageService,
+    ILogger<GetAllPlayerStatisticsHandler> logger) : IRequestHandler<GetAllPlayerStatisticsQuery, IEnumerable<PlayerStatsDto>>
 {
-    private readonly StorageService _storageService;
-    private readonly ILogger<GetAllPlayerStatisticsHandler> _logger;
-
-    public GetAllPlayerStatisticsHandler(StorageService storageService, ILogger<GetAllPlayerStatisticsHandler> logger)
-    {
-        _storageService = storageService;
-        _logger = logger;
-    }
-
     public async Task<IEnumerable<PlayerStatsDto>> Handle(GetAllPlayerStatisticsQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Retrieving all player statistics");
+        logger.LogInformation("Retrieving all player statistics");
 
         try
         {
-            var allPlayers = await _storageService.GetAllPlayersAsync();
-            var playerStatsDtos = new List<PlayerStatsDto>();
+            var allPlayers = await storageService.GetAllPlayersAsync();
+            List<PlayerStatsDto> playerStatsDtos = [.. allPlayers.Select(p => new PlayerStatsDto { Name = p.Name, Stats = p.Stats })];
 
-            foreach (var player in allPlayers)
-            {
-                playerStatsDtos.Add(new PlayerStatsDto
-                {
-                    Name = player.Name,
-                    Stats = player.Stats
-                });
-            }
-
-            _logger.LogInformation("Successfully retrieved {Count} player statistics", playerStatsDtos.Count);
+            logger.LogInformation("Successfully retrieved {Count} player statistics", playerStatsDtos.Count);
             return playerStatsDtos;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all player statistics");
+            logger.LogError(ex, "Error retrieving all player statistics");
             throw;
         }
     }
