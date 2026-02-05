@@ -58,7 +58,7 @@ Thumbs.db
 .vs/
 
 # Package manager files
-package-lock.json
+# package-lock.json intentionally tracked for CI/CD reproducibility
 yarn.lock
 
 # Test results
@@ -73,7 +73,6 @@ coverage/
 
 # Node modules (diagram generation)
 node_modules/
-package-lock.json
 # Playwright test artifacts
 playwright-report/
 test-results/
