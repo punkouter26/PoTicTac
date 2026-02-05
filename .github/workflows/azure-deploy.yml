@@ -66,11 +66,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/Po.TicTac.Web/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
         working-directory: src/Po.TicTac.Web
 
       - name: Build React app
