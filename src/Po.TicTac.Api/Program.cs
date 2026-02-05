@@ -85,20 +85,15 @@ builder.Services.AddHybridCache(options =>
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 // Add Azure Table Storage client
-// Use connection string for local development (Azurite) or Managed Identity for Azure
+// Priority: Key Vault secrets (via ConnectionStrings:Tables) > App Settings > Development storage
 var tableConnectionString = builder.Configuration.GetConnectionString("Tables")
     ?? builder.Configuration["ConnectionStrings:AzureTableStorage"]
     ?? "UseDevelopmentStorage=true";
 
 builder.Services.AddSingleton(sp =>
 {
-    if (tableConnectionString == "UseDevelopmentStorage=true" || tableConnectionString.Contains("devstoreaccount1"))
-    {
-        return new TableServiceClient(tableConnectionString);
-    }
-    // Use DefaultAzureCredential for Azure Table Storage with Managed Identity
-    var tableUri = new Uri(tableConnectionString);
-    return new TableServiceClient(tableUri, new DefaultAzureCredential());
+    // Use connection string directly (works for local Azurite, Key Vault secrets, or app settings)
+    return new TableServiceClient(tableConnectionString);
 });
 
 builder.Services.AddSingleton<StorageService>();
