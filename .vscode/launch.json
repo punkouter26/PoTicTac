@@ -25,24 +25,6 @@
             "webRoot": "${workspaceFolder}/src/Po.TicTac.Web"
         },
         {
-            "name": "Launch PoTicTac (Aspire)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build-apphost",
-            "cwd": "${workspaceFolder}/src/Po.TicTac.AppHost",
-            "program": "${workspaceFolder}/src/Po.TicTac.AppHost/bin/Debug/net10.0/Po.TicTac.AppHost.dll",
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "Login to the dashboard at (https?://\\S+)",
-                "uriFormat": "%s"
-            },
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "DOTNET_ENVIRONMENT": "Development"
-            }
-        },
-        {
             "name": "Attach to PoTicTac.Api",
             "type": "coreclr",
             "request": "attach"
@@ -56,7 +38,7 @@
             "presentation": {
                 "hidden": false,
                 "group": "PoTicTac",
-                "order": 1
+                "order": 0
             }
         }
     ]

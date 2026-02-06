@@ -148,6 +148,9 @@ app.UseSwaggerUI(options =>
 });
 
 // Add Serilog request logging with enrichment
+// Enable CORS before any other middleware that might reject/redirect requests
+app.UseCors();
+
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
@@ -164,10 +167,11 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
-app.UseHttpsRedirection();
-
-// Enable CORS before authorization
-app.UseCors();
+// Only redirect to HTTPS in non-development (local dev uses HTTP on port 5000)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

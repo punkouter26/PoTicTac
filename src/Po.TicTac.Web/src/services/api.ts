@@ -5,8 +5,10 @@ import { PlayerStats, PlayerStatsDto, createDefaultPlayerStats } from '../types'
  * Implements resilience pattern - gracefully handles offline API
  */
 
-// Base URL - uses Vite proxy in development
-const API_BASE = '/api';
+// Base URL - uses VITE_API_URL in production, Vite proxy in development
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
 
 /**
  * Generic fetch wrapper with error handling

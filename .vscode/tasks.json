@@ -2,7 +2,22 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "kill-port-5000",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "build-server",
+            "dependsOn": "kill-port-5000",
             "command": "dotnet",
             "type": "process",
             "args": [
