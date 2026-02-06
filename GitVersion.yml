@@ -5,16 +5,12 @@ branches:
     mode: ContinuousDeployment
     label: ''
     increment: Patch
-    prevent-increment-of-merged-branch-version: true
-    track-merge-target: false
     source-branches: ['develop', 'feature', 'hotfix']
   develop:
     regex: ^develop$
     mode: ContinuousDeployment
     label: alpha
     increment: Minor
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: true
     source-branches: []
   feature:
     regex: ^feature[/-]
@@ -30,4 +26,3 @@ branches:
     source-branches: ['main']
 ignore:
   sha: []
-merge-message-formats: {}
