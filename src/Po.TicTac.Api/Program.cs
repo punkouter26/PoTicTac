@@ -176,9 +176,12 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 // Map Minimal API endpoints
+// NOTE: Order matters! More specific routes must be registered before general ones
+// to prevent route matching conflicts. For example, /api/statistics/leaderboard
+// must come before /api/statistics to ensure correct routing.
 app.MapHealthCheck();
-app.MapGetAllPlayerStatistics();
-app.MapGetLeaderboard();
+app.MapGetLeaderboard();  // More specific: /api/statistics/leaderboard
+app.MapGetAllPlayerStatistics();  // More general: /api/statistics
 app.MapGetPlayerStats();
 app.MapSavePlayerStats();
 
