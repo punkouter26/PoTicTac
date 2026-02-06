@@ -30,7 +30,7 @@ __blobstorage__/
 __queuestorage__/
 AzuriteData/
 AzuriteConfig
-*.json
+__azurite_*.json
 
 # Logs
 logs
