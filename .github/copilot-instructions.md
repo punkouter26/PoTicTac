@@ -27,4 +27,5 @@ Conditional Schemes: Register AddGoogle() for Prod; add AddTestAuth() in Dev to 
 React/Next.js + .NET 10 API (Static Web App / App Service)
 Progressive Dev: Start client-only; use client-side storage for local data.
 Integration: Use .NET API for data (leaderboards) once integrated.
-Resilience: Ensure the app remains functional if the API is offline.
+Resilience: Ensure the app remains functional if the API is offline
+Code the react client app in such a way so that it is still functional if not API exists or it cannot connect to an API

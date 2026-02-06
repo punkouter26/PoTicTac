@@ -52,8 +52,7 @@ export function Game() {
     LocalStorageService.setDifficulty(difficulty);
   }, [difficulty]);
 
-  const [nameWarning, setNameWarning] = useState(false);
-  const canStartGame = selectedMode !== '';
+  const canStartGame = selectedMode !== '' && playerName.trim().length > 0;
 
   // Create players for single player game
   const createPlayers = useCallback((): [Player, Player] => {
@@ -88,13 +87,6 @@ export function Game() {
   // Handle starting selected game mode
   const handleStartGame = useCallback(async () => {
     if (!selectedMode) return;
-
-    // Issue 1 fix: Warn if no player name for stats tracking
-    if (!playerName.trim()) {
-      setNameWarning(true);
-    } else {
-      setNameWarning(false);
-    }
 
     setIsStartingGame(true);
     try {
@@ -295,17 +287,11 @@ export function Game() {
                 type="text"
                 placeholder="Enter Your Name"
                 value={playerName}
-                onChange={(e) => {
-                  setPlayerName(e.target.value);
-                  setNameWarning(false); // Clear warning on edit
-                }}
-                className={`name-input ${playerName ? 'has-value' : ''} ${nameWarning ? 'warning' : ''}`}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className={`name-input ${playerName ? 'has-value' : ''}`}
               />
               {playerName && <span className="input-check">✓</span>}
             </div>
-            {nameWarning && (
-              <div className="name-warning">⚠️ Stats won't be saved without a name!</div>
-            )}
           </div>
 
           <div className="mode-selection">
