@@ -3,7 +3,7 @@ branches:
   main:
     regex: ^main$
     mode: ContinuousDeployment
-    tag: ''
+    label: ''
     increment: Patch
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
@@ -11,7 +11,7 @@ branches:
   develop:
     regex: ^develop$
     mode: ContinuousDeployment
-    tag: alpha
+    label: alpha
     increment: Minor
     prevent-increment-of-merged-branch-version: false
     track-merge-target: true
@@ -19,13 +19,13 @@ branches:
   feature:
     regex: ^feature[/-]
     mode: ContinuousDeployment
-    tag: 'feat-{BranchName}'
+    label: 'feat-{BranchName}'
     increment: Inherit
     source-branches: ['develop', 'main']
   hotfix:
     regex: ^hotfix[/-]
     mode: ContinuousDeployment
-    tag: 'hotfix'
+    label: 'hotfix'
     increment: Patch
     source-branches: ['main']
 ignore:
